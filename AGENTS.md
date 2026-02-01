@@ -13,5 +13,6 @@ Do not write any documentation (no KDoc, no comments, no README files).
 # Architecture
 
 Use DDD and Clean Architecture. UI and presentation are separate layers.
+Follow fail-fast principle.
 
 
