@@ -1,0 +1,18 @@
+package app.tich.buildandrun.domain.entities
+
+enum class PRState {
+    OPEN,
+    CLOSED,
+    MERGED,
+    ;
+
+    companion object {
+        fun fromString(value: String): PRState =
+            when (value.uppercase()) {
+                "OPEN" -> OPEN
+                "CLOSED" -> CLOSED
+                "MERGED" -> MERGED
+                else -> CLOSED
+            }
+    }
+}

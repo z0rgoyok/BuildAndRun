@@ -14,7 +14,7 @@ kotlin {
 
     listOf(
         iosArm64(),
-        iosSimulatorArm64()
+        iosSimulatorArm64(),
     ).forEach { iosTarget ->
         iosTarget.binaries.framework {
             baseName = "Shared"
@@ -24,7 +24,7 @@ kotlin {
 
     listOf(
         macosArm64(),
-        macosX64()
+        macosX64(),
     ).forEach { macosTarget ->
         macosTarget.binaries.framework {
             baseName = "Shared"

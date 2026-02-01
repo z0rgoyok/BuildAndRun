@@ -1,0 +1,13 @@
+root = true
+
+[*]
+insert_final_newline = true
+
+[*.{kt,kts}]
+ktlint_standard_trailing-comma-on-call-site = enabled
+ktlint_standard_trailing-comma-on-declaration-site = enabled
+ktlint_function_naming_ignore_when_annotated_with = Composable
+ktlint_standard_no-wildcard-imports = disabled
+
+[**/build/**]
+ktlint = disabled
