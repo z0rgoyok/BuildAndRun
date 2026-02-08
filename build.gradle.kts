@@ -16,3 +16,10 @@ subprojects {
         }
     }
 }
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}

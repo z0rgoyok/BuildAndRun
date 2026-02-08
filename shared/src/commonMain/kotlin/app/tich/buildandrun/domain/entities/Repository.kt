@@ -4,6 +4,7 @@ data class Repository(
     val id: RepositoryId,
     val path: String,
     val name: String,
+    val isArchived: Boolean,
 ) {
     init {
         require(path.isNotBlank()) { "Repository path cannot be blank" }
@@ -14,12 +15,14 @@ data class Repository(
         fun create(
             path: String,
             name: String? = null,
+            isArchived: Boolean = false,
         ): Repository {
             val derivedName = name ?: path.substringAfterLast('/')
             return Repository(
                 id = RepositoryId.generate(),
                 path = path,
                 name = derivedName,
+                isArchived = isArchived,
             )
         }
     }
