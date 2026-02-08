@@ -59,7 +59,7 @@ struct AddWorktreeSheet: View {
         }
     }
 
-    private var createState: MacOSAppStore.CreateWorktreeState {
+    private var createState: AppStore.CreateWorktreeState {
         root.state.createWorktree
     }
 

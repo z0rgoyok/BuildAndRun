@@ -8,6 +8,7 @@ struct ProjectTreeSidebar: View {
     @State private var isArchivedSectionExpanded: Bool = false
     @State private var hoveredRepositoryId: String?
     @State private var hoveredWorktreePath: String?
+    @State private var repositoryForCopySettings: RepositoryCopySettingsTarget?
 
     var body: some View {
         List {
@@ -46,18 +47,25 @@ struct ProjectTreeSidebar: View {
         .onChange(of: root.state.selectedRepositoryId) { _, _ in
             syncSelectionExpansion()
         }
+        .sheet(item: $repositoryForCopySettings) { target in
+            RepositoryCopyPatternsSheet(
+                repositoryId: target.id,
+                repositoryName: target.name,
+            )
+            .environmentObject(root)
+        }
     }
 
-    private var activeRepositories: [MacOSAppStore.RepositoryItem] {
+    private var activeRepositories: [AppStore.RepositoryItem] {
         root.state.repositories.filter { !$0.isArchived }
     }
 
-    private var archivedRepositories: [MacOSAppStore.RepositoryItem] {
+    private var archivedRepositories: [AppStore.RepositoryItem] {
         root.state.repositories.filter { $0.isArchived }
     }
 
     @ViewBuilder
-    private func repositoryNode(repository: MacOSAppStore.RepositoryItem) -> some View {
+    private func repositoryNode(repository: AppStore.RepositoryItem) -> some View {
         let isArchived = repository.isArchived
         let isExpanded = expandedRepositoryIds.contains(repository.id)
         let isSelected =
@@ -162,6 +170,16 @@ struct ProjectTreeSidebar: View {
                     Label("Copy Path", systemImage: "doc.on.doc")
                 }
 
+                Button {
+                    repositoryForCopySettings =
+                        RepositoryCopySettingsTarget(
+                            id: repository.id,
+                            name: repository.name,
+                        )
+                } label: {
+                    Label("Copy Files Settings...", systemImage: "doc.on.doc")
+                }
+
                 Divider()
 
                 if repository.isArchived {
@@ -197,7 +215,7 @@ struct ProjectTreeSidebar: View {
 
     @ViewBuilder
     private func worktreeRow(
-        worktree: MacOSAppStore.WorktreeItem,
+        worktree: AppStore.WorktreeItem,
         repositoryId: String,
     ) -> some View {
         let isSelected =
@@ -282,7 +300,7 @@ struct ProjectTreeSidebar: View {
         }
     }
 
-    private func sortedWorktrees(of repository: MacOSAppStore.RepositoryItem) -> [MacOSAppStore.WorktreeItem] {
+    private func sortedWorktrees(of repository: AppStore.RepositoryItem) -> [AppStore.WorktreeItem] {
         repository.worktrees.sorted { lhs, rhs in
             if lhs.isMain && !rhs.isMain {
                 return true
@@ -308,6 +326,11 @@ struct ProjectTreeSidebar: View {
             }
         }
     }
+}
+
+private struct RepositoryCopySettingsTarget: Identifiable {
+    let id: String
+    let name: String
 }
 
 #Preview {

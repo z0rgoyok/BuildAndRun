@@ -1,15 +1,15 @@
-package app.tich.buildandrun.macos
+package app.tich.buildandrun.appstore
 
 import app.tich.buildandrun.domain.failures.DomainFailure
 import app.tich.buildandrun.presentation.errors.UiError
 
-internal fun MacOSAppStoreCore.mapFailureToErrorState(failure: DomainFailure): MacOSAppStore.ErrorState? {
+internal fun AppStoreCore.mapFailureToErrorState(failure: DomainFailure): AppStore.ErrorState? {
     val uiError = failureToUiErrorMapper.map(failure) ?: return null
     return mapUiErrorToErrorState(uiError)
 }
 
-internal fun mapUiErrorToErrorState(uiError: UiError): MacOSAppStore.ErrorState {
-    return MacOSAppStore.ErrorState(
+internal fun mapUiErrorToErrorState(uiError: UiError): AppStore.ErrorState {
+    return AppStore.ErrorState(
         code = uiError.code,
         message = resolveText(text = uiError.message),
         details = uiError.details?.let { resolveText(text = it) },

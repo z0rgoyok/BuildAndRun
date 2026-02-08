@@ -1,4 +1,4 @@
-package app.tich.buildandrun.macos
+package app.tich.buildandrun.appstore
 
 import app.tich.buildandrun.domain.usecases.AddRepositoryUseCase
 import app.tich.buildandrun.domain.usecases.RemoveRepositoryUseCase
@@ -9,13 +9,13 @@ import app.tich.buildandrun.resources.Res
 import app.tich.buildandrun.resources.screen_repositories_repository_added
 import kotlinx.coroutines.launch
 
-internal fun MacOSAppStoreCore.onAddRepositoryPathChanged(value: String) {
+internal fun AppStoreCore.onAddRepositoryPathChanged(value: String) {
     addRepositoryPathInput = value
     clearMessages()
     publishState()
 }
 
-internal fun MacOSAppStoreCore.onAddRepository() {
+internal fun AppStoreCore.onAddRepository() {
     if (isLoading) {
         return
     }
@@ -45,7 +45,7 @@ internal fun MacOSAppStoreCore.onAddRepository() {
                         createdWorktreePath = null,
                     )
                 success =
-                    MacOSAppStore.SuccessState(
+                    AppStore.SuccessState(
                         message =
                             resolveText(
                                 text =
@@ -55,6 +55,7 @@ internal fun MacOSAppStoreCore.onAddRepository() {
                                     ),
                             ),
                     )
+                persistSelection()
             }
 
             is UseCaseResult.Failure -> {
@@ -66,33 +67,34 @@ internal fun MacOSAppStoreCore.onAddRepository() {
     }
 }
 
-internal fun MacOSAppStoreCore.onSelectRepository(repositoryId: String) {
+internal fun AppStoreCore.onSelectRepository(repositoryId: String) {
     if (selectedRepositoryId == repositoryId) {
         return
     }
     selectedRepositoryId = repositoryId
     selectedWorktreePath = null
+    persistSelection()
     clearMessages()
     publishState()
     val selectedRepository = repositories.firstOrNull { it.id.value == repositoryId } ?: return
     loadWorktreesForRepository(path = selectedRepository.path)
 }
 
-internal fun MacOSAppStoreCore.onArchiveRepository(repositoryId: String) {
+internal fun AppStoreCore.onArchiveRepository(repositoryId: String) {
     onSetRepositoryArchivedState(
         repositoryId = repositoryId,
         isArchived = true,
     )
 }
 
-internal fun MacOSAppStoreCore.onRestoreRepository(repositoryId: String) {
+internal fun AppStoreCore.onRestoreRepository(repositoryId: String) {
     onSetRepositoryArchivedState(
         repositoryId = repositoryId,
         isArchived = false,
     )
 }
 
-internal fun MacOSAppStoreCore.onRemoveRepository(repositoryId: String) {
+internal fun AppStoreCore.onRemoveRepository(repositoryId: String) {
     if (isLoading) {
         return
     }
@@ -113,6 +115,7 @@ internal fun MacOSAppStoreCore.onRemoveRepository(repositoryId: String) {
                     selectedRepositoryId = preferredSelectedRepositoryId()
                     selectedWorktreePath = null
                 }
+                persistSelection()
             }
 
             is UseCaseResult.Failure -> {
@@ -124,7 +127,7 @@ internal fun MacOSAppStoreCore.onRemoveRepository(repositoryId: String) {
     }
 }
 
-internal fun MacOSAppStoreCore.onSetRepositoryArchivedState(
+internal fun AppStoreCore.onSetRepositoryArchivedState(
     repositoryId: String,
     isArchived: Boolean,
 ) {
@@ -154,6 +157,7 @@ internal fun MacOSAppStoreCore.onSetRepositoryArchivedState(
                         selectedWorktreePath = null
                     }
                 }
+                persistSelection()
             }
 
             is UseCaseResult.Failure -> {

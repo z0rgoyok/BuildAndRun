@@ -4,7 +4,7 @@ import SwiftUI
 struct KanbanColumn: View {
     let title: String
     let columnId: KanbanColumnType
-    let tasks: [MacOSAppStore.KanbanTaskItem]
+    let tasks: [AppStore.KanbanTaskItem]
     @Binding var draggedTaskId: String?
     let onAddTask: () -> Void
     let onMoveTask: (String, KanbanColumnType) -> Void

@@ -2,7 +2,7 @@ import Shared
 import SwiftUI
 
 struct KanbanCardCompact: View {
-    let task: MacOSAppStore.KanbanTaskItem
+    let task: AppStore.KanbanTaskItem
     let isDragging: Bool
 
     @State private var isHovered = false

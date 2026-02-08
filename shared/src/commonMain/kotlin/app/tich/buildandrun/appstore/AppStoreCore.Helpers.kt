@@ -1,8 +1,9 @@
-package app.tich.buildandrun.macos
+package app.tich.buildandrun.appstore
 
 import app.tich.buildandrun.domain.entities.KanbanColumnType
 import app.tich.buildandrun.domain.entities.KanbanTask
 import app.tich.buildandrun.domain.entities.Repository
+import app.tich.buildandrun.domain.entities.Worktree
 import app.tich.buildandrun.presentation.i18n.UiText
 import app.tich.buildandrun.presentation.i18n.UiTextLocalizer
 
@@ -29,12 +30,34 @@ internal fun normalizePath(path: String): String = path.trim().trimEnd('/')
 
 internal fun currentEpochMillis(): Long = kotlin.time.Clock.System.now().toEpochMilliseconds()
 
-internal fun MacOSAppStoreCore.cleanupRepositoryData(repository: Repository) {
+internal fun AppStoreCore.cleanupRepositoryData(repository: Repository) {
     val removedWorktreePaths = worktreesByRepositoryPath.remove(repository.path).orEmpty().map { it.path }
     tasksByScope.remove("repo:${repository.id.value}")
     removedWorktreePaths.forEach { tasksByScope.remove("worktree:$it") }
     removedWorktreePaths.forEach { worktreeStatusByPath.remove(it) }
+    removedWorktreePaths.forEach { hasRemoteBranchByWorktreePath.remove(it) }
     worktreeStatusLoadingPaths.removeAll(removedWorktreePaths.toSet())
+}
+
+internal fun AppStoreCore.findWorktreeByPath(path: String): Pair<Repository, Worktree>? {
+    val normalizedPath = normalizePath(path)
+    if (normalizedPath.isBlank()) {
+        return null
+    }
+    repositories.forEach { repository ->
+        val worktree = worktreesByRepositoryPath[repository.path].orEmpty().firstOrNull { normalizePath(it.path) == normalizedPath }
+        if (worktree != null) {
+            return repository to worktree
+        }
+    }
+    return null
+}
+
+internal fun AppStoreCore.currentRepositoryId(): String? = selectedRepository()?.id?.value
+
+internal fun AppStoreCore.persistSelection() {
+    graph.preferencesStore.lastSelectedRepositoryId = selectedRepositoryId
+    graph.preferencesStore.lastSelectedWorktreePath = selectedWorktreePath
 }
 
 internal fun createDefaultTasks(worktreePath: String?): MutableList<KanbanTask> {

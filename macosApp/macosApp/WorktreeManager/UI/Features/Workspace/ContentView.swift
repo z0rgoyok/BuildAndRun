@@ -78,13 +78,13 @@ struct ContentView: View {
                     OpenEditorMenu(root: root, worktreePath: selectedWorktreePath)
 
                     Button {
-                        NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: selectedWorktreePath)
+                        root.store.onOpenInFinder(worktreePath: selectedWorktreePath)
                     } label: {
                         Label("Finder", systemImage: "folder")
                     }
 
                     Button {
-                        NSWorkspace.shared.open(URL(fileURLWithPath: selectedWorktreePath))
+                        root.store.onOpenInTerminal(worktreePath: selectedWorktreePath)
                     } label: {
                         Label("Terminal", systemImage: "terminal")
                     }
@@ -168,15 +168,15 @@ struct ContentView: View {
             case .addWorktree:
                 AddWorktreeSheet()
                     .environmentObject(root)
-            case .createPR:
-                Text("Not implemented")
-                    .padding()
-            case .completeWorktree:
-                Text("Not implemented")
-                    .padding()
+            case .createPR(let worktreePath):
+                CreatePRSheet(worktreePath: worktreePath)
+                    .environmentObject(root)
+            case .completeWorktree(let worktreePath):
+                CompleteWorktreeSheet(worktreePath: worktreePath)
+                    .environmentObject(root)
             case .configureEditors:
-                Text("Not implemented")
-                    .padding()
+                ConfigureEditorsSheet()
+                    .environmentObject(root)
             case .help:
                 HelpView()
             }

@@ -22,7 +22,7 @@ class DomainFailureMapperTest {
 
     @Test
     fun mapsCancelledToCancelledFailure() {
-        val failure = DomainFailureMapper.fromThrowable(AppError.Cancelled)
+        val failure = DomainFailureMapper.fromThrowable(AppError.Cancelled())
 
         if (failure !is DomainFailure.Cancelled) {
             error("Expected DomainFailure.Cancelled but was ${failure::class.simpleName}")

@@ -2,7 +2,7 @@ import Shared
 import SwiftUI
 
 struct KanbanCard: View {
-    let task: MacOSAppStore.KanbanTaskItem
+    let task: AppStore.KanbanTaskItem
     let isDragging: Bool
     let onDelete: () -> Void
 

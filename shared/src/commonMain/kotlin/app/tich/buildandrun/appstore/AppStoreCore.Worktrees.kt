@@ -1,4 +1,4 @@
-package app.tich.buildandrun.macos
+package app.tich.buildandrun.appstore
 
 import app.tich.buildandrun.domain.failures.DomainFailureMapper
 import app.tich.buildandrun.domain.usecases.CreateWorktreeUseCase
@@ -8,19 +8,21 @@ import app.tich.buildandrun.resources.Res
 import app.tich.buildandrun.resources.screen_create_worktree_success
 import kotlinx.coroutines.launch
 
-internal fun MacOSAppStoreCore.onSelectWorktree(worktreePath: String?) {
+internal fun AppStoreCore.onSelectWorktree(worktreePath: String?) {
     selectedWorktreePath = worktreePath
+    persistSelection()
     clearMessages()
     publishState()
 }
 
-internal fun MacOSAppStoreCore.onRefreshSelectedRepository() {
+internal fun AppStoreCore.onRefreshSelectedRepository() {
     val repositoryPath = selectedRepository()?.path ?: return
     clearMessages()
     loadWorktreesForRepository(path = repositoryPath)
+    onLoadBranches()
 }
 
-internal fun MacOSAppStoreCore.onCreateWorktreeBranchChanged(value: String) {
+internal fun AppStoreCore.onCreateWorktreeBranchChanged(value: String) {
     val selectedRepositoryPath = selectedRepository()?.path.orEmpty()
     val normalizedBranch = value.trim()
     val currentWorktreePath = createWorktreeState.worktreePathInput
@@ -40,7 +42,7 @@ internal fun MacOSAppStoreCore.onCreateWorktreeBranchChanged(value: String) {
     publishState()
 }
 
-internal fun MacOSAppStoreCore.onCreateWorktreePathChanged(value: String) {
+internal fun AppStoreCore.onCreateWorktreePathChanged(value: String) {
     createWorktreeState =
         createWorktreeState.copy(
             worktreePathInput = value,
@@ -50,24 +52,29 @@ internal fun MacOSAppStoreCore.onCreateWorktreePathChanged(value: String) {
     publishState()
 }
 
-internal fun MacOSAppStoreCore.onCreateWorktreeBaseBranchChanged(value: String) {
+internal fun AppStoreCore.onCreateWorktreeBaseBranchChanged(value: String) {
     createWorktreeState = createWorktreeState.copy(baseBranchInput = value)
     clearMessages()
     publishState()
 }
 
-internal fun MacOSAppStoreCore.onCreateWorktreeCreateBranchChanged(value: Boolean) {
+internal fun AppStoreCore.onCreateWorktreeCreateBranchChanged(value: Boolean) {
     createWorktreeState = createWorktreeState.copy(createBranch = value)
     clearMessages()
     publishState()
 }
 
-internal fun MacOSAppStoreCore.onCreateWorktree() {
+internal fun AppStoreCore.onCreateWorktree() {
     if (createWorktreeState.isSubmitting || isLoading) {
         return
     }
     val repositoryPath = selectedRepository()?.path ?: return
     scope.launch {
+        val repository = selectedRepository()
+        if (repository == null) {
+            createWorktreeState = createWorktreeState.copy(isSubmitting = false)
+            return@launch
+        }
         createWorktreeState =
             createWorktreeState.copy(
                 isSubmitting = true,
@@ -89,16 +96,34 @@ internal fun MacOSAppStoreCore.onCreateWorktree() {
                 )
         ) {
             is UseCaseResult.Success -> {
-                val worktrees = result.value.allWorktrees
+                val preferredBaseBranch = createWorktreeState.baseBranchInput.trim().ifBlank { null }
+                preferredBaseBranch?.let { baseBranch ->
+                    graph.preferencesStore.setPreferredBaseBranch(
+                        branch = baseBranch,
+                        forRepositoryId = repository.id,
+                    )
+                    graph.preferencesStore.setWorktreeBaseBranch(
+                        branch = baseBranch,
+                        forWorktreePath = result.value.createdWorktree.path,
+                    )
+                }
+                copyConfiguredFiles(
+                    repositoryPath = repository.path,
+                    createdWorktreePath = result.value.createdWorktree.path,
+                    repositoryId = repository.id.value,
+                )
+                val worktrees = graph.gitClient.listWorktrees(atRepoPath = repositoryPath)
                 worktreesByRepositoryPath[repositoryPath] = worktrees
                 selectedWorktreePath = result.value.createdWorktree.path
+                persistSelection()
                 createWorktreeState =
                     createWorktreeState.copy(
                         isSubmitting = false,
                         createdWorktreePath = result.value.createdWorktree.path,
                     )
+                onLoadBranches()
                 success =
-                    MacOSAppStore.SuccessState(
+                    AppStore.SuccessState(
                         message =
                             resolveText(
                                 text =
@@ -119,7 +144,7 @@ internal fun MacOSAppStoreCore.onCreateWorktree() {
     }
 }
 
-internal fun MacOSAppStoreCore.loadWorktreesForRepository(path: String) {
+internal fun AppStoreCore.loadWorktreesForRepository(path: String) {
     scope.launch {
         isLoading = true
         publishState()
@@ -129,7 +154,7 @@ internal fun MacOSAppStoreCore.loadWorktreesForRepository(path: String) {
     }
 }
 
-internal suspend fun MacOSAppStoreCore.loadWorktreesForRepositoryInternal(path: String) {
+internal suspend fun AppStoreCore.loadWorktreesForRepositoryInternal(path: String) {
     val normalizedPath = normalizePath(path)
     if (normalizedPath.isBlank()) {
         return
@@ -137,14 +162,22 @@ internal suspend fun MacOSAppStoreCore.loadWorktreesForRepositoryInternal(path: 
     runCatching {
         graph.gitClient.listWorktrees(atRepoPath = normalizedPath)
     }.onSuccess { worktrees ->
-        worktreesByRepositoryPath[normalizedPath] = worktrees
+        worktreesByRepositoryPath[normalizedPath] =
+            worktrees.map { worktree ->
+                val baseBranch =
+                    graph.preferencesStore.worktreeBaseBranch(
+                        forWorktreePath = worktree.path,
+                    )
+                worktree.withBaseBranch(baseBranch = baseBranch)
+            }
         if (selectedRepository()?.path == normalizedPath && selectedWorktreePath != null) {
-            val stillExists = worktrees.any { it.path == selectedWorktreePath }
+            val stillExists = worktreesByRepositoryPath[normalizedPath].orEmpty().any { it.path == selectedWorktreePath }
             if (!stillExists) {
                 selectedWorktreePath = null
+                persistSelection()
             }
         }
-        worktrees.forEach { worktree ->
+        worktreesByRepositoryPath[normalizedPath].orEmpty().forEach { worktree ->
             if (!worktreeStatusByPath.containsKey(worktree.path)) {
                 onRefreshWorktreeStatus(worktreePath = worktree.path)
             }

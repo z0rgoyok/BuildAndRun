@@ -8,16 +8,23 @@ object DomainFailureMapper {
         when (throwable) {
             is AppError.Validation ->
                 DomainFailure.Validation(
-                    code = DomainFailureCode.APP_VALIDATION,
-                    args = listOf(throwable.reason),
+                    code =
+                        when (throwable.reason) {
+                            AppError.ValidationReason.WORKTREE_PATH_BLANK -> DomainFailureCode.APP_VALIDATION_WORKTREE_PATH_BLANK
+                            AppError.ValidationReason.REPOSITORY_PATH_BLANK -> DomainFailureCode.APP_VALIDATION_REPOSITORY_PATH_BLANK
+                            AppError.ValidationReason.REPOSITORY_ID_BLANK -> DomainFailureCode.APP_VALIDATION_REPOSITORY_ID_BLANK
+                            AppError.ValidationReason.BRANCH_BLANK -> DomainFailureCode.APP_VALIDATION_BRANCH_BLANK
+                            AppError.ValidationReason.TASK_TITLE_BLANK -> DomainFailureCode.APP_VALIDATION_TASK_TITLE_BLANK
+                        },
+                    args = emptyList(),
                 )
-            AppError.RepositoryAlreadyAdded ->
+            is AppError.RepositoryAlreadyAdded ->
                 DomainFailure.Conflict(
                     code = DomainFailureCode.APP_REPOSITORY_ALREADY_ADDED,
                     args = emptyList(),
                     isRetryable = false,
                 )
-            AppError.NoEditorConfigured ->
+            is AppError.NoEditorConfigured ->
                 DomainFailure.Validation(
                     code = DomainFailureCode.APP_NO_EDITOR_CONFIGURED,
                     args = emptyList(),
@@ -27,13 +34,13 @@ object DomainFailureMapper {
                     code = DomainFailureCode.APP_INVALID_URL,
                     args = listOf(throwable.urlString),
                 )
-            AppError.CannotRemoveMainWorktree ->
+            is AppError.CannotRemoveMainWorktree ->
                 DomainFailure.Conflict(
                     code = DomainFailureCode.APP_CANNOT_REMOVE_MAIN_WORKTREE,
                     args = emptyList(),
                     isRetryable = false,
                 )
-            AppError.Cancelled -> DomainFailure.Cancelled
+            is AppError.Cancelled -> DomainFailure.Cancelled
             is AppError.Unexpected ->
                 DomainFailure.Unknown(
                     code = DomainFailureCode.APP_UNEXPECTED,

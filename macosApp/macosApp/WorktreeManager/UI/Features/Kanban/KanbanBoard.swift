@@ -64,7 +64,7 @@ struct KanbanBoard: View {
         ]
     }
 
-    private func tasks(for columnId: KanbanColumnType) -> [MacOSAppStore.KanbanTaskItem] {
+    private func tasks(for columnId: KanbanColumnType) -> [AppStore.KanbanTaskItem] {
         root.state.kanbanTasks
             .filter { $0.columnId === columnId }
             .sorted { $0.order < $1.order }

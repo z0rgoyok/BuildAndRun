@@ -4,15 +4,23 @@ sealed class AppError(
     override val message: String,
     cause: Throwable? = null,
 ) : Exception(message, cause) {
-    data class Validation(val reason: String) : AppError(
-        "Validation error: $reason",
-    )
+    enum class ValidationReason {
+        WORKTREE_PATH_BLANK,
+        REPOSITORY_PATH_BLANK,
+        REPOSITORY_ID_BLANK,
+        BRANCH_BLANK,
+        TASK_TITLE_BLANK,
+    }
 
-    data object RepositoryAlreadyAdded : AppError(
+    data class Validation(
+        val reason: ValidationReason,
+    ) : AppError("Validation error: $reason")
+
+    class RepositoryAlreadyAdded : AppError(
         "This repository has already been added",
     )
 
-    data object NoEditorConfigured : AppError(
+    class NoEditorConfigured : AppError(
         "No editor is configured",
     )
 
@@ -20,11 +28,11 @@ sealed class AppError(
         "Invalid URL: $urlString",
     )
 
-    data object CannotRemoveMainWorktree : AppError(
+    class CannotRemoveMainWorktree : AppError(
         "The main worktree cannot be removed",
     )
 
-    data object Cancelled : AppError(
+    class Cancelled : AppError(
         "Operation was cancelled",
     )
 

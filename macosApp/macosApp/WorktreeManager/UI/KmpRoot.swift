@@ -30,15 +30,15 @@ final class KmpRoot: ObservableObject {
         }
     }
 
-    @Published private(set) var state: MacOSAppStore.State
+    @Published private(set) var state: AppStore.State
     @Published var child: Child = .workspace
     @Published var sheet: Sheet? = nil
 
-    let store: MacOSAppStore
+    let store: AppStore
 
     private var cancellation: DecomposeCancellation?
 
-    init(store: MacOSAppStore = MacOSAppStore()) {
+    init(store: AppStore = AppStoreFactory.shared.create()) {
         self.store = store
         self.state = store.state.value
 
@@ -67,16 +67,16 @@ final class KmpRoot: ObservableObject {
         self.child = child
     }
 
-    var repositories: [MacOSAppStore.RepositoryItem] {
+    var repositories: [AppStore.RepositoryItem] {
         state.repositories
     }
 
-    var selectedRepository: MacOSAppStore.RepositoryItem? {
+    var selectedRepository: AppStore.RepositoryItem? {
         guard let selectedId = state.selectedRepositoryId else { return nil }
         return state.repositories.first { $0.id == selectedId }
     }
 
-    var selectedWorktree: MacOSAppStore.WorktreeItem? {
+    var selectedWorktree: AppStore.WorktreeItem? {
         guard let selectedPath = state.selectedWorktreePath else { return nil }
         return selectedRepository?.worktrees.first { $0.path == selectedPath }
     }

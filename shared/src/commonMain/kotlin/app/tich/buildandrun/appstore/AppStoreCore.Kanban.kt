@@ -1,4 +1,4 @@
-package app.tich.buildandrun.macos
+package app.tich.buildandrun.appstore
 
 import app.tich.buildandrun.domain.entities.KanbanColumnType
 import app.tich.buildandrun.domain.entities.KanbanTask
@@ -7,7 +7,7 @@ import app.tich.buildandrun.presentation.i18n.UiText
 import app.tich.buildandrun.resources.Res
 import app.tich.buildandrun.resources.app_validation_task_title_blank
 
-internal fun MacOSAppStoreCore.onAddTask(
+internal fun AppStoreCore.onAddTask(
     title: String,
     description: String?,
     column: KanbanColumnType,
@@ -15,7 +15,7 @@ internal fun MacOSAppStoreCore.onAddTask(
     val normalizedTitle = title.trim()
     if (normalizedTitle.isBlank()) {
         error =
-            MacOSAppStore.ErrorState(
+            AppStore.ErrorState(
                 code = DomainFailureCode.APP_VALIDATION_TASK_TITLE_BLANK,
                 message = resolveText(text = UiText(resource = Res.string.app_validation_task_title_blank)),
                 details = null,
@@ -40,7 +40,7 @@ internal fun MacOSAppStoreCore.onAddTask(
     publishState()
 }
 
-internal fun MacOSAppStoreCore.onMoveTask(
+internal fun AppStoreCore.onMoveTask(
     taskId: String,
     column: KanbanColumnType,
 ) {
@@ -56,7 +56,7 @@ internal fun MacOSAppStoreCore.onMoveTask(
     publishState()
 }
 
-internal fun MacOSAppStoreCore.onDeleteTask(taskId: String) {
+internal fun AppStoreCore.onDeleteTask(taskId: String) {
     val scopeKey = selectedScopeKey() ?: return
     val existingTasks = tasksByScope.getOrPut(scopeKey) { createDefaultTasks(currentWorktreePath()) }
     if (existingTasks.removeAll { it.id.value == taskId }) {

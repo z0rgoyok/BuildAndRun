@@ -2,7 +2,7 @@ import Shared
 import SwiftUI
 
 struct RepositoryRow: View {
-    let repository: MacOSAppStore.RepositoryItem
+    let repository: AppStore.RepositoryItem
 
     private var isArchived: Bool {
         repository.isArchived
