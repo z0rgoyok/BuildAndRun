@@ -223,6 +223,24 @@ class AppStore internal constructor(
         core.onDeleteTask(taskId = taskId)
     }
 
+    fun onSelectChild(child: AppChild) {
+        core.onSelectChild(child = child)
+    }
+
+    fun onPresentSheet(
+        kind: AppSheetKind,
+        worktreePath: String?,
+    ) {
+        core.onPresentSheet(
+            kind = kind,
+            worktreePath = worktreePath,
+        )
+    }
+
+    fun onDismissSheet() {
+        core.onDismissSheet()
+    }
+
     fun onDismissError() {
         core.onDismissError()
     }
@@ -252,6 +270,8 @@ class AppStore internal constructor(
         val remoteBranches: List<RemoteBranchItem> = emptyList(),
         val createWorktree: CreateWorktreeState = CreateWorktreeState(),
         val kanbanTasks: List<KanbanTaskItem> = emptyList(),
+        val activeChild: AppChild = AppChild.WORKSPACE,
+        val activeSheet: AppSheetState? = null,
         val error: ErrorState? = null,
         val success: SuccessState? = null,
     )

@@ -1,8 +1,8 @@
 package app.tich.buildandrun.appstore
 
+import app.tich.buildandrun.application.usecases.CreateWorktreeUseCase
+import app.tich.buildandrun.application.usecases.UseCaseResult
 import app.tich.buildandrun.domain.failures.DomainFailureMapper
-import app.tich.buildandrun.domain.usecases.CreateWorktreeUseCase
-import app.tich.buildandrun.domain.usecases.UseCaseResult
 import app.tich.buildandrun.presentation.i18n.UiText
 import app.tich.buildandrun.resources.Res
 import app.tich.buildandrun.resources.screen_create_worktree_success
@@ -18,6 +18,7 @@ internal fun AppStoreCore.onSelectWorktree(worktreePath: String?) {
 internal fun AppStoreCore.onRefreshSelectedRepository() {
     val repositoryPath = selectedRepository()?.path ?: return
     clearMessages()
+    scope.launch { refreshInstalledEditors() }
     loadWorktreesForRepository(path = repositoryPath)
     onLoadBranches()
 }

@@ -11,7 +11,7 @@ struct ContentView: View {
             .frame(minWidth: 900, minHeight: 550)
             .navigationTitle(navigationTitle)
             .toolbar { toolbarContent }
-            .sheet(item: $root.sheet) { sheet in
+            .sheet(item: sheetBinding) { sheet in
                 SheetContent(sheet: sheet)
                     .environmentObject(root)
             }
@@ -139,6 +139,19 @@ struct ContentView: View {
         )
     }
 
+    private var sheetBinding: Binding<KmpRoot.Sheet?> {
+        Binding(
+            get: { root.sheet },
+            set: { newValue in
+                if let newValue {
+                    root.presentSheet(newValue)
+                } else {
+                    root.dismissSheet()
+                }
+            }
+        )
+    }
+
     private func applySelection(_ selection: SidebarSelection?) {
         guard let selection else {
             root.store.onSelectWorktree(worktreePath: nil)
@@ -148,7 +161,6 @@ struct ContentView: View {
         switch selection {
         case .repository(let repositoryId):
             root.store.onSelectRepository(repositoryId: repositoryId)
-            root.store.onSelectWorktree(worktreePath: nil)
         case .worktree(let worktreePath, let repositoryId):
             root.store.onSelectRepository(repositoryId: repositoryId)
             root.store.onSelectWorktree(worktreePath: worktreePath)

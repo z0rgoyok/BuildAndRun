@@ -1,7 +1,7 @@
 package app.tich.buildandrun.appstore
 
-import app.tich.buildandrun.domain.ports.*
-import app.tich.buildandrun.domain.usecases.*
+import app.tich.buildandrun.application.ports.*
+import app.tich.buildandrun.application.usecases.*
 
 internal interface AppStoreGraph {
     val preferencesStore: PreferencesStore

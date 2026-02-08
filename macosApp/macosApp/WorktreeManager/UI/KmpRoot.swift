@@ -1,6 +1,7 @@
 import Combine
 import Foundation
 import Shared
+import SwiftUI
 
 @MainActor
 final class KmpRoot: ObservableObject {
@@ -31,8 +32,6 @@ final class KmpRoot: ObservableObject {
     }
 
     @Published private(set) var state: AppStore.State
-    @Published var child: Child = .workspace
-    @Published var sheet: Sheet? = nil
 
     let store: AppStore
 
@@ -56,15 +55,73 @@ final class KmpRoot: ObservableObject {
     }
 
     func presentSheet(_ sheet: Sheet) {
-        self.sheet = sheet
+        switch sheet {
+        case .addRepository:
+            store.onPresentSheet(kind: .addRepository, worktreePath: nil)
+        case .addWorktree:
+            store.onPresentSheet(kind: .addWorktree, worktreePath: nil)
+        case .createPR(let worktreePath):
+            store.onPresentSheet(kind: .createPr, worktreePath: worktreePath)
+        case .completeWorktree(let worktreePath):
+            store.onPresentSheet(kind: .completeWorktree, worktreePath: worktreePath)
+        case .configureEditors:
+            store.onPresentSheet(kind: .configureEditors, worktreePath: nil)
+        case .help:
+            store.onPresentSheet(kind: .help, worktreePath: nil)
+        }
     }
 
     func dismissSheet() {
-        sheet = nil
+        store.onDismissSheet()
     }
 
     func selectChild(_ child: Child) {
-        self.child = child
+        switch child {
+        case .workspace:
+            store.onSelectChild(child: .workspace)
+        case .settings:
+            store.onSelectChild(child: .settings)
+        case .help:
+            store.onSelectChild(child: .help)
+        }
+    }
+
+    var child: Child {
+        if state.activeChild === AppChild.workspace {
+            return .workspace
+        }
+        if state.activeChild === AppChild.settings {
+            return .settings
+        }
+        return .help
+    }
+
+    var sheet: Sheet? {
+        guard let activeSheet = state.activeSheet else {
+            return nil
+        }
+        if activeSheet.kind === AppSheetKind.addRepository {
+            return .addRepository
+        }
+        if activeSheet.kind === AppSheetKind.addWorktree {
+            return .addWorktree
+        }
+        if activeSheet.kind === AppSheetKind.configureEditors {
+            return .configureEditors
+        }
+        if activeSheet.kind === AppSheetKind.help {
+            return .help
+        }
+        if activeSheet.kind === AppSheetKind.createPr {
+            guard let worktreePath = activeSheet.worktreePath else {
+                return nil
+            }
+            return .createPR(worktreePath: worktreePath)
+        }
+        guard let worktreePath = activeSheet.worktreePath else {
+            return nil
+        }
+        return .completeWorktree(worktreePath: worktreePath)
     }
 
     var repositories: [AppStore.RepositoryItem] {

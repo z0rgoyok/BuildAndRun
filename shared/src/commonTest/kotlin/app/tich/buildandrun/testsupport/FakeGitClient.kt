@@ -1,11 +1,11 @@
 package app.tich.buildandrun.testsupport
 
+import app.tich.buildandrun.application.ports.GitClient
 import app.tich.buildandrun.domain.entities.PRState
 import app.tich.buildandrun.domain.entities.PRStatus
 import app.tich.buildandrun.domain.entities.Worktree
 import app.tich.buildandrun.domain.entities.WorktreeStatus
 import app.tich.buildandrun.domain.errors.GitError
-import app.tich.buildandrun.domain.ports.GitClient
 
 class FakeGitClient : GitClient {
     private val repositoryRootsByPath = mutableMapOf<String, String>()

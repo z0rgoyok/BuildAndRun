@@ -1,8 +1,8 @@
 package app.tich.buildandrun.macos
 
+import app.tich.buildandrun.application.ports.EditorOpening
 import app.tich.buildandrun.domain.entities.Editor
 import app.tich.buildandrun.domain.errors.AppError
-import app.tich.buildandrun.domain.ports.EditorOpening
 
 class MacOSEditorOpening : EditorOpening {
     override suspend fun open(

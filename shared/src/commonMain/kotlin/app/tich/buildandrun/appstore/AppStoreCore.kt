@@ -30,9 +30,12 @@ internal class AppStoreCore(
     internal var rememberEditorChoice: Boolean = graph.preferencesStore.rememberEditorChoice
     internal var enabledEditorIds: Set<String>? = graph.preferencesStore.enabledEditorIds
     internal val allEditors: List<Editor> = graph.editorOpening.allEditors()
+    internal val installedEditorIds: MutableSet<String> = mutableSetOf()
     internal var createWorktreeState = AppStore.CreateWorktreeState()
     internal var selectedRepositoryId: String? = null
     internal var selectedWorktreePath: String? = null
+    internal var activeChild: AppChild = AppChild.WORKSPACE
+    internal var activeSheet: AppSheetState? = null
     internal var error: AppStore.ErrorState? = null
     internal var success: AppStore.SuccessState? = null
 

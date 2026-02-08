@@ -38,6 +38,8 @@ internal fun AppStoreCore.publishState() {
             remoteBranches = buildRemoteBranchItems(),
             createWorktree = createWorktreeState,
             kanbanTasks = currentKanbanTasks(),
+            activeChild = activeChild,
+            activeSheet = activeSheet,
             error = error,
             success = success,
         )
@@ -94,7 +96,7 @@ internal fun AppStoreCore.buildEditorItems(): List<AppStore.EditorItem> =
             id = editor.id,
             name = editor.name,
             icon = editor.icon,
-            isInstalled = graph.editorOpening.isInstalled(editor = editor),
+            isInstalled = installedEditorIds.contains(editor.id),
             isEnabled = graph.preferencesStore.isEditorEnabled(editorId = editor.id),
         )
     }

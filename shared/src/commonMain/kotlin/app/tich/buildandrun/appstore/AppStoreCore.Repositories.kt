@@ -1,9 +1,9 @@
 package app.tich.buildandrun.appstore
 
-import app.tich.buildandrun.domain.usecases.AddRepositoryUseCase
-import app.tich.buildandrun.domain.usecases.RemoveRepositoryUseCase
-import app.tich.buildandrun.domain.usecases.SetRepositoryArchivedStateUseCase
-import app.tich.buildandrun.domain.usecases.UseCaseResult
+import app.tich.buildandrun.application.usecases.AddRepositoryUseCase
+import app.tich.buildandrun.application.usecases.RemoveRepositoryUseCase
+import app.tich.buildandrun.application.usecases.SetRepositoryArchivedStateUseCase
+import app.tich.buildandrun.application.usecases.UseCaseResult
 import app.tich.buildandrun.presentation.i18n.UiText
 import app.tich.buildandrun.resources.Res
 import app.tich.buildandrun.resources.screen_repositories_repository_added

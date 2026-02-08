@@ -1,11 +1,11 @@
 package app.tich.buildandrun.macos
 
+import app.tich.buildandrun.application.ports.*
+import app.tich.buildandrun.application.usecases.*
 import app.tich.buildandrun.appstore.AppStoreGraph
-import app.tich.buildandrun.domain.ports.*
-import app.tich.buildandrun.domain.usecases.*
 
 internal class MacOSAppGraph : AppStoreGraph {
-    override val preferencesStore: PreferencesStore = InMemoryPreferencesStore()
+    override val preferencesStore: PreferencesStore = MacOSPreferencesStore()
     override val gitClient: GitClient = MacOSGitClient()
     override val fileSystem: FileSystemHandling = MacOSFileSystemHandling()
     override val editorOpening: EditorOpening = MacOSEditorOpening()

@@ -1,7 +1,7 @@
 package app.tich.buildandrun.appstore
 
-import app.tich.buildandrun.domain.usecases.LoadBranchesUseCase
-import app.tich.buildandrun.domain.usecases.UseCaseResult
+import app.tich.buildandrun.application.usecases.LoadBranchesUseCase
+import app.tich.buildandrun.application.usecases.UseCaseResult
 import kotlinx.coroutines.launch
 
 internal fun AppStoreCore.onLoadBranches() {

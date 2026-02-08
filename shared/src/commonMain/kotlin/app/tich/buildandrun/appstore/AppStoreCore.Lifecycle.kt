@@ -1,6 +1,6 @@
 package app.tich.buildandrun.appstore
 
-import app.tich.buildandrun.domain.usecases.UseCaseResult
+import app.tich.buildandrun.application.usecases.UseCaseResult
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
@@ -26,6 +26,7 @@ internal fun AppStoreCore.loadInitial() {
                 error = mapFailureToErrorState(result.value)
             }
         }
+        refreshInstalledEditors()
         repositories.forEach { repository ->
             loadWorktreesForRepositoryInternal(path = repository.path)
         }
@@ -42,6 +43,15 @@ internal fun AppStoreCore.loadInitial() {
         persistSelection()
         isLoading = false
         publishState()
+    }
+}
+
+internal fun AppStoreCore.refreshInstalledEditors() {
+    installedEditorIds.clear()
+    allEditors.forEach { editor ->
+        if (graph.editorOpening.isInstalled(editor = editor)) {
+            installedEditorIds += editor.id
+        }
     }
 }
 
