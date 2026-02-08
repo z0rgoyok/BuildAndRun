@@ -66,6 +66,22 @@
     <string name="branch_conflict_recreate">Перестворити гілку</string>
     <string name="branch_conflict_recreate_detail">Видалити існуючу гілку і створити заново</string>
 
+    <string name="loading_initial">Завантаження\u2026</string>
+    <string name="loading_refreshing">Оновлення\u2026</string>
+    <string name="loading_branches">Завантаження гілок\u2026</string>
+    <string name="loading_adding_repository">Додавання\u2026</string>
+    <string name="loading_removing_repository">Видалення\u2026</string>
+    <string name="loading_archiving">Архівація\u2026</string>
+    <string name="loading_restoring">Відновлення\u2026</string>
+    <string name="loading_pushing">Відправка\u2026</string>
+    <string name="loading_pulling">Отримання\u2026</string>
+    <string name="loading_creating_pr">Створення PR\u2026</string>
+    <string name="loading_locking">Блокування\u2026</string>
+    <string name="loading_unlocking">Розблокування\u2026</string>
+    <string name="loading_removing_worktree">Видалення\u2026</string>
+    <string name="loading_completing">Завершення\u2026</string>
+    <string name="loading_pruning">Очищення\u2026</string>
+
     <string name="toolbar_new_worktree">Новий worktree (⌘N)</string>
     <string name="toolbar_finder">Відкрити у Finder (⇧⌘F)</string>
     <string name="toolbar_terminal">Відкрити у Терміналі (⇧⌘T)</string>

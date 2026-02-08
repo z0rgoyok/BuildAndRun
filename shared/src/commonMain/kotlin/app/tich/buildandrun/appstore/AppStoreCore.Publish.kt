@@ -22,7 +22,8 @@ internal fun AppStoreCore.publishState() {
 
     mutableState.value =
         AppStore.State(
-            isLoading = isLoading,
+            isLoading = activityCenter.isGlobalActive,
+            loadingMessage = activityCenter.currentGlobalMessage,
             repositories = buildRepositoryItems(),
             selectedRepositoryId = selectedRepositoryId,
             selectedWorktreePath = selectedWorktreePath,
@@ -68,7 +69,7 @@ internal fun AppStoreCore.buildRepositoryItems(): List<AppStore.RepositoryItem> 
                             isLocked = it.isLocked,
                             isPrunable = it.isPrunable,
                             status = worktreeStatusByPath[it.path],
-                            isStatusLoading = worktreeStatusLoadingPaths.contains(it.path),
+                            isStatusLoading = worktreeStatusLoadingPaths.contains(it.path) || activityCenter.isWorktreeActive(it.path),
                         )
                     },
         )

@@ -66,6 +66,22 @@
     <string name="branch_conflict_recreate">Recreate branch</string>
     <string name="branch_conflict_recreate_detail">Delete existing branch and create fresh from base</string>
 
+    <string name="loading_initial">Loading\u2026</string>
+    <string name="loading_refreshing">Refreshing\u2026</string>
+    <string name="loading_branches">Loading branches\u2026</string>
+    <string name="loading_adding_repository">Adding\u2026</string>
+    <string name="loading_removing_repository">Removing\u2026</string>
+    <string name="loading_archiving">Archiving\u2026</string>
+    <string name="loading_restoring">Restoring\u2026</string>
+    <string name="loading_pushing">Pushing\u2026</string>
+    <string name="loading_pulling">Pulling\u2026</string>
+    <string name="loading_creating_pr">Creating PR\u2026</string>
+    <string name="loading_locking">Locking\u2026</string>
+    <string name="loading_unlocking">Unlocking\u2026</string>
+    <string name="loading_removing_worktree">Removing\u2026</string>
+    <string name="loading_completing">Completing\u2026</string>
+    <string name="loading_pruning">Pruning\u2026</string>
+
     <string name="toolbar_new_worktree">New Worktree (⌘N)</string>
     <string name="toolbar_finder">Open in Finder (⇧⌘F)</string>
     <string name="toolbar_terminal">Open in Terminal (⇧⌘T)</string>

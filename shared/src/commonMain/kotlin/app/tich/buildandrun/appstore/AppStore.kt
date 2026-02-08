@@ -263,6 +263,7 @@ class AppStore internal constructor(
 
     data class State(
         val isLoading: Boolean = false,
+        val loadingMessage: String? = null,
         val repositories: List<RepositoryItem> = emptyList(),
         val selectedRepositoryId: String? = null,
         val selectedWorktreePath: String? = null,

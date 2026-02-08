@@ -5,6 +5,7 @@ import app.tich.buildandrun.application.usecases.UseCaseResult
 import app.tich.buildandrun.domain.failures.DomainFailureMapper
 import app.tich.buildandrun.presentation.i18n.UiText
 import app.tich.buildandrun.resources.Res
+import app.tich.buildandrun.resources.loading_refreshing
 import app.tich.buildandrun.resources.screen_create_worktree_success
 import kotlinx.coroutines.launch
 
@@ -66,7 +67,7 @@ internal fun AppStoreCore.onCreateWorktreeCreateBranchChanged(value: Boolean) {
 }
 
 internal fun AppStoreCore.onCreateWorktree() {
-    if (createWorktreeState.isSubmitting || isLoading) {
+    if (createWorktreeState.isSubmitting || activityCenter.isGlobalActive) {
         return
     }
     val repositoryPath = selectedRepository()?.path ?: return
@@ -147,11 +148,9 @@ internal fun AppStoreCore.onCreateWorktree() {
 
 internal fun AppStoreCore.loadWorktreesForRepository(path: String) {
     scope.launch {
-        isLoading = true
-        publishState()
-        loadWorktreesForRepositoryInternal(path = path)
-        isLoading = false
-        publishState()
+        withGlobalLoading(Res.string.loading_refreshing) {
+            loadWorktreesForRepositoryInternal(path = path)
+        }
     }
 }
 

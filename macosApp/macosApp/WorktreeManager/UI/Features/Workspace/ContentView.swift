@@ -11,6 +11,7 @@ struct ContentView: View {
             .frame(minWidth: 900, minHeight: 550)
             .navigationTitle(navigationTitle)
             .toolbar { toolbarContent }
+            .animation(DS.Animation.quick, value: root.state.loadingMessage)
             .sheet(item: sheetBinding) { sheet in
                 SheetContent(sheet: sheet)
                     .environmentObject(root)
@@ -103,15 +104,16 @@ struct ContentView: View {
         }
 
         ToolbarItem(placement: .status) {
-            if root.state.isLoading {
+            if let message = root.state.loadingMessage {
                 HStack(spacing: 6) {
                     ProgressView()
                         .controlSize(.small)
-                    Text("Loading…")
+                    Text(message)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
+                .transition(.opacity)
             }
         }
     }

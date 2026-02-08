@@ -29,3 +29,6 @@ DerivedData/
 *.ipa
 *.dSYM.zip
 *.dSYM
+
+# Compiled AppleScript launcher
+Build & Run.app/

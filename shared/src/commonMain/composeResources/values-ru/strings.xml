@@ -66,6 +66,22 @@
     <string name="branch_conflict_recreate">Пересоздать ветку</string>
     <string name="branch_conflict_recreate_detail">Удалить существующую ветку и создать заново</string>
 
+    <string name="loading_initial">Загрузка\u2026</string>
+    <string name="loading_refreshing">Обновление\u2026</string>
+    <string name="loading_branches">Загрузка веток\u2026</string>
+    <string name="loading_adding_repository">Добавление\u2026</string>
+    <string name="loading_removing_repository">Удаление\u2026</string>
+    <string name="loading_archiving">Архивация\u2026</string>
+    <string name="loading_restoring">Восстановление\u2026</string>
+    <string name="loading_pushing">Отправка\u2026</string>
+    <string name="loading_pulling">Получение\u2026</string>
+    <string name="loading_creating_pr">Создание PR\u2026</string>
+    <string name="loading_locking">Блокировка\u2026</string>
+    <string name="loading_unlocking">Разблокировка\u2026</string>
+    <string name="loading_removing_worktree">Удаление\u2026</string>
+    <string name="loading_completing">Завершение\u2026</string>
+    <string name="loading_pruning">Очистка\u2026</string>
+
     <string name="toolbar_new_worktree">Новый worktree (⌘N)</string>
     <string name="toolbar_finder">Открыть в Finder (⇧⌘F)</string>
     <string name="toolbar_terminal">Открыть в Терминале (⇧⌘T)</string>

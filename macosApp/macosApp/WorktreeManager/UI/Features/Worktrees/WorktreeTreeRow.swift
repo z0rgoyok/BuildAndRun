@@ -53,6 +53,7 @@ struct WorktreeTreeRow: View {
                     if worktree.isStatusLoading {
                         ProgressView()
                             .controlSize(.mini)
+                            .transition(.opacity)
                     } else if let status = worktree.status {
                         WorktreeStatusIndicators(status: status)
                     }
@@ -85,6 +86,7 @@ struct WorktreeTreeRow: View {
             .allowsHitTesting(true)
             .accessibilityHidden(true)
         }
+        .animation(DS.Animation.quick, value: worktree.isStatusLoading)
         .contextMenu {
             WorktreeMenuItems(root: root, worktreePath: worktree.path, includeNewWorktree: false)
         }

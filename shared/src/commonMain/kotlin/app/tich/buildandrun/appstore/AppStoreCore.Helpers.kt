@@ -6,6 +6,7 @@ import app.tich.buildandrun.domain.entities.Repository
 import app.tich.buildandrun.domain.entities.Worktree
 import app.tich.buildandrun.presentation.i18n.UiText
 import app.tich.buildandrun.presentation.i18n.UiTextLocalizer
+import org.jetbrains.compose.resources.StringResource
 
 internal fun suggestWorktreePath(
     repositoryPath: String,
@@ -115,3 +116,34 @@ internal fun createDefaultTasks(worktreePath: String?): MutableList<KanbanTask> 
 }
 
 internal fun resolveText(text: UiText): String = UiTextLocalizer.resolve(text = text)
+
+internal suspend fun <T> AppStoreCore.withGlobalLoading(
+    resource: StringResource,
+    block: suspend () -> T,
+): T {
+    val tokenId = activityCenter.beginGlobal(resolveText(UiText(resource)))
+    clearMessages()
+    publishState()
+    try {
+        return block()
+    } finally {
+        activityCenter.end(tokenId)
+        publishState()
+    }
+}
+
+internal suspend fun <T> AppStoreCore.withWorktreeLoading(
+    worktreePath: String,
+    resource: StringResource,
+    block: suspend () -> T,
+): T {
+    val tokenId = activityCenter.beginWorktree(worktreePath, resolveText(UiText(resource)))
+    clearMessages()
+    publishState()
+    try {
+        return block()
+    } finally {
+        activityCenter.end(tokenId)
+        publishState()
+    }
+}

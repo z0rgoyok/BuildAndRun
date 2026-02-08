@@ -22,7 +22,7 @@ internal class AppStoreCore(
     internal val hasRemoteBranchByWorktreePath = mutableMapOf<String, Boolean>()
     internal val tasksByScope = mutableMapOf<String, MutableList<KanbanTask>>()
 
-    internal var isLoading: Boolean = false
+    internal val activityCenter = ActivityCenter()
     internal var addRepositoryPathInput: String = ""
     internal var branches: List<String> = emptyList()
     internal var worktreeBasePath: String = graph.preferencesStore.worktreeBasePath
