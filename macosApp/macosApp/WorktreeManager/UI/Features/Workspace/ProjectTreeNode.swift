@@ -108,7 +108,7 @@ struct ProjectTreeNode: View {
             }
         }
         .contextMenu {
-            Button("Show in Finder") {
+            Button(root.store.sidebarLabels.showInFinder) {
                 NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: repository.path)
             }
 
@@ -116,13 +116,13 @@ struct ProjectTreeNode: View {
                 NSPasteboard.general.clearContents()
                 NSPasteboard.general.setString(repository.path, forType: .string)
             } label: {
-                Label("Copy Path", systemImage: "doc.on.doc")
+                Label(root.store.sidebarLabels.copyPath, systemImage: "doc.on.doc")
             }
 
             Button {
                 onCopySettings()
             } label: {
-                Label("Copy Files Settings...", systemImage: "doc.on.doc")
+                Label(root.store.sidebarLabels.copyFilesSettings, systemImage: "doc.on.doc")
             }
 
             Divider()
@@ -131,19 +131,19 @@ struct ProjectTreeNode: View {
                 Button {
                     root.store.onRestoreRepository(repositoryId: repository.id)
                 } label: {
-                    Label("Restore Project", systemImage: "arrow.uturn.left")
+                    Label(root.store.sidebarLabels.restoreProject, systemImage: "arrow.uturn.left")
                 }
             } else {
                 Button {
                     root.store.onArchiveRepository(repositoryId: repository.id)
                 } label: {
-                    Label("Archive Project", systemImage: "archivebox")
+                    Label(root.store.sidebarLabels.archiveProject, systemImage: "archivebox")
                 }
             }
 
             Divider()
 
-            Button("Remove from List", role: .destructive) {
+            Button(root.store.sidebarLabels.removeFromList, role: .destructive) {
                 root.store.onRemoveRepository(repositoryId: repository.id)
             }
         }

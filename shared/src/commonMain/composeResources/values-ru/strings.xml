@@ -29,4 +29,13 @@
     <string name="git_worktree_already_exists">Worktree уже существует: %1$s.</string>
     <string name="git_worktree_has_uncommitted_changes">В worktree есть незакоммиченные изменения: %1$s.</string>
     <string name="git_worktree_not_found">Worktree не найден: %1$s.</string>
+
+    <string name="sidebar_archived">Архив</string>
+    <string name="sidebar_add_repository">Добавить репозиторий</string>
+    <string name="action_show_in_finder">Показать в Finder</string>
+    <string name="action_copy_path">Копировать путь</string>
+    <string name="action_copy_files_settings">Настройки копирования\u2026</string>
+    <string name="action_restore_project">Восстановить проект</string>
+    <string name="action_archive_project">Архивировать проект</string>
+    <string name="action_remove_from_list">Удалить из списка</string>
 </resources>

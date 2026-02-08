@@ -43,7 +43,7 @@ struct ProjectTreeSidebar: View {
                 Button {
                     root.presentSheet(.addRepository)
                 } label: {
-                    Label("Add Repository", systemImage: "plus")
+                    Label(root.store.sidebarLabels.addRepository, systemImage: "plus")
                 }
             }
         }
@@ -84,7 +84,7 @@ struct ProjectTreeSidebar: View {
                     .foregroundStyle(DS.Colors.textTertiary)
                     .frame(width: DS.Sizes.treeIconSize)
 
-                Text("Archived")
+                Text(root.store.sidebarLabels.archived)
                     .font(DS.Typography.sectionHeader)
                     .foregroundStyle(DS.Colors.textSecondary)
 

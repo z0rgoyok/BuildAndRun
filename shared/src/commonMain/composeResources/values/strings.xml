@@ -29,4 +29,13 @@
     <string name="git_worktree_already_exists">Worktree already exists: %1$s.</string>
     <string name="git_worktree_has_uncommitted_changes">Worktree has uncommitted changes: %1$s.</string>
     <string name="git_worktree_not_found">Worktree not found: %1$s.</string>
+
+    <string name="sidebar_archived">Archived</string>
+    <string name="sidebar_add_repository">Add Repository</string>
+    <string name="action_show_in_finder">Show in Finder</string>
+    <string name="action_copy_path">Copy Path</string>
+    <string name="action_copy_files_settings">Copy Files Settings\u2026</string>
+    <string name="action_restore_project">Restore Project</string>
+    <string name="action_archive_project">Archive Project</string>
+    <string name="action_remove_from_list">Remove from List</string>
 </resources>

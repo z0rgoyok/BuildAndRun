@@ -14,6 +14,8 @@ class AppStore internal constructor(
 
     val state: Value<State> = core.state
 
+    val sidebarLabels = buildSidebarLabels()
+
     fun onAddRepositoryPathChanged(value: String) {
         core.onAddRepositoryPathChanged(value = value)
     }
