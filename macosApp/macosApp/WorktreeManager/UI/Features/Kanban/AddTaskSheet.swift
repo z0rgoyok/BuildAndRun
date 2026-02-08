@@ -1,7 +1,8 @@
+import Shared
 import SwiftUI
 
 struct AddTaskSheet: View {
-    let column: KanbanColumnType
+    let columnId: KanbanColumnType
     let onAdd: (String, String?) -> Void
 
     @Environment(\.dismiss) private var dismiss
@@ -12,9 +13,9 @@ struct AddTaskSheet: View {
     var body: some View {
         VStack(spacing: DS.Spacing.lg) {
             HStack {
-                Image(systemName: column.icon)
+                Image(systemName: iconName)
                     .foregroundStyle(columnColor)
-                Text("New Task in \(column.rawValue)")
+                Text("New Task in \(columnTitle)")
                     .font(.headline)
             }
 
@@ -62,13 +63,27 @@ struct AddTaskSheet: View {
         }
     }
 
+    private var iconName: String {
+        columnId.icon
+    }
+
+    private var columnTitle: String {
+        columnId.displayName
+    }
+
     private var columnColor: Color {
-        switch column {
-        case .todo: return DS.Colors.statusTodo
-        case .inProgress: return DS.Colors.statusInProgress
-        case .review: return DS.Colors.statusReview
-        case .done: return DS.Colors.statusDone
+        if columnId === KanbanColumnType.todo {
+            return DS.Colors.statusTodo
         }
+        if columnId === KanbanColumnType.inProgress {
+            return DS.Colors.statusInProgress
+        }
+        if columnId === KanbanColumnType.review {
+            return DS.Colors.statusReview
+        }
+        if columnId === KanbanColumnType.done {
+            return DS.Colors.statusDone
+        }
+        return DS.Colors.statusTodo
     }
 }
-

@@ -3,41 +3,36 @@ import SwiftUI
 // MARK: - Worktree Commands
 
 struct WorktreeCommands: Commands {
-    @ObservedObject var root: RootComponent
-
-    private var workspace: WorkspaceComponent {
-        root.workspace
-    }
+    @ObservedObject var root: KmpRoot
 
     var body: some Commands {
         CommandMenu("Worktree") {
-            WorktreeMenuItems(root: root, workspace: workspace, worktree: workspace.state.selectedWorktree, includeNewWorktree: true)
+            WorktreeMenuItems(root: root, worktreePath: root.state.selectedWorktreePath, includeNewWorktree: true)
         }
 
         CommandMenu("Repository") {
             Section {
                 Button("Add Repository...") {
-                    root.send(.presentSheet(.addRepository))
+                    root.presentSheet(.addRepository)
                 }
                 .keyboardShortcut("o", modifiers: [.command, .shift])
 
                 Button("Show in Finder") {
-                    if let repo = workspace.state.selectedRepository {
-                        NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: repo.path)
-                    }
+                    guard let repo = root.selectedRepository else { return }
+                    NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: repo.path)
                 }
-                .disabled(workspace.state.selectedRepository == nil)
+                .disabled(root.selectedRepository == nil)
             }
 
             Section {
-                if let repo = workspace.state.selectedRepository {
+                if let repo = root.selectedRepository {
                     if repo.isArchived {
                         Button("Restore Project") {
-                            Task { await workspace.restoreRepository(repo) }
+                            root.store.onRestoreRepository(repositoryId: repo.id)
                         }
                     } else {
                         Button("Archive Project") {
-                            Task { await workspace.archiveRepository(repo) }
+                            root.store.onArchiveRepository(repositoryId: repo.id)
                         }
                     }
                 } else {
@@ -48,10 +43,10 @@ struct WorktreeCommands: Commands {
 
             Section {
                 Button("Refresh All") {
-                    workspace.send(.refresh, root: root)
+                    root.store.onRefreshSelectedRepository()
                 }
                 .keyboardShortcut("r", modifiers: [.command, .shift])
-                .disabled(workspace.state.selectedRepository == nil)
+                .disabled(root.selectedRepository == nil)
             }
         }
     }

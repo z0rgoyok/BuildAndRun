@@ -1,3 +1,4 @@
+import Shared
 import SwiftUI
 
 struct WorktreeStatusRow: View {

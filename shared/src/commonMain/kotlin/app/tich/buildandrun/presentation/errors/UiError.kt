@@ -1,9 +1,10 @@
 package app.tich.buildandrun.presentation.errors
 
+import app.tich.buildandrun.domain.failures.DomainFailureCode
 import app.tich.buildandrun.presentation.i18n.UiText
 
 data class UiError(
-    val code: String,
+    val code: DomainFailureCode,
     val kind: UiErrorKind,
     val message: UiText,
     val details: UiText?,

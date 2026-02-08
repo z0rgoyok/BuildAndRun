@@ -1,39 +1,29 @@
+import Shared
 import SwiftUI
 
 struct ColumnDropDelegate: DropDelegate {
-    let column: KanbanColumnType
-    @Binding var draggedTask: KanbanTask?
+    let columnId: KanbanColumnType
+    @Binding var draggedTaskId: String?
     @Binding var isTargeted: Bool
-    @Binding var dropIndex: Int?
-    let tasksCount: Int
-    let onMove: (KanbanTask, KanbanColumnType) -> Void
+    let onMove: (String, KanbanColumnType) -> Void
 
     func dropEntered(info: DropInfo) {
         withAnimation(DS.Animation.quick) {
             isTargeted = true
-            if dropIndex == nil {
-                dropIndex = tasksCount
-            }
         }
     }
 
     func dropExited(info: DropInfo) {
         withAnimation(DS.Animation.quick) {
             isTargeted = false
-            dropIndex = nil
         }
     }
 
     func performDrop(info: DropInfo) -> Bool {
-        guard let dragged = draggedTask else { return false }
-
-        if dragged.columnId != column {
-            onMove(dragged, column)
-        }
-
-        draggedTask = nil
+        guard let draggedTaskId else { return false }
+        onMove(draggedTaskId, columnId)
+        self.draggedTaskId = nil
         isTargeted = false
-        dropIndex = nil
         return true
     }
 
@@ -41,4 +31,3 @@ struct ColumnDropDelegate: DropDelegate {
         DropProposal(operation: .move)
     }
 }
-

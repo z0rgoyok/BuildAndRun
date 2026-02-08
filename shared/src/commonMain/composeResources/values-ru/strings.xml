@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="error_details">Детали: %1$s</string>
+    <string name="screen_create_worktree_success">Создано: %1$s</string>
+    <string name="screen_repositories_repository_added">Репозиторий добавлен: %1$s</string>
+
+    <string name="app_cannot_remove_main_worktree">Нельзя удалить основной worktree.</string>
+    <string name="app_invalid_url">Некорректный URL: %1$s.</string>
+    <string name="app_no_editor_configured">Редактор не настроен.</string>
+    <string name="app_repository_already_added">Репозиторий уже добавлен: %1$s.</string>
+    <string name="app_repository_not_found">Репозиторий не найден: %1$s.</string>
+    <string name="app_unexpected">Неожиданная ошибка.</string>
+    <string name="app_unknown">Неожиданная ошибка.</string>
+    <string name="app_validation">Некорректный ввод: %1$s.</string>
+    <string name="app_validation_branch_blank">Укажите имя ветки.</string>
+    <string name="app_validation_repository_id_blank">Укажите id репозитория.</string>
+    <string name="app_validation_repository_path_blank">Укажите путь к репозиторию.</string>
+    <string name="app_validation_task_title_blank">Укажите название задачи.</string>
+    <string name="app_validation_worktree_path_blank">Укажите путь к worktree.</string>
+
+    <string name="git_branch_already_exists">Ветка уже существует: %1$s.</string>
+    <string name="git_branch_not_found">Ветка не найдена: %1$s.</string>
+    <string name="git_cannot_remove_main_worktree">Нельзя удалить основной worktree.</string>
+    <string name="git_command_failed">Ошибка выполнения команды git.</string>
+    <string name="git_invalid_path">Некорректный путь: %1$s.</string>
+    <string name="git_merge_conflict">Конфликт merge: нельзя влить '%1$s' в '%2$s'.</string>
+    <string name="git_not_a_repository">Путь не является git-репозиторием: %1$s.</string>
+    <string name="git_pr_creation_failed">Не удалось создать pull request.</string>
+    <string name="git_worktree_already_exists">Worktree уже существует: %1$s.</string>
+    <string name="git_worktree_has_uncommitted_changes">В worktree есть незакоммиченные изменения: %1$s.</string>
+    <string name="git_worktree_not_found">Worktree не найден: %1$s.</string>
+</resources>

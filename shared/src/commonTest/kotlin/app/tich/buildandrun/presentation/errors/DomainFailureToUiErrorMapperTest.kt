@@ -1,11 +1,12 @@
 package app.tich.buildandrun.presentation.errors
 
 import app.tich.buildandrun.domain.failures.DomainFailure
-import app.tich.buildandrun.presentation.i18n.UiText
+import app.tich.buildandrun.domain.failures.DomainFailureCode
+import app.tich.buildandrun.resources.Res
+import app.tich.buildandrun.resources.git_worktree_already_exists
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
-import kotlin.test.assertTrue
 
 class DomainFailureToUiErrorMapperTest {
     private val mapper = DomainFailureToUiErrorMapper()
@@ -16,8 +17,8 @@ class DomainFailureToUiErrorMapperTest {
             mapper.map(
                 failure =
                     DomainFailure.Conflict(
-                        code = "git.worktree_already_exists",
-                        payload = mapOf("name" to "feature/test"),
+                        code = DomainFailureCode.GIT_WORKTREE_ALREADY_EXISTS,
+                        args = listOf("feature/test"),
                         isRetryable = false,
                     ),
             )
@@ -25,8 +26,7 @@ class DomainFailureToUiErrorMapperTest {
         val resolvedError = requireNotNull(uiError)
         assertEquals(UiErrorKind.Conflict, resolvedError.kind)
         val text = resolvedError.message
-        assertTrue(text is UiText.Key)
-        assertEquals("git.worktree_already_exists", text.key)
+        assertEquals(Res.string.git_worktree_already_exists, text.resource)
         assertEquals(listOf("feature/test"), text.args)
     }
 

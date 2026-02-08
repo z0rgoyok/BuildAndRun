@@ -1,5 +1,6 @@
 package app.tich.buildandrun.domain.usecases
 
+import app.tich.buildandrun.domain.failures.DomainFailureCode
 import app.tich.buildandrun.testsupport.FakeGitClient
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
@@ -51,6 +52,6 @@ class CreateWorktreeUseCaseTest {
 
             assertTrue(result is UseCaseResult.Failure)
             val failure = result
-            assertEquals("app.validation.branch_blank", failure.value.code)
+            assertEquals(DomainFailureCode.APP_VALIDATION_BRANCH_BLANK, failure.value.code)
         }
 }

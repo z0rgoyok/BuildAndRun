@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct AddRepositorySheet: View {
-    @EnvironmentObject var workspace: WorkspaceComponent
+    @EnvironmentObject var root: KmpRoot
     @Environment(\.dismiss) var dismiss
     @State private var path = ""
 
@@ -28,7 +28,8 @@ struct AddRepositorySheet: View {
                 Spacer()
 
                 Button("Add") {
-                    Task { await workspace.addRepository(at: path) }
+                    root.store.onAddRepositoryPathChanged(value: path)
+                    root.store.onAddRepository()
                     dismiss()
                 }
                 .keyboardShortcut(.defaultAction)

@@ -1,30 +1,29 @@
+import Shared
 import SwiftUI
 
 struct WorktreeMenuItems: View {
-    @ObservedObject var root: RootComponent
-    @ObservedObject var workspace: WorkspaceComponent
-    let worktree: Worktree?
+    @ObservedObject var root: KmpRoot
+    let worktreePath: String?
     let includeNewWorktree: Bool
 
-    init(root: RootComponent, workspace: WorkspaceComponent, worktree: Worktree?, includeNewWorktree: Bool) {
+    init(root: KmpRoot, worktreePath: String?, includeNewWorktree: Bool) {
         self.root = root
-        self.workspace = workspace
-        self.worktree = worktree
+        self.worktreePath = worktreePath
         self.includeNewWorktree = includeNewWorktree
     }
 
     var body: some View {
         Group {
-            if let worktree {
-                WorktreeBoundMenuItems(root: root, workspace: workspace, worktree: worktree)
+            if let worktree = root.selectedWorktree, worktreePath == worktree.path {
+                WorktreeBoundMenuItems(root: root, worktree: worktree)
 
                 if includeNewWorktree {
                     Divider()
                     Button("New Worktree...") {
-                        root.send(.presentSheet(.addWorktree))
+                        root.presentSheet(.addWorktree)
                     }
                     .keyboardShortcut("n", modifiers: .command)
-                    .disabled(workspace.state.selectedRepository == nil)
+                    .disabled(root.selectedRepository == nil)
                 }
             } else {
                 WorktreeUnboundMenuItems()
@@ -76,66 +75,27 @@ struct WorktreeMenuItems: View {
     }
 
     private struct WorktreeBoundMenuItems: View {
-        @ObservedObject var root: RootComponent
-        @ObservedObject var workspace: WorkspaceComponent
-        let worktree: Worktree
-        @ObservedObject var statusCell: WorktreeStatusCell
-
-        init(root: RootComponent, workspace: WorkspaceComponent, worktree: Worktree) {
-            self.root = root
-            self.workspace = workspace
-            self.worktree = worktree
-            self.statusCell = workspace.statusCell(for: worktree.path)
-        }
-
-        private var selectedEditorId: String {
-            workspace.preferredEditor()?.id ?? ""
-        }
+        @ObservedObject var root: KmpRoot
+        let worktree: MacOSAppStore.WorktreeItem
 
         var body: some View {
             Section {
-                Button("Open in Editor") {
-                    workspace.smartOpenInEditor(worktree)
-                }
+                Button("Open in Editor") {}
                 .keyboardShortcut("o", modifiers: .command)
+                .disabled(true)
 
-                Menu("Open in...") {
-                    Picker("", selection: Binding(
-                        get: { selectedEditorId },
-                        set: { newId in
-                            if let editor = workspace.configuredEditors().first(where: { $0.id == newId }) {
-                                workspace.openInEditorAndRemember(worktree, editor: editor)
-                            }
-                        }
-                    )) {
-                        ForEach(workspace.configuredEditors()) { editor in
-                            Text(editor.name).tag(editor.id)
-                        }
-                    }
-                    .pickerStyle(.inline)
-                    .labelsHidden()
-
-                    Divider()
-                    Button(workspace.rememberEditorChoice ? "Forget Editor Choice" : "Remember Editor Choice") {
-                        workspace.rememberEditorChoice.toggle()
-                        if !workspace.rememberEditorChoice {
-                            workspace.clearPreferredEditor()
-                        }
-                    }
-                    Button("Configure Editors...") {
-                        root.send(.presentSheet(.configureEditors))
-                    }
-                }
+                Menu("Open in...") {}
+                    .disabled(true)
             }
 
             Section {
                 Button("Show in Finder") {
-                    workspace.openInFinder(worktree)
+                    NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: worktree.path)
                 }
                 .keyboardShortcut("f", modifiers: [.command, .shift])
 
                 Button("Open in Terminal") {
-                    workspace.openInTerminal(worktree)
+                    NSWorkspace.shared.open(URL(fileURLWithPath: worktree.path))
                 }
                 .keyboardShortcut("t", modifiers: [.command, .shift])
 
@@ -148,55 +108,42 @@ struct WorktreeMenuItems: View {
 
             if !worktree.isMain {
                 Section {
-                    Button("Push") {
-                        Task { await workspace.push(worktree) }
-                    }
+                    Button("Push") {}
                     .keyboardShortcut("p", modifiers: [.command, .shift])
+                    .disabled(true)
 
-                    Button("Pull") {
-                        Task { await workspace.pull(worktree) }
-                    }
+                    Button("Pull") {}
                     .keyboardShortcut("p", modifiers: [.command, .option])
+                    .disabled(true)
                 }
 
                 Section {
-                    if let pr = statusCell.value?.prStatus {
-                        Button(pr.isMerged ? "View Merged PR" : "View PR #\(pr.number)") {
-                            workspace.openPR(worktree)
-                        }
-                    } else {
-                        Button("Create Pull Request...") {
-                            workspace.selectWorktree(worktree)
-                            root.send(.presentSheet(.createPR(worktreePath: worktree.path)))
-                        }
-                    }
+                    Button("Create Pull Request...") {}
+                        .disabled(true)
                 }
 
                 Section {
                     if worktree.isLocked {
-                        Button("Unlock") {
-                            Task { await workspace.unlockWorktree(worktree) }
-                        }
+                        Button("Unlock") {}
+                            .disabled(true)
                     } else {
-                        Button("Lock") {
-                            Task { await workspace.lockWorktree(worktree) }
-                        }
+                        Button("Lock") {}
+                            .disabled(true)
                     }
                 }
 
                 Section {
                     Button("Finish Worktree...") {
-                        workspace.selectWorktree(worktree)
-                        root.send(.presentSheet(.completeWorktree(worktreePath: worktree.path)))
+                        root.presentSheet(.completeWorktree(worktreePath: worktree.path))
                     }
+                    .disabled(true)
                 }
             }
 
             Section {
-                Button("Refresh Status") {
-                    Task { await workspace.refreshWorktreeStatus(worktree) }
-                }
+                Button("Refresh Status") {}
                 .keyboardShortcut("r", modifiers: .command)
+                .disabled(true)
             }
         }
     }

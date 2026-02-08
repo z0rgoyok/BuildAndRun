@@ -2,6 +2,7 @@ package app.tich.buildandrun.domain.usecases
 
 import app.tich.buildandrun.domain.entities.Worktree
 import app.tich.buildandrun.domain.failures.DomainFailure
+import app.tich.buildandrun.domain.failures.DomainFailureCode
 import app.tich.buildandrun.domain.failures.DomainFailureMapper
 import app.tich.buildandrun.domain.ports.GitClient
 
@@ -16,9 +17,8 @@ class CreateWorktreeUseCase(
         if (repositoryPath.isBlank()) {
             return UseCaseResult.Failure(
                 DomainFailure.Validation(
-                    code = "app.validation.repository_path_blank",
-                    reason = "repository_path_blank",
-                    payload = mapOf("reason" to "repository_path_blank"),
+                    code = DomainFailureCode.APP_VALIDATION_REPOSITORY_PATH_BLANK,
+                    args = emptyList(),
                 ),
             )
         }
@@ -26,9 +26,8 @@ class CreateWorktreeUseCase(
         if (branch.isBlank()) {
             return UseCaseResult.Failure(
                 DomainFailure.Validation(
-                    code = "app.validation.branch_blank",
-                    reason = "branch_blank",
-                    payload = mapOf("reason" to "branch_blank"),
+                    code = DomainFailureCode.APP_VALIDATION_BRANCH_BLANK,
+                    args = emptyList(),
                 ),
             )
         }
@@ -36,20 +35,20 @@ class CreateWorktreeUseCase(
         if (worktreePath.isBlank()) {
             return UseCaseResult.Failure(
                 DomainFailure.Validation(
-                    code = "app.validation.worktree_path_blank",
-                    reason = "worktree_path_blank",
-                    payload = mapOf("reason" to "worktree_path_blank"),
+                    code = DomainFailureCode.APP_VALIDATION_WORKTREE_PATH_BLANK,
+                    args = emptyList(),
                 ),
             )
         }
 
-        return try {
+        return runCatching {
+            val normalizedBaseBranch = input.baseBranch?.trim()?.ifBlank { null }
             gitClient.createWorktree(
                 atRepoPath = repositoryPath,
                 worktreePath = worktreePath,
                 branch = branch,
                 createBranch = input.createBranch,
-                baseBranch = input.baseBranch?.trim()?.ifBlank { null },
+                baseBranch = normalizedBaseBranch,
             )
             val worktrees = gitClient.listWorktrees(atRepoPath = repositoryPath)
             val createdWorktree =
@@ -61,7 +60,7 @@ class CreateWorktreeUseCase(
                         commitHash = null,
                         isLocked = false,
                         isPrunable = false,
-                        baseBranch = input.baseBranch?.trim()?.ifBlank { null },
+                        baseBranch = normalizedBaseBranch,
                     )
 
             UseCaseResult.Success(
@@ -71,9 +70,12 @@ class CreateWorktreeUseCase(
                         allWorktrees = worktrees,
                     ),
             )
-        } catch (throwable: Throwable) {
-            UseCaseResult.Failure(value = DomainFailureMapper.fromThrowable(throwable))
-        }
+        }.fold(
+            onSuccess = { it },
+            onFailure = { throwable ->
+                UseCaseResult.Failure(value = DomainFailureMapper.fromThrowable(throwable))
+            },
+        )
     }
 
     data class Input(

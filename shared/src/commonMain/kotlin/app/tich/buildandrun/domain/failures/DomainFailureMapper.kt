@@ -8,121 +8,111 @@ object DomainFailureMapper {
         when (throwable) {
             is AppError.Validation ->
                 DomainFailure.Validation(
-                    code = "app.validation",
-                    reason = throwable.reason,
-                    payload = mapOf("reason" to throwable.reason),
+                    code = DomainFailureCode.APP_VALIDATION,
+                    args = listOf(throwable.reason),
                 )
             AppError.RepositoryAlreadyAdded ->
                 DomainFailure.Conflict(
-                    code = "app.repository_already_added",
-                    payload = emptyMap(),
+                    code = DomainFailureCode.APP_REPOSITORY_ALREADY_ADDED,
+                    args = emptyList(),
                     isRetryable = false,
                 )
             AppError.NoEditorConfigured ->
                 DomainFailure.Validation(
-                    code = "app.no_editor_configured",
-                    reason = "no_editor_configured",
-                    payload = mapOf("reason" to "no_editor_configured"),
+                    code = DomainFailureCode.APP_NO_EDITOR_CONFIGURED,
+                    args = emptyList(),
                 )
             is AppError.InvalidURL ->
                 DomainFailure.Validation(
-                    code = "app.invalid_url",
-                    reason = throwable.urlString,
-                    payload = mapOf("url" to throwable.urlString),
+                    code = DomainFailureCode.APP_INVALID_URL,
+                    args = listOf(throwable.urlString),
                 )
             AppError.CannotRemoveMainWorktree ->
                 DomainFailure.Conflict(
-                    code = "app.cannot_remove_main_worktree",
-                    payload = emptyMap(),
+                    code = DomainFailureCode.APP_CANNOT_REMOVE_MAIN_WORKTREE,
+                    args = emptyList(),
                     isRetryable = false,
                 )
             AppError.Cancelled -> DomainFailure.Cancelled
             is AppError.Unexpected ->
                 DomainFailure.Unknown(
-                    code = "app.unexpected",
-                    payload = throwable.messagePayload(),
+                    code = DomainFailureCode.APP_UNEXPECTED,
+                    args = emptyList(),
                     isRetryable = true,
+                    details = throwable.message,
                 )
             is GitError.NotARepository ->
                 DomainFailure.Validation(
-                    code = "git.not_a_repository",
-                    reason = throwable.path,
-                    payload = mapOf("path" to throwable.path),
+                    code = DomainFailureCode.GIT_NOT_A_REPOSITORY,
+                    args = listOf(throwable.path),
                 )
             is GitError.WorktreeAlreadyExists ->
                 DomainFailure.Conflict(
-                    code = "git.worktree_already_exists",
-                    payload = mapOf("name" to throwable.name),
+                    code = DomainFailureCode.GIT_WORKTREE_ALREADY_EXISTS,
+                    args = listOf(throwable.name),
                     isRetryable = false,
                 )
             is GitError.WorktreeNotFound ->
                 DomainFailure.NotFound(
-                    code = "git.worktree_not_found",
-                    payload = mapOf("path" to throwable.path),
+                    code = DomainFailureCode.GIT_WORKTREE_NOT_FOUND,
+                    args = listOf(throwable.path),
                     isRetryable = false,
                 )
             is GitError.BranchAlreadyExists ->
                 DomainFailure.Conflict(
-                    code = "git.branch_already_exists",
-                    payload = mapOf("name" to throwable.name),
+                    code = DomainFailureCode.GIT_BRANCH_ALREADY_EXISTS,
+                    args = listOf(throwable.name),
                     isRetryable = false,
                 )
             is GitError.BranchNotFound ->
                 DomainFailure.NotFound(
-                    code = "git.branch_not_found",
-                    payload = mapOf("name" to throwable.name),
+                    code = DomainFailureCode.GIT_BRANCH_NOT_FOUND,
+                    args = listOf(throwable.name),
                     isRetryable = false,
                 )
             GitError.CannotRemoveMainWorktree ->
                 DomainFailure.Conflict(
-                    code = "git.cannot_remove_main_worktree",
-                    payload = emptyMap(),
+                    code = DomainFailureCode.GIT_CANNOT_REMOVE_MAIN_WORKTREE,
+                    args = emptyList(),
                     isRetryable = false,
                 )
             is GitError.CommandFailed ->
                 DomainFailure.ExternalTool(
-                    code = "git.command_failed",
-                    payload = mapOf("details" to throwable.errorMessage),
+                    code = DomainFailureCode.GIT_COMMAND_FAILED,
+                    args = emptyList(),
                     isRetryable = true,
+                    details = throwable.errorMessage,
                 )
             is GitError.InvalidPath ->
                 DomainFailure.Validation(
-                    code = "git.invalid_path",
-                    reason = throwable.path,
-                    payload = mapOf("path" to throwable.path),
+                    code = DomainFailureCode.GIT_INVALID_PATH,
+                    args = listOf(throwable.path),
                 )
             is GitError.WorktreeHasUncommittedChanges ->
                 DomainFailure.Conflict(
-                    code = "git.worktree_has_uncommitted_changes",
-                    payload = mapOf("path" to throwable.path),
+                    code = DomainFailureCode.GIT_WORKTREE_HAS_UNCOMMITTED_CHANGES,
+                    args = listOf(throwable.path),
                     isRetryable = false,
                 )
             is GitError.PRCreationFailed ->
                 DomainFailure.ExternalTool(
-                    code = "git.pr_creation_failed",
-                    payload = mapOf("details" to throwable.reason),
+                    code = DomainFailureCode.GIT_PR_CREATION_FAILED,
+                    args = emptyList(),
                     isRetryable = true,
+                    details = throwable.reason,
                 )
             is GitError.MergeConflict ->
                 DomainFailure.Conflict(
-                    code = "git.merge_conflict",
-                    payload =
-                        mapOf(
-                            "source" to throwable.source,
-                            "target" to throwable.target,
-                        ),
+                    code = DomainFailureCode.GIT_MERGE_CONFLICT,
+                    args = listOf(throwable.source, throwable.target),
                     isRetryable = false,
                 )
             else ->
                 DomainFailure.Unknown(
-                    code = "app.unknown",
-                    payload = throwable.messagePayload(),
+                    code = DomainFailureCode.APP_UNKNOWN,
+                    args = emptyList(),
                     isRetryable = true,
+                    details = throwable.message,
                 )
         }
-
-    private fun Throwable.messagePayload(): Map<String, String> {
-        val messageValue = message ?: return emptyMap()
-        return mapOf("details" to messageValue)
-    }
 }

@@ -12,11 +12,11 @@ class DomainFailureMapperTest {
         if (failure !is DomainFailure.Conflict) {
             error("Expected DomainFailure.Conflict but was ${failure::class.simpleName}")
         }
-        if (failure.code != "git.worktree_already_exists") {
+        if (failure.code != DomainFailureCode.GIT_WORKTREE_ALREADY_EXISTS) {
             error("Unexpected failure code: ${failure.code}")
         }
-        if (failure.payload["name"] != "feature/test") {
-            error("Unexpected payload name: ${failure.payload["name"]}")
+        if (failure.args != listOf("feature/test")) {
+            error("Unexpected args: ${failure.args}")
         }
     }
 

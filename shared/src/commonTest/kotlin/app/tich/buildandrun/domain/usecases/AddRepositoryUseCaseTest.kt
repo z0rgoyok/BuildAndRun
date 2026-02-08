@@ -2,6 +2,7 @@ package app.tich.buildandrun.domain.usecases
 
 import app.tich.buildandrun.domain.entities.Repository
 import app.tich.buildandrun.domain.entities.Worktree
+import app.tich.buildandrun.domain.failures.DomainFailureCode
 import app.tich.buildandrun.testsupport.FakeGitClient
 import app.tich.buildandrun.testsupport.FakePreferencesStore
 import kotlinx.coroutines.runBlocking
@@ -55,7 +56,7 @@ class AddRepositoryUseCaseTest {
 
             assertTrue(result is UseCaseResult.Failure)
             val failure = result
-            assertEquals("app.repository_already_added", failure.value.code)
+            assertEquals(DomainFailureCode.APP_REPOSITORY_ALREADY_ADDED, failure.value.code)
         }
 
     @Test
@@ -71,6 +72,6 @@ class AddRepositoryUseCaseTest {
 
             assertTrue(result is UseCaseResult.Failure)
             val failure = result
-            assertEquals("app.validation.repository_path_blank", failure.value.code)
+            assertEquals(DomainFailureCode.APP_VALIDATION_REPOSITORY_PATH_BLANK, failure.value.code)
         }
 }

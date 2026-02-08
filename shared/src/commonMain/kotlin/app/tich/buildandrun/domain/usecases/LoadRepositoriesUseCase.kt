@@ -8,10 +8,13 @@ class LoadRepositoriesUseCase(
     private val preferencesStore: PreferencesStore,
 ) {
     suspend fun execute(): UseCaseResult<List<Repository>> =
-        try {
+        runCatching {
             val repositories = preferencesStore.loadRepositories().sortedBy { it.name.lowercase() }
             UseCaseResult.Success(value = repositories)
-        } catch (throwable: Throwable) {
-            UseCaseResult.Failure(value = DomainFailureMapper.fromThrowable(throwable))
-        }
+        }.fold(
+            onSuccess = { it },
+            onFailure = { throwable ->
+                UseCaseResult.Failure(value = DomainFailureMapper.fromThrowable(throwable))
+            },
+        )
 }

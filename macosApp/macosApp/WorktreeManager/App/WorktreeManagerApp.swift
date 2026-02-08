@@ -2,15 +2,12 @@ import SwiftUI
 
 @main
 struct WorktreeManagerApp: App {
-    @StateObject private var root = RootComponent.makeDefault()
+    @StateObject private var root = KmpRoot()
 
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environmentObject(root)
-                .environmentObject(root.workspace)
-                .environmentObject(root.settings)
-                .environmentObject(root.activityCenter)
         }
         .windowStyle(.titleBar)
         .windowToolbarStyle(.unified(showsTitle: true))
@@ -32,7 +29,7 @@ struct WorktreeManagerApp: App {
 
         Settings {
             SettingsView()
-                .environmentObject(root.settings)
+                .environmentObject(root)
         }
     }
 }

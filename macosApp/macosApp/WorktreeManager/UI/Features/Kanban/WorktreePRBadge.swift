@@ -1,3 +1,4 @@
+import Shared
 import SwiftUI
 
 struct WorktreePRBadge: View {
@@ -12,19 +13,14 @@ struct WorktreePRBadge: View {
     }
 
     private var prIcon: String {
-        switch pr.state.uppercased() {
-        case "MERGED": return "checkmark.circle.fill"
-        case "CLOSED": return "xmark.circle.fill"
-        default: return "arrow.triangle.pull"
-        }
+        if pr.state === PRState.merged { return "checkmark.circle.fill" }
+        if pr.state === PRState.closed { return "xmark.circle.fill" }
+        return "arrow.triangle.pull"
     }
 
     private var prColor: Color {
-        switch pr.state.uppercased() {
-        case "MERGED": return .purple
-        case "CLOSED": return .red
-        default: return .green
-        }
+        if pr.state === PRState.merged { return .purple }
+        if pr.state === PRState.closed { return .red }
+        return .green
     }
 }
-

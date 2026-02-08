@@ -1,54 +1,61 @@
 package app.tich.buildandrun.domain.failures
 
 sealed class DomainFailure(
-    open val code: String,
+    open val code: DomainFailureCode,
     open val isRetryable: Boolean,
-    open val payload: Map<String, String> = emptyMap(),
+    open val args: List<String> = emptyList(),
+    open val details: String? = null,
 ) {
     data class Validation(
-        override val code: String,
-        val reason: String,
-        override val payload: Map<String, String>,
-    ) : DomainFailure(code = code, isRetryable = false, payload = payload)
+        override val code: DomainFailureCode,
+        override val args: List<String>,
+        override val details: String? = null,
+    ) : DomainFailure(code = code, isRetryable = false, args = args, details = details)
 
     data class Conflict(
-        override val code: String,
-        override val payload: Map<String, String>,
+        override val code: DomainFailureCode,
+        override val args: List<String>,
         override val isRetryable: Boolean,
-    ) : DomainFailure(code = code, isRetryable = isRetryable, payload = payload)
+        override val details: String? = null,
+    ) : DomainFailure(code = code, isRetryable = isRetryable, args = args, details = details)
 
     data class NotFound(
-        override val code: String,
-        override val payload: Map<String, String>,
+        override val code: DomainFailureCode,
+        override val args: List<String>,
         override val isRetryable: Boolean,
-    ) : DomainFailure(code = code, isRetryable = isRetryable, payload = payload)
+        override val details: String? = null,
+    ) : DomainFailure(code = code, isRetryable = isRetryable, args = args, details = details)
 
     data class PermissionDenied(
-        override val code: String,
-        override val payload: Map<String, String>,
-    ) : DomainFailure(code = code, isRetryable = false, payload = payload)
+        override val code: DomainFailureCode,
+        override val args: List<String>,
+        override val details: String? = null,
+    ) : DomainFailure(code = code, isRetryable = false, args = args, details = details)
 
     data class ExternalTool(
-        override val code: String,
-        override val payload: Map<String, String>,
+        override val code: DomainFailureCode,
+        override val args: List<String>,
         override val isRetryable: Boolean,
-    ) : DomainFailure(code = code, isRetryable = isRetryable, payload = payload)
+        override val details: String? = null,
+    ) : DomainFailure(code = code, isRetryable = isRetryable, args = args, details = details)
 
     data class Network(
-        override val code: String,
-        override val payload: Map<String, String>,
+        override val code: DomainFailureCode,
+        override val args: List<String>,
         override val isRetryable: Boolean,
-    ) : DomainFailure(code = code, isRetryable = isRetryable, payload = payload)
+        override val details: String? = null,
+    ) : DomainFailure(code = code, isRetryable = isRetryable, args = args, details = details)
 
     data class Unknown(
-        override val code: String,
-        override val payload: Map<String, String>,
+        override val code: DomainFailureCode,
+        override val args: List<String>,
         override val isRetryable: Boolean,
-    ) : DomainFailure(code = code, isRetryable = isRetryable, payload = payload)
+        override val details: String? = null,
+    ) : DomainFailure(code = code, isRetryable = isRetryable, args = args, details = details)
 
     data object Cancelled : DomainFailure(
-        code = "app.cancelled",
+        code = DomainFailureCode.APP_CANCELLED,
         isRetryable = false,
-        payload = emptyMap(),
+        args = emptyList(),
     )
 }

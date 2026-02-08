@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="error_details">Details: %1$s</string>
+    <string name="screen_create_worktree_success">Created: %1$s</string>
+    <string name="screen_repositories_repository_added">Repository added: %1$s</string>
+
+    <string name="app_cannot_remove_main_worktree">The main worktree cannot be removed.</string>
+    <string name="app_invalid_url">Invalid URL: %1$s.</string>
+    <string name="app_no_editor_configured">No editor is configured.</string>
+    <string name="app_repository_already_added">Repository is already added: %1$s.</string>
+    <string name="app_repository_not_found">Repository not found: %1$s.</string>
+    <string name="app_unexpected">Unexpected error.</string>
+    <string name="app_unknown">Unexpected error.</string>
+    <string name="app_validation">Invalid input: %1$s.</string>
+    <string name="app_validation_branch_blank">Branch name is required.</string>
+    <string name="app_validation_repository_id_blank">Repository id is required.</string>
+    <string name="app_validation_repository_path_blank">Repository path is required.</string>
+    <string name="app_validation_task_title_blank">Task title is required.</string>
+    <string name="app_validation_worktree_path_blank">Worktree path is required.</string>
+
+    <string name="git_branch_already_exists">Branch already exists: %1$s.</string>
+    <string name="git_branch_not_found">Branch not found: %1$s.</string>
+    <string name="git_cannot_remove_main_worktree">Cannot remove the main worktree.</string>
+    <string name="git_command_failed">Git command failed.</string>
+    <string name="git_invalid_path">Invalid path: %1$s.</string>
+    <string name="git_merge_conflict">Merge conflict: cannot merge '%1$s' into '%2$s'.</string>
+    <string name="git_not_a_repository">Path is not a git repository: %1$s.</string>
+    <string name="git_pr_creation_failed">Failed to create pull request.</string>
+    <string name="git_worktree_already_exists">Worktree already exists: %1$s.</string>
+    <string name="git_worktree_has_uncommitted_changes">Worktree has uncommitted changes: %1$s.</string>
+    <string name="git_worktree_not_found">Worktree not found: %1$s.</string>
+</resources>

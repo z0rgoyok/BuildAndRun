@@ -1,132 +1,130 @@
-# План дальнейшего порта `worktree-manager` на KMP (черновик)
+# План полного порта `worktree-manager` на KMP (macOS-first)
 
-## Вводные и ограничения (на сейчас)
+## Цель
 
-- Домен уже перенесён в KMP.
-- Presentation: берём Decompose.
-- UI остаётся платформенным; общий UI слой пока не добавляем.
-- В текущем инкременте поддерживаем только macOS. Android и iOS пока не трогаем.
-- Архитектура: DDD + Clean Architecture, UI и presentation — разные слои.
-- Fail-fast: явные контракты, ранние проверки, понятные ошибки.
-- Мультиязычность: сразу закладываем i18n (ключи + параметры + плюрализация); домен не знает про локали/ресурсы.
+- В `Swift` остаются только `UI` и app entrypoint.
+- Вся бизнес-логика, состояние, навигация presentation и инфраструктурные интеграции переносятся в `shared`.
+- Режим работы целевой сборки: `PORT_SYNC_NON_UI_SWIFT_PRUNE=YES`.
+- Покрываем сразу весь функционал: repositories/worktrees/status/PR/settings/editors/help/menus/kanban.
+- Мультиязычность сразу обязательная: `en` (default), `ru`, `uk`.
 
-## Цель ближайшего инкремента
+## Целевая архитектура
 
-Собрать сквозной вертикальный срез: платформа → presentation (Decompose) → use cases (domain) → заглушки инфраструктуры, чтобы можно было:
+```mermaid
+flowchart LR
+    subgraph MacOS["macOS (SwiftUI/AppKit)"]
+        UI["UI Views + Menus + Commands"]
+    end
 
-- запускать приложение на macOS,
-- открыть 1–2 экрана,
-- выполнить 1–2 базовые команды/операции (пусть пока через fake/ин-мемори реализации),
-- увидеть обработку ошибок и состояния.
+    subgraph Shared["KMP shared"]
+        P["Presentation (Decompose компоненты)"]
+        A["Application / Use Cases"]
+        D["Domain (Entities + Rules)"]
+        Ports["Ports (Git/FS/Process/Editor/System/Prefs)"]
+        Infra["macosMain adapters"]
+    end
 
-## Шаги (поверхностно)
+    UI -->|Intents| P
+    P -->|State/Effects| UI
+    P --> A
+    A --> D
+    A --> Ports
+    Ports --> Infra
+```
 
-### 0) Выбранный вертикальный срез (macOS)
+## Этапы выполнения
 
-1) Добавить репозиторий:
-   - выбрать/ввести путь,
-   - провалидировать, что это git-репозиторий,
-   - сохранить в preferences,
-   - показать список worktrees.
+### 0) Freeze цели и границ
 
-2) Создать worktree:
-   - ввести имя ветки + выбрать/сгенерировать путь worktree,
-   - создать worktree через `GitClient`,
-   - опционально открыть в выбранном editor / показать в Finder.
+- Фиксируем правило: никакой новой non-UI `Swift` логики.
+- Делим текущий `Swift` код на:
+  - `оставляем`: `WorktreeManager/UI/**`, `WorktreeManager/App/**` (entry + wiring),
+  - `удаляем после переноса`: `Application/**`, `Domain/**`, `Infrastructure/**`, `Presentation/**`, `DecomposeKit/**`.
+- Фиксируем parity-матрицу экранов/действий и owner для каждого пункта.
 
-### 1) Зафиксировать границы слоёв и контракты
+Результат: понятный список того, что переносится в `shared`, без серых зон.
 
-- Список use-case’ов, которые реально нужны в первом вертикальном срезе.
-- Порты/интерфейсы домена (репозитории/шлюзы), которые домен ожидает от инфраструктуры.
-- Единый `Result`/ошибки домена: какие ошибки считаем бизнесовыми, какие — техническими.
+### 1) Shared contracts и error/i18n контракты
 
-Выход: минимальный набор public API домена, который стабилен и покрывается тестами.
+- В `shared/commonMain` фиксируем единые контракты ошибок:
+  - `DomainFailure` на границе domain/use-cases,
+  - `UiError` + `UiText(key,args)` на границе presentation → UI.
+- Полный набор i18n-ключей для первого полного релиза (`en/ru/uk`), без fallback на missing keys.
+- В `shared` фиксируем публичные модели/DTO, которые реально нужны UI.
 
-### 1.1) Контракт ошибок (выбранный формат)
+Результат: UI не опирается на legacy Swift-модели, только на `Shared*` API.
 
-- На границе use-case’ов: ошибки как типизированные `DomainFailure` (не строки, не `Throwable` наружу).
-  - `code`: стабильная строка (например `git.not_a_repository`, `git.worktree_already_exists`, `app.no_editor_configured`).
-  - `payload`: данные для сообщения (path/branch/…).
-  - `isRetryable`: можно ли повторить.
-- В presentation → UI: `UiError`:
-  - `code`,
-  - `kind`: `Validation | NotFound | Conflict | Permission | ExternalTool | Network | Unknown`,
-  - `message: UiText` (ключ + аргументы + quantity),
-  - `details: UiText?` (опционально, например stdout/stderr как “технические детали”),
-  - `primaryAction`: например `Retry`/`OpenSettings`/`RevealInFinder` (если нужно).
-- Правило i18n: UI получает только `UiText` токены; финальная локализация — в macOS UI.
-- Правило fail-fast: неожиданные исключения конвертируем в `Unknown` с безопасным сообщением + отдельными “тех. деталями” (если показываем).
-- `Cancelled` не считаем ошибкой UI (не показываем).
+### 2) Полный перенос application/data/infrastructure в shared
 
-### 2) Добавить shared: presentation слой на Decompose
+- `shared/macosMain` реализует реальные адаптеры:
+  - `Git` (worktrees, branches, status, push/pull, merge, PR, lock/unlock/prune),
+  - `Preferences` (base path, expanded repos, selected repo/worktree, editor prefs, copy patterns),
+  - `Editor/System` opening,
+  - `Process/FileSystem` где нужно.
+- Все use-cases переводим на эти порты и убираем дублирование в `Swift`.
 
-- Определить `RootComponent` и навигацию (`ChildStack`/`Router`) под 1–2 экрана.
-- Для каждого экрана:
-  - контракт: `State`, `Intent`/`Action` (или события), `Output` (навигация наружу),
-  - реализация: корутины + `StateFlow`/`Value` (без UI зависимостей),
-  - маппинг ошибок домена → UI-friendly состояния.
-- Тексты/сообщения в `State`: не хранить готовые строки; вместо этого использовать токены (`TextKey`/`UiText`: key + args), которые резолвит платформа.
-- Выбрать стратегию потоков/скоупов:
-  - корутинный scope, привязанный к lifecycle Decompose,
-  - строгое закрытие ресурсов при `onDestroy`.
+Результат: runtime-функционал вне UI выполняется только в `shared`.
 
-Выход: презентационный слой компилируется в `shared` и не тянет платформенный UI.
+### 3) Полный перенос presentation в shared (Decompose)
 
-### 3) Инфраструктура: минимальный data/platform слой (сквозной, но с заглушками)
+- В `shared/commonMain` собираем `Root/Workspace/Settings/...` компоненты.
+- Для всех сценариев заводим `State + Intent + Effect`:
+  - sidebar selection / repository-worktree lifecycle,
+  - команды меню и тулбара,
+  - sheets (add repo, add worktree, create PR, complete worktree, editors, help),
+  - kanban операции,
+  - alert/openURL эффекты.
+- Lifecycle и cancellation строго в компонентах shared.
 
-- Выделить порты, которые нужны для первого среза (например: filesystem, process exec, git operations, settings).
-- Сразу решить, что делаем через `expect/actual`, а что — через DI с платформенной реализацией:
-  - `expect/actual`: только то, что реально разное и нельзя/нехочется тащить в common,
-  - DI: всё остальное.
-- На первом шаге допустимы `Fake`/`InMemory` реализации, чтобы разомкнуть цикл разработки UI/presentation.
+Результат: `SwiftUI` только рендерит state и отправляет intents.
 
-Выход: domain подключается к инфраструктуре через интерфейсы, вертикальный срез работает без настоящих интеграций.
+### 4) macOS UI wiring на прямых `Shared*` типах
 
-### 4) Платформенный UI (macOS): тонкие адаптеры к presentation
+- `SwiftUI` подключается напрямую к `Shared.framework`:
+  - подписка на `SharedDecomposeValue`,
+  - отправка intents в shared components/store.
+- Локальные bridge-модели не используются.
+- Допустимы только тонкие interop helpers:
+  - async wrappers для completion-based Kotlin API,
+  - конвертеры platform-specific типов (например, `NSNumber`/`Date`) без бизнес-правил.
 
-- Entry point (SwiftUI/AppKit host).
-- Создать `ComponentContext` и `RootComponent`.
-- Подписать UI на `State` и отправлять `Intent`.
-- Резолвить `TextKey`/`UiText` в локализованные строки через native ресурсы macOS (с fallback по умолчанию).
+Результат: UI слой тонкий и стабильный, без дублирования логики shared.
 
-Выход: UI тонкий, без бизнес-логики; всё поведение — в presentation+domain.
+### 5) Выключение legacy Swift non-UI слоя
 
-### 5) DI и сборка графа зависимостей
+- Включаем `PORT_SYNC_NON_UI_SWIFT_PRUNE=YES` как default.
+- Удаляем/исключаем legacy директории non-UI `Swift`.
+- Чистим все импорты/ссылки на удалённые Swift-слои.
 
-- Определить composition root на каждой платформе:
-  - как создаём shared `RootComponent`,
-  - какие реализации портов подсовываем (fake vs real).
-- Минимизировать “сервис-локатор” эффекты: зависимости явно передаются в компоненты.
-- Прокинуть i18n-resolver в UI layer (или в presentation через интерфейс), без доступа домена к ресурсам.
+Результат: проект физически не содержит активной non-UI логики в `Swift`.
 
-Выход: явный граф зависимостей; легко подменять реализации в тестах.
+### 6) Полный parity-check по фичам
 
-### 6) Реальные интеграции (по очереди, по одному порту за раз)
+- Репозитории:
+  - add/remove/archive/restore/select/refresh.
+- Worktrees:
+  - create/list/select/status/lock/unlock/remove/prune/open in finder/terminal/editor.
+- Branch/PR:
+  - load branches, create PR, open PR, push/pull, merge, delete local/remote branch.
+- Settings:
+  - worktree base path, copy patterns (global + per-repo), editors (enable/disable, remember choice).
+- Help/Menu/Commands:
+  - все пункты меню и шорткаты работают через shared intents/effects.
+- Kanban:
+  - add/move/reorder/delete task в рамках shared state.
 
-Приоритизировать по ценности/риску:
+Результат: визуально и функционально macOS-клон соответствует старому приложению.
 
-1. filesystem,
-2. process exec,
-3. git operations,
-4. хранение настроек/кэша.
+## Контроль качества и gate
 
-Для каждого порта:
+- `./gradlew :shared:test`
+- `./gradlew :shared:check`
+- `xcodebuild -project macosApp/macosApp.xcodeproj -scheme macosApp -configuration Debug -sdk macosx CODE_SIGNING_ALLOWED=NO PORT_SYNC_NON_UI_SWIFT_PRUNE=YES build`
+- IDEA inspections по затронутым файлам/модулям без ошибок и предупреждений.
 
-- добавить реальную реализацию на каждой платформе,
-- закрыть контрактные тесты (common) и платформенные sanity-check тесты,
-- обеспечить одинаковое поведение ошибок.
+## Definition of Done
 
-### 7) Тесты и контроль качества
-
-- Domain: unit-тесты use-case’ов и моделей.
-- Presentation: unit-тесты компонентов (редьюсер/машина состояний, если есть) + тесты навигационных output’ов.
-- Data/platform: тесты портов и адаптеров, где возможно.
-- Прогон: `./gradlew test` + IDE inspections на затронутых модулях.
-
-## Принятые решения (на сейчас)
-
-- Вертикальный срез (macOS): “Добавить репозиторий” + “Создать worktree” (см. шаг 0).
-
-- Контракт ошибок для UI: `DomainFailure` на границе use-case’ов и `UiError`/`UiText` в presentation → UI (см. шаг 1.1).
-
-- Языки в первом срезе: `en` (default/fallback), `ru`, `uk` (Ukrainian).
+- Сборка и запуск macOS проходят в режиме `PORT_SYNC_NON_UI_SWIFT_PRUNE=YES`.
+- В runtime нет зависимостей на legacy non-UI `Swift` код.
+- Все ключевые сценарии parity-check проходят вручную и автотестами.
+- i18n для `en/ru/uk` полная, без дыр.

@@ -1,7 +1,9 @@
+import Shared
 import SwiftUI
 
 struct ColumnHeader: View {
-    let type: KanbanColumnType
+    let columnId: KanbanColumnType
+    let title: String
     let count: Int
     let onAdd: () -> Void
 
@@ -9,17 +11,14 @@ struct ColumnHeader: View {
 
     var body: some View {
         HStack(spacing: DS.Spacing.sm) {
-            // Status icon
-            Image(systemName: type.icon)
+            Image(systemName: iconName)
                 .font(.system(size: 14))
                 .foregroundStyle(statusColor)
 
-            // Title
-            Text(type.rawValue)
+            Text(title)
                 .font(DS.Typography.columnHeader)
                 .foregroundStyle(DS.Colors.textPrimary)
 
-            // Count badge
             Text("\(count)")
                 .font(DS.Typography.columnCount)
                 .foregroundStyle(DS.Colors.textSecondary)
@@ -30,10 +29,7 @@ struct ColumnHeader: View {
 
             Spacer()
 
-            // Add button
-            Button {
-                onAdd()
-            } label: {
+            Button(action: onAdd) {
                 Image(systemName: "plus")
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(DS.Colors.textSecondary)
@@ -48,13 +44,23 @@ struct ColumnHeader: View {
         .padding(.vertical, DS.Spacing.sm)
     }
 
+    private var iconName: String {
+        columnId.icon
+    }
+
     private var statusColor: Color {
-        switch type {
-        case .todo: return DS.Colors.statusTodo
-        case .inProgress: return DS.Colors.statusInProgress
-        case .review: return DS.Colors.statusReview
-        case .done: return DS.Colors.statusDone
+        if columnId === KanbanColumnType.todo {
+            return DS.Colors.statusTodo
         }
+        if columnId === KanbanColumnType.inProgress {
+            return DS.Colors.statusInProgress
+        }
+        if columnId === KanbanColumnType.review {
+            return DS.Colors.statusReview
+        }
+        if columnId === KanbanColumnType.done {
+            return DS.Colors.statusDone
+        }
+        return DS.Colors.statusTodo
     }
 }
-

@@ -3,6 +3,7 @@ package app.tich.buildandrun.domain.usecases
 import app.tich.buildandrun.domain.entities.Repository
 import app.tich.buildandrun.domain.entities.Worktree
 import app.tich.buildandrun.domain.failures.DomainFailure
+import app.tich.buildandrun.domain.failures.DomainFailureCode
 import app.tich.buildandrun.domain.failures.DomainFailureMapper
 import app.tich.buildandrun.domain.ports.GitClient
 import app.tich.buildandrun.domain.ports.PreferencesStore
@@ -16,41 +17,42 @@ class AddRepositoryUseCase(
         if (path.isBlank()) {
             return UseCaseResult.Failure(
                 DomainFailure.Validation(
-                    code = "app.validation.repository_path_blank",
-                    reason = "repository_path_blank",
-                    payload = mapOf("reason" to "repository_path_blank"),
+                    code = DomainFailureCode.APP_VALIDATION_REPOSITORY_PATH_BLANK,
+                    args = emptyList(),
                 ),
             )
         }
 
-        return try {
+        return runCatching {
             val repositoryRoot = normalizePath(gitClient.getRepositoryRoot(atPath = path))
             val existingRepositories = preferencesStore.loadRepositories()
             if (existingRepositories.any { normalizePath(it.path) == repositoryRoot }) {
-                return UseCaseResult.Failure(
+                UseCaseResult.Failure(
                     DomainFailure.Conflict(
-                        code = "app.repository_already_added",
-                        payload = mapOf("path" to repositoryRoot),
+                        code = DomainFailureCode.APP_REPOSITORY_ALREADY_ADDED,
+                        args = listOf(repositoryRoot),
                         isRetryable = false,
                     ),
                 )
+            } else {
+                val repository = Repository.create(path = repositoryRoot)
+                val repositories = (existingRepositories + repository).sortedBy { it.name.lowercase() }
+                preferencesStore.saveRepositories(repositories = repositories)
+                val worktrees = gitClient.listWorktrees(atRepoPath = repositoryRoot)
+                UseCaseResult.Success(
+                    Output(
+                        repositories = repositories,
+                        addedRepository = repository,
+                        worktrees = worktrees,
+                    ),
+                )
             }
-
-            val repository = Repository.create(path = repositoryRoot)
-            val repositories = (existingRepositories + repository).sortedBy { it.name.lowercase() }
-            preferencesStore.saveRepositories(repositories = repositories)
-            val worktrees = gitClient.listWorktrees(atRepoPath = repositoryRoot)
-
-            UseCaseResult.Success(
-                Output(
-                    repositories = repositories,
-                    addedRepository = repository,
-                    worktrees = worktrees,
-                ),
-            )
-        } catch (throwable: Throwable) {
-            UseCaseResult.Failure(value = DomainFailureMapper.fromThrowable(throwable))
-        }
+        }.fold(
+            onSuccess = { it },
+            onFailure = { throwable ->
+                UseCaseResult.Failure(value = DomainFailureMapper.fromThrowable(throwable))
+            },
+        )
     }
 
     data class Input(val path: String)

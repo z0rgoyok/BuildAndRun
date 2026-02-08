@@ -1,3 +1,4 @@
+import Shared
 import SwiftUI
 
 struct WorktreeStatusIndicators: View {
@@ -35,12 +36,11 @@ struct WorktreeStatusIndicators: View {
             }
 
             if let pr = status.prStatus {
-                Image(systemName: pr.isMerged ? "checkmark.circle.fill" : "arrow.triangle.pull")
+                Image(systemName: pr.state === PRState.merged ? "checkmark.circle.fill" : "arrow.triangle.pull")
                     .font(.system(size: 9))
-                    .foregroundStyle(pr.isMerged ? .purple : .green)
-                    .help(pr.isMerged ? "PR merged" : "PR #\(pr.number)")
+                    .foregroundStyle(pr.state === PRState.merged ? .purple : .green)
+                    .help(pr.state === PRState.merged ? "PR merged" : "PR #\(pr.number)")
             }
         }
     }
 }
-
