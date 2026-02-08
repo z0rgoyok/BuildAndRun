@@ -64,16 +64,19 @@ internal fun AppStoreCore.onAddRepository() {
 }
 
 internal fun AppStoreCore.onSelectRepository(repositoryId: String) {
-    if (selectedRepositoryId == repositoryId) {
+    if (selectedRepositoryId == repositoryId && selectedWorktreePath == null) {
         return
     }
+    val repositoryChanged = selectedRepositoryId != repositoryId
     selectedRepositoryId = repositoryId
     selectedWorktreePath = null
     persistSelection()
     clearMessages()
     publishState()
-    val selectedRepository = repositories.firstOrNull { it.id.value == repositoryId } ?: return
-    loadWorktreesForRepository(path = selectedRepository.path)
+    if (repositoryChanged) {
+        val selectedRepository = repositories.firstOrNull { it.id.value == repositoryId } ?: return
+        loadWorktreesForRepository(path = selectedRepository.path)
+    }
 }
 
 internal fun AppStoreCore.onArchiveRepository(repositoryId: String) {
