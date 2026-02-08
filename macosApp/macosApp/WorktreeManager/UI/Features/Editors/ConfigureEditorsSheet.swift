@@ -79,7 +79,6 @@ private struct EditorRow: View {
                 )
             )
             .labelsHidden()
-            .disabled(!editor.isInstalled)
         }
         .contentShape(Rectangle())
     }

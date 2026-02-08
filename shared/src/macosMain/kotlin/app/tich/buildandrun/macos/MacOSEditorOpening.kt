@@ -4,7 +4,11 @@ import app.tich.buildandrun.application.ports.EditorOpening
 import app.tich.buildandrun.domain.entities.Editor
 import app.tich.buildandrun.domain.errors.AppError
 
-class MacOSEditorOpening : EditorOpening {
+class MacOSEditorOpening(
+    private val executeCommand: (List<String>) -> Pair<Int, String> = { arguments ->
+        runShellCommand(arguments = arguments)
+    },
+) : EditorOpening {
     override suspend fun open(
         path: String,
         withEditor: Editor,
@@ -26,7 +30,7 @@ class MacOSEditorOpening : EditorOpening {
                 else ->
                     listOf(withEditor.command, targetPath)
             }
-        val (exitCode, output) = runShellCommand(arguments = commandArguments)
+        val (exitCode, output) = executeCommand(commandArguments)
         if (exitCode != 0) {
             throw AppError.Unexpected(
                 reason = output.ifBlank { "failed_to_open_editor" },
@@ -46,9 +50,8 @@ class MacOSEditorOpening : EditorOpening {
             return true
         }
         val appName = editor.appName ?: return false
-        val query = "kMDItemKind == 'Application' && kMDItemDisplayName == '$appName'"
-        val (exitCode, output) = runShellCommand(arguments = listOf("mdfind", query))
-        return exitCode == 0 && output.isNotBlank()
+        val (exitCode, _) = executeCommand(listOf("open", "-Ra", appName))
+        return exitCode == 0
     }
 
     private fun isCommandAvailable(command: String): Boolean {
@@ -56,7 +59,7 @@ class MacOSEditorOpening : EditorOpening {
         if (commandName.isBlank()) {
             return false
         }
-        val (exitCode, _) = runShellCommand(arguments = listOf("which", commandName))
+        val (exitCode, _) = executeCommand(listOf("which", commandName))
         return exitCode == 0
     }
 }
