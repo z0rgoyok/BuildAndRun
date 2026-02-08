@@ -42,8 +42,7 @@ struct KanbanCard: View {
                 }
             }
 
-            let description = task.description
-            if !description.isEmpty {
+            if let description = task.description_, !description.isEmpty {
                 Text(description)
                     .font(DS.Typography.cardSubtitle)
                     .foregroundStyle(DS.Colors.textSecondary)

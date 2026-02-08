@@ -38,7 +38,7 @@ struct AddWorktreeSheet: View {
             buttons
         }
         .padding()
-        .frame(width: 420)
+        .frame(width: 480)
         .overlay { progressOverlay }
         .onAppear { loadBranches() }
         .onChange(of: branchName) { oldValue, newValue in
