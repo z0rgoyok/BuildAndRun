@@ -32,6 +32,9 @@
 
     <string name="sidebar_archived">Архів</string>
     <string name="sidebar_add_repository">Додати репозиторій</string>
+    <string name="sidebar_expand_all">Розгорнути все</string>
+    <string name="sidebar_collapse_all">Згорнути все</string>
+    <string name="sidebar_help">Довідка</string>
     <string name="action_show_in_finder">Показати у Finder</string>
     <string name="action_copy_path">Копіювати шлях</string>
     <string name="action_copy_files_settings">Налаштування копіювання\u2026</string>

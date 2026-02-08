@@ -19,3 +19,6 @@ Max file length = 350 lines.
 
 Use DDD and Clean Architecture. UI and presentation are separate layers.
 Follow the fail-fast principle.
+
+Each task must conclude with running tests and IDE inspections across the full affected scope. 
+All issues and warnings must be fixed, not suppressed.

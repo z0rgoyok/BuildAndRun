@@ -4,9 +4,6 @@ import SwiftUI
 struct ProjectTreeSidebar: View {
     @EnvironmentObject var root: KmpRoot
     @Binding var selection: SidebarSelection?
-    @State private var expandedRepositoryIds: Set<String> = []
-    @State private var isArchivedSectionExpanded: Bool = false
-    @State private var repositoryForCopySettings: RepositoryCopySettingsTarget?
 
     var body: some View {
         ScrollView {
@@ -16,20 +13,20 @@ struct ProjectTreeSidebar: View {
                         repository: repo,
                         selection: $selection,
                         isExpanded: expansionBinding(for: repo),
-                        onCopySettings: { showCopySettings(for: repo) }
+                        onCopySettings: { root.presentSidebarCopySettings(for: repo) }
                     )
                 }
 
                 if !archivedRepositories.isEmpty {
                     archivedSectionHeader
 
-                    if isArchivedSectionExpanded {
+                    if root.isSidebarArchivedSectionExpanded {
                         ForEach(archivedRepositories, id: \.id) { repo in
                             ProjectTreeNode(
                                 repository: repo,
                                 selection: $selection,
                                 isExpanded: expansionBinding(for: repo),
-                                onCopySettings: { showCopySettings(for: repo) }
+                                onCopySettings: { root.presentSidebarCopySettings(for: repo) }
                             )
                         }
                     }
@@ -39,21 +36,39 @@ struct ProjectTreeSidebar: View {
         }
         .background(DS.Colors.surfacePrimary)
         .toolbar {
-            ToolbarItemGroup(placement: .automatic) {
+            ToolbarItem(placement: .automatic) {
                 Button {
                     root.presentSheet(.addRepository)
                 } label: {
                     Label(root.store.sidebarLabels.addRepository, systemImage: "plus")
                 }
             }
+
+            ToolbarItem(placement: .primaryAction) {
+                Button {
+                    withAnimation(DS.Animation.quick) {
+                        root.toggleSidebarAllRepositoriesExpansion(selection: selection)
+                    }
+                } label: {
+                    Image(systemName: root.areAllSidebarRepositoriesExpanded ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right")
+                }
+                .help(collapseExpandHelpText)
+                .disabled(allRepositoryIds.isEmpty)
+            }
+
+            ToolbarItem(placement: .primaryAction) {
+                Button {
+                    root.presentSheet(.help)
+                } label: {
+                    Image(systemName: "questionmark.circle")
+                }
+                .help(root.store.sidebarLabels.help)
+            }
         }
-        .onAppear { restoreExpandedState() }
-        .onChange(of: selection) { _, _ in syncSelectionExpansion() }
-        .onChange(of: root.state.selectedRepositoryId) { _, _ in syncSelectionExpansion() }
-        .onChange(of: expandedRepositoryIds) { _, newValue in
-            root.store.setExpandedRepositoryIds(ids: newValue)
-        }
-        .sheet(item: $repositoryForCopySettings) { target in
+        .onAppear { root.syncSidebarSelectionExpansion(selection: selection) }
+        .onChange(of: selection) { _, _ in root.syncSidebarSelectionExpansion(selection: selection) }
+        .onChange(of: root.state.selectedRepositoryId) { _, _ in root.syncSidebarSelectionExpansion(selection: selection) }
+        .sheet(item: sidebarCopySettingsTargetBinding) { target in
             RepositoryCopyPatternsSheet(
                 repositoryId: target.id,
                 repositoryName: target.name
@@ -70,14 +85,32 @@ struct ProjectTreeSidebar: View {
         root.state.repositories.filter { $0.isArchived }
     }
 
+    private var allRepositoryIds: Set<String> {
+        Set(root.state.repositories.map(\.id))
+    }
+
+    private var collapseExpandHelpText: String {
+        if root.areAllSidebarRepositoriesExpanded {
+            return root.store.sidebarLabels.collapseAll
+        }
+        return root.store.sidebarLabels.expandAll
+    }
+
+    private var sidebarCopySettingsTargetBinding: Binding<SidebarCopySettingsTarget?> {
+        Binding(
+            get: { root.sidebarCopySettingsTarget },
+            set: { root.sidebarCopySettingsTarget = $0 }
+        )
+    }
+
     private var archivedSectionHeader: some View {
         Button {
             withAnimation(DS.Animation.quick) {
-                isArchivedSectionExpanded.toggle()
+                root.isSidebarArchivedSectionExpanded.toggle()
             }
         } label: {
             HStack(spacing: DS.Spacing.xs) {
-                Image(systemName: isArchivedSectionExpanded ? "chevron.down" : "chevron.right")
+                Image(systemName: root.isSidebarArchivedSectionExpanded ? "chevron.down" : "chevron.right")
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundStyle(DS.Colors.textTertiary)
                     .frame(width: DS.Sizes.treeIconSize, height: DS.Sizes.treeIconSize)
@@ -113,49 +146,12 @@ struct ProjectTreeSidebar: View {
 
     private func expansionBinding(for repo: AppStore.RepositoryItem) -> Binding<Bool> {
         Binding(
-            get: { expandedRepositoryIds.contains(repo.id) },
+            get: { root.sidebarExpandedRepositoryIds.contains(repo.id) },
             set: { expanded in
-                if expanded {
-                    expandedRepositoryIds.insert(repo.id)
-                } else {
-                    expandedRepositoryIds.remove(repo.id)
-                }
+                root.setSidebarRepositoryExpanded(repositoryId: repo.id, expanded: expanded)
             }
         )
     }
-
-    private func showCopySettings(for repo: AppStore.RepositoryItem) {
-        repositoryForCopySettings = RepositoryCopySettingsTarget(
-            id: repo.id,
-            name: repo.name
-        )
-    }
-
-    private func restoreExpandedState() {
-        let saved = root.store.loadExpandedRepositoryIds() as! Set<String>
-        if !saved.isEmpty {
-            expandedRepositoryIds = saved
-        }
-        syncSelectionExpansion()
-    }
-
-    private func syncSelectionExpansion() {
-        guard let currentSelection = selection else { return }
-        let selectedRepositoryId = currentSelection.repositoryId
-        if !selectedRepositoryId.isEmpty {
-            expandedRepositoryIds.insert(selectedRepositoryId)
-            let selectedRepository =
-                root.state.repositories.first { $0.id == selectedRepositoryId }
-            if selectedRepository?.isArchived == true {
-                isArchivedSectionExpanded = true
-            }
-        }
-    }
-}
-
-private struct RepositoryCopySettingsTarget: Identifiable {
-    let id: String
-    let name: String
 }
 
 #Preview {

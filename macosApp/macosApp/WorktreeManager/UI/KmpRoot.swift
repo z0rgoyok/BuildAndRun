@@ -32,6 +32,9 @@ final class KmpRoot: ObservableObject {
     }
 
     @Published private(set) var state: AppStore.State
+    @Published var sidebarExpandedRepositoryIds: Set<String> = []
+    @Published var isSidebarArchivedSectionExpanded: Bool = false
+    @Published var sidebarCopySettingsTarget: SidebarCopySettingsTarget?
 
     let store: AppStore
 
@@ -40,6 +43,7 @@ final class KmpRoot: ObservableObject {
     init(store: AppStore = AppStoreFactory.shared.create()) {
         self.store = store
         self.state = store.state.value
+        self.sidebarExpandedRepositoryIds = store.loadExpandedRepositoryIds() as! Set<String>
 
         self.cancellation =
             store.state.subscribe { [weak self] nextState in
@@ -137,4 +141,63 @@ final class KmpRoot: ObservableObject {
         guard let selectedPath = state.selectedWorktreePath else { return nil }
         return selectedRepository?.worktrees.first { $0.path == selectedPath }
     }
+
+    var areAllSidebarRepositoriesExpanded: Bool {
+        let allRepositoryIds = Set(state.repositories.map(\.id))
+        return !allRepositoryIds.isEmpty && allRepositoryIds.isSubset(of: sidebarExpandedRepositoryIds)
+    }
+
+    func setSidebarRepositoryExpanded(repositoryId: String, expanded: Bool) {
+        if expanded {
+            sidebarExpandedRepositoryIds.insert(repositoryId)
+        } else {
+            sidebarExpandedRepositoryIds.remove(repositoryId)
+        }
+        store.setExpandedRepositoryIds(ids: sidebarExpandedRepositoryIds)
+    }
+
+    func toggleSidebarAllRepositoriesExpansion(selection: SidebarSelection?) {
+        let allRepositoryIds = Set(state.repositories.map(\.id))
+        guard !allRepositoryIds.isEmpty else { return }
+
+        if areAllSidebarRepositoriesExpanded {
+            sidebarExpandedRepositoryIds = []
+            if let selectedRepositoryId = selection?.repositoryId, !selectedRepositoryId.isEmpty {
+                sidebarExpandedRepositoryIds.insert(selectedRepositoryId)
+            } else if let selectedRepositoryId = state.selectedRepositoryId, !selectedRepositoryId.isEmpty {
+                sidebarExpandedRepositoryIds.insert(selectedRepositoryId)
+            }
+        } else {
+            sidebarExpandedRepositoryIds.formUnion(allRepositoryIds)
+        }
+
+        store.setExpandedRepositoryIds(ids: sidebarExpandedRepositoryIds)
+    }
+
+    func syncSidebarSelectionExpansion(selection: SidebarSelection?) {
+        guard let currentSelection = selection else { return }
+        let selectedRepositoryId = currentSelection.repositoryId
+        guard !selectedRepositoryId.isEmpty else { return }
+
+        sidebarExpandedRepositoryIds.insert(selectedRepositoryId)
+        store.setExpandedRepositoryIds(ids: sidebarExpandedRepositoryIds)
+
+        let selectedRepository = state.repositories.first { $0.id == selectedRepositoryId }
+        if selectedRepository?.isArchived == true {
+            isSidebarArchivedSectionExpanded = true
+        }
+    }
+
+    func presentSidebarCopySettings(for repository: AppStore.RepositoryItem) {
+        sidebarCopySettingsTarget =
+            SidebarCopySettingsTarget(
+                id: repository.id,
+                name: repository.name
+            )
+    }
+}
+
+struct SidebarCopySettingsTarget: Identifiable {
+    let id: String
+    let name: String
 }

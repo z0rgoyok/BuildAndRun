@@ -10,8 +10,7 @@ internal class ActivityCenter {
     val isGlobalActive: Boolean get() = globalStack.isNotEmpty()
     val currentGlobalMessage: String? get() = globalStack.lastOrNull()?.message
 
-    fun isWorktreeActive(path: String): Boolean =
-        worktreeStacks[path]?.isNotEmpty() == true
+    fun isWorktreeActive(path: String): Boolean = worktreeStacks[path]?.isNotEmpty() == true
 
     @OptIn(ExperimentalUuidApi::class)
     fun beginGlobal(message: String): String {
@@ -21,9 +20,19 @@ internal class ActivityCenter {
     }
 
     @OptIn(ExperimentalUuidApi::class)
-    fun beginWorktree(path: String, message: String): String {
+    fun beginWorktree(
+        path: String,
+        message: String,
+    ): String {
         val id = Uuid.random().toString()
-        worktreeStacks.getOrPut(path) { mutableListOf() }.add(Activity(id = id, message = message))
+        worktreeStacks
+            .getOrPut(path) { mutableListOf() }
+            .add(
+                Activity(
+                    id = id,
+                    message = message,
+                ),
+            )
         return id
     }
 
