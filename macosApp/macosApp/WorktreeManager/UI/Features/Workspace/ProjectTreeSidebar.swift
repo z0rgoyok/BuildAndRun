@@ -47,9 +47,12 @@ struct ProjectTreeSidebar: View {
                 }
             }
         }
-        .onAppear { syncSelectionExpansion() }
+        .onAppear { restoreExpandedState() }
         .onChange(of: selection) { _, _ in syncSelectionExpansion() }
         .onChange(of: root.state.selectedRepositoryId) { _, _ in syncSelectionExpansion() }
+        .onChange(of: expandedRepositoryIds) { _, newValue in
+            root.store.setExpandedRepositoryIds(ids: newValue)
+        }
         .sheet(item: $repositoryForCopySettings) { target in
             RepositoryCopyPatternsSheet(
                 repositoryId: target.id,
@@ -126,6 +129,14 @@ struct ProjectTreeSidebar: View {
             id: repo.id,
             name: repo.name
         )
+    }
+
+    private func restoreExpandedState() {
+        let saved = root.store.loadExpandedRepositoryIds() as! Set<String>
+        if !saved.isEmpty {
+            expandedRepositoryIds = saved
+        }
+        syncSelectionExpansion()
     }
 
     private func syncSelectionExpansion() {

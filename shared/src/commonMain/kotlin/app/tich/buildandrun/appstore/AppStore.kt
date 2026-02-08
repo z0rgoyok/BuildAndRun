@@ -257,6 +257,12 @@ class AppStore internal constructor(
 
     fun resolveBranchConflictUseExistingDetail(branch: String): String = resolveBranchConflictUseExistingDetailText(branch = branch)
 
+    fun loadExpandedRepositoryIds(): Set<String> = core.graph.preferencesStore.expandedRepositoryIds
+
+    fun setExpandedRepositoryIds(ids: Set<String>) {
+        core.graph.preferencesStore.expandedRepositoryIds = ids
+    }
+
     fun destroy() {
         core.destroy()
     }
