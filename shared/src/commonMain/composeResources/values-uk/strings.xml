@@ -38,4 +38,36 @@
     <string name="action_restore_project">Відновити проект</string>
     <string name="action_archive_project">Архівувати проект</string>
     <string name="action_remove_from_list">Видалити зі списку</string>
+    <string name="action_delete">Видалити</string>
+    <string name="action_move_to">Перемістити до</string>
+
+    <string name="detail_select_worktree_hint">Оберіть worktree для перегляду статусу</string>
+    <string name="detail_badge_main">основний</string>
+    <string name="detail_badge_locked">заблоковано</string>
+
+    <string name="worktree_create_title">Створити Worktree</string>
+    <string name="worktree_create_name">Назва worktree</string>
+    <string name="worktree_create_branch_new">Створити нову гілку</string>
+    <string name="worktree_create_branch_existing">Використати існуючу</string>
+    <string name="worktree_create_branch_name">Назва нової гілки</string>
+    <string name="worktree_create_base_branch">На основі</string>
+    <string name="worktree_create_loading_branches">Завантаження гілок\u2026</string>
+    <string name="worktree_create_location">Розташування</string>
+    <string name="worktree_create_button">Створити</string>
+    <string name="worktree_create_cancel">Скасувати</string>
+    <string name="worktree_create_preparing">Підготовка\u2026</string>
+    <string name="worktree_create_submitting">Створення worktree\u2026</string>
+    <string name="worktree_create_branch_picker">Гілка</string>
+
+    <string name="branch_conflict_title">Гілка вже існує</string>
+    <string name="branch_conflict_message">Гілка \'%1$s\' вже існує.\nЯк продовжити?</string>
+    <string name="branch_conflict_use_existing">Використати існуючу</string>
+    <string name="branch_conflict_use_existing_detail">Створити worktree з існуючою гілкою \'%1$s\'</string>
+    <string name="branch_conflict_recreate">Перестворити гілку</string>
+    <string name="branch_conflict_recreate_detail">Видалити існуючу гілку і створити заново</string>
+
+    <string name="toolbar_new_worktree">Новий worktree (⌘N)</string>
+    <string name="toolbar_finder">Відкрити у Finder (⇧⌘F)</string>
+    <string name="toolbar_terminal">Відкрити у Терміналі (⇧⌘T)</string>
+    <string name="toolbar_refresh">Оновити (⌘R)</string>
 </resources>

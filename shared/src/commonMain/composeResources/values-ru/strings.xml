@@ -38,4 +38,36 @@
     <string name="action_restore_project">Восстановить проект</string>
     <string name="action_archive_project">Архивировать проект</string>
     <string name="action_remove_from_list">Удалить из списка</string>
+    <string name="action_delete">Удалить</string>
+    <string name="action_move_to">Переместить в</string>
+
+    <string name="detail_select_worktree_hint">Выберите worktree для просмотра статуса</string>
+    <string name="detail_badge_main">основной</string>
+    <string name="detail_badge_locked">заблокирован</string>
+
+    <string name="worktree_create_title">Создать Worktree</string>
+    <string name="worktree_create_name">Имя worktree</string>
+    <string name="worktree_create_branch_new">Создать новую ветку</string>
+    <string name="worktree_create_branch_existing">Использовать существующую</string>
+    <string name="worktree_create_branch_name">Имя новой ветки</string>
+    <string name="worktree_create_base_branch">На основе</string>
+    <string name="worktree_create_loading_branches">Загрузка веток\u2026</string>
+    <string name="worktree_create_location">Расположение</string>
+    <string name="worktree_create_button">Создать</string>
+    <string name="worktree_create_cancel">Отмена</string>
+    <string name="worktree_create_preparing">Подготовка\u2026</string>
+    <string name="worktree_create_submitting">Создание worktree\u2026</string>
+    <string name="worktree_create_branch_picker">Ветка</string>
+
+    <string name="branch_conflict_title">Ветка уже существует</string>
+    <string name="branch_conflict_message">Ветка \'%1$s\' уже существует.\nКак продолжить?</string>
+    <string name="branch_conflict_use_existing">Использовать существующую</string>
+    <string name="branch_conflict_use_existing_detail">Создать worktree с существующей веткой \'%1$s\'</string>
+    <string name="branch_conflict_recreate">Пересоздать ветку</string>
+    <string name="branch_conflict_recreate_detail">Удалить существующую ветку и создать заново</string>
+
+    <string name="toolbar_new_worktree">Новый worktree (⌘N)</string>
+    <string name="toolbar_finder">Открыть в Finder (⇧⌘F)</string>
+    <string name="toolbar_terminal">Открыть в Терминале (⇧⌘T)</string>
+    <string name="toolbar_refresh">Обновить (⌘R)</string>
 </resources>

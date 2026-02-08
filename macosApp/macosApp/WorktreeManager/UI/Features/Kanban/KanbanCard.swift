@@ -4,6 +4,7 @@ import SwiftUI
 struct KanbanCard: View {
     let task: AppStore.KanbanTaskItem
     let isDragging: Bool
+    let onMoveTask: (String, KanbanColumnType) -> Void
     let onDelete: () -> Void
 
     @State private var isHovered = false
@@ -63,9 +64,35 @@ struct KanbanCard: View {
             }
         }
         .contextMenu {
+            moveToMenu
+            Divider()
             Button("Delete", role: .destructive) {
                 onDelete()
             }
         }
+    }
+
+    @ViewBuilder
+    private var moveToMenu: some View {
+        Menu("Move to") {
+            ForEach(otherColumns, id: \.id) { column in
+                Button(column.title) {
+                    onMoveTask(task.id, column.id)
+                }
+            }
+        }
+    }
+
+    private var otherColumns: [(id: KanbanColumnType, title: String)] {
+        allColumns.filter { $0.id !== task.columnId }
+    }
+
+    private var allColumns: [(id: KanbanColumnType, title: String)] {
+        [
+            (id: KanbanColumnType.todo, title: KanbanColumnType.todo.displayName),
+            (id: KanbanColumnType.inProgress, title: KanbanColumnType.inProgress.displayName),
+            (id: KanbanColumnType.review, title: KanbanColumnType.review.displayName),
+            (id: KanbanColumnType.done, title: KanbanColumnType.done.displayName),
+        ]
     }
 }

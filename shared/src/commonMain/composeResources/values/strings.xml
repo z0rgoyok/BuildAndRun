@@ -38,4 +38,36 @@
     <string name="action_restore_project">Restore Project</string>
     <string name="action_archive_project">Archive Project</string>
     <string name="action_remove_from_list">Remove from List</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_move_to">Move to</string>
+
+    <string name="detail_select_worktree_hint">Select a worktree to see status</string>
+    <string name="detail_badge_main">main</string>
+    <string name="detail_badge_locked">locked</string>
+
+    <string name="worktree_create_title">Create New Worktree</string>
+    <string name="worktree_create_name">Worktree Name</string>
+    <string name="worktree_create_branch_new">Create new branch</string>
+    <string name="worktree_create_branch_existing">Use existing branch</string>
+    <string name="worktree_create_branch_name">New Branch Name</string>
+    <string name="worktree_create_base_branch">Based on</string>
+    <string name="worktree_create_loading_branches">Loading branches\u2026</string>
+    <string name="worktree_create_location">Location</string>
+    <string name="worktree_create_button">Create</string>
+    <string name="worktree_create_cancel">Cancel</string>
+    <string name="worktree_create_preparing">Preparing\u2026</string>
+    <string name="worktree_create_submitting">Creating worktree\u2026</string>
+    <string name="worktree_create_branch_picker">Branch</string>
+
+    <string name="branch_conflict_title">Branch Already Exists</string>
+    <string name="branch_conflict_message">Branch \'%1$s\' already exists.\nHow would you like to proceed?</string>
+    <string name="branch_conflict_use_existing">Use existing branch</string>
+    <string name="branch_conflict_use_existing_detail">Create worktree using the existing \'%1$s\' branch</string>
+    <string name="branch_conflict_recreate">Recreate branch</string>
+    <string name="branch_conflict_recreate_detail">Delete existing branch and create fresh from base</string>
+
+    <string name="toolbar_new_worktree">New Worktree (⌘N)</string>
+    <string name="toolbar_finder">Open in Finder (⇧⌘F)</string>
+    <string name="toolbar_terminal">Open in Terminal (⇧⌘T)</string>
+    <string name="toolbar_refresh">Refresh (⌘R)</string>
 </resources>

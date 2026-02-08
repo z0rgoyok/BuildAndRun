@@ -11,6 +11,8 @@ struct KanbanBoard: View {
     var body: some View {
         VStack(spacing: 0) {
             if selection != nil {
+                detailHeader
+
                 KanbanSectionHeader {
                     addTaskColumnId = KanbanColumnType.todo
                     showAddTask = true
@@ -52,6 +54,17 @@ struct KanbanBoard: View {
                 root.store.onAddTask(title: title, description: description, column: addTaskColumnId)
             }
             .environmentObject(root)
+        }
+    }
+
+    @ViewBuilder
+    private var detailHeader: some View {
+        if let worktree = root.selectedWorktree {
+            WorktreeDetailHeader(worktree: worktree)
+                .environmentObject(root)
+        } else if let repository = root.selectedRepository {
+            RepositoryDetailHeader(repository: repository)
+                .environmentObject(root)
         }
     }
 

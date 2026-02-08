@@ -1,6 +1,8 @@
+import Shared
 import SwiftUI
 
 struct BranchConflictSheet: View {
+    @EnvironmentObject var root: KmpRoot
     let branchName: String
     let worktreeName: String
     let onUseExisting: () -> Void
@@ -8,16 +10,18 @@ struct BranchConflictSheet: View {
 
     @Environment(\.dismiss) var dismiss
 
+    private var labels: KanbanLabels { root.store.kanbanLabels }
+
     var body: some View {
         VStack(spacing: 16) {
             Image(systemName: "exclamationmark.triangle")
                 .font(.largeTitle)
                 .foregroundStyle(.orange)
 
-            Text("Branch Already Exists")
+            Text(labels.branchConflictTitle)
                 .font(.headline)
 
-            Text("Branch '\(branchName)' already exists.\nHow would you like to proceed?")
+            Text(root.store.resolveBranchConflictMessage(branch: branchName))
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -29,9 +33,9 @@ struct BranchConflictSheet: View {
                     HStack {
                         Image(systemName: "arrow.right.circle")
                         VStack(alignment: .leading) {
-                            Text("Use existing branch")
+                            Text(labels.branchConflictUseExisting)
                                 .fontWeight(.medium)
-                            Text("Create worktree using the existing '\(branchName)' branch")
+                            Text(root.store.resolveBranchConflictUseExistingDetail(branch: branchName))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -50,9 +54,9 @@ struct BranchConflictSheet: View {
                     HStack {
                         Image(systemName: "arrow.counterclockwise")
                         VStack(alignment: .leading) {
-                            Text("Recreate branch")
+                            Text(labels.branchConflictRecreate)
                                 .fontWeight(.medium)
-                            Text("Delete existing branch and create fresh from base")
+                            Text(labels.branchConflictRecreateDetail)
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -66,7 +70,7 @@ struct BranchConflictSheet: View {
                 .buttonStyle(.plain)
             }
 
-            Button("Cancel") {
+            Button(labels.createCancel) {
                 dismiss()
             }
             .keyboardShortcut(.cancelAction)
@@ -75,4 +79,3 @@ struct BranchConflictSheet: View {
         .frame(width: 360)
     }
 }
-

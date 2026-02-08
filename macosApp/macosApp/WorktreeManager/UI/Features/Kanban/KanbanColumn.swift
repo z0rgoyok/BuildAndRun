@@ -27,6 +27,7 @@ struct KanbanColumn: View {
                         KanbanCard(
                             task: task,
                             isDragging: draggedTaskId == task.id,
+                            onMoveTask: onMoveTask,
                             onDelete: { onDeleteTask(task.id) }
                         )
                         .onDrag {

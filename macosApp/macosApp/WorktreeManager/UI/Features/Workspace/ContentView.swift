@@ -73,6 +73,7 @@ struct ContentView: View {
                 } label: {
                     Label("New Worktree", systemImage: "plus.square.on.square")
                 }
+                .help(root.store.kanbanLabels.toolbarNewWorktree)
 
                 if let selectedWorktreePath = root.state.selectedWorktreePath {
                     OpenEditorMenu(root: root, worktreePath: selectedWorktreePath)
@@ -82,12 +83,14 @@ struct ContentView: View {
                     } label: {
                         Label("Finder", systemImage: "folder")
                     }
+                    .help(root.store.kanbanLabels.toolbarFinder)
 
                     Button {
                         root.store.onOpenInTerminal(worktreePath: selectedWorktreePath)
                     } label: {
                         Label("Terminal", systemImage: "terminal")
                     }
+                    .help(root.store.kanbanLabels.toolbarTerminal)
                 }
 
                 Button {
@@ -95,6 +98,7 @@ struct ContentView: View {
                 } label: {
                     Label("Refresh", systemImage: "arrow.clockwise")
                 }
+                .help(root.store.kanbanLabels.toolbarRefresh)
             }
         }
 

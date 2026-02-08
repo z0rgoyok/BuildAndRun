@@ -16,6 +16,8 @@ class AppStore internal constructor(
 
     val sidebarLabels = buildSidebarLabels()
 
+    val kanbanLabels = buildKanbanLabels()
+
     fun onAddRepositoryPathChanged(value: String) {
         core.onAddRepositoryPathChanged(value = value)
     }
@@ -250,6 +252,10 @@ class AppStore internal constructor(
     fun onDismissSuccess() {
         core.onDismissSuccess()
     }
+
+    fun resolveBranchConflictMessage(branch: String): String = resolveBranchConflictMessageText(branch = branch)
+
+    fun resolveBranchConflictUseExistingDetail(branch: String): String = resolveBranchConflictUseExistingDetailText(branch = branch)
 
     fun destroy() {
         core.destroy()
