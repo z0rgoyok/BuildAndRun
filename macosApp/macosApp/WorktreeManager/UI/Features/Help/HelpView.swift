@@ -222,7 +222,6 @@ private struct HelpNavBar: View {
         }
         .padding(.horizontal, DS.Spacing.xxl)
         .padding(.vertical, DS.Spacing.md)
-        .background(DS.Colors.surfaceSecondary.opacity(0.5))
     }
 }
 

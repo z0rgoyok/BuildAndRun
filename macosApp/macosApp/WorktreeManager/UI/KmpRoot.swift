@@ -43,7 +43,7 @@ final class KmpRoot: ObservableObject {
     init(store: AppStore = AppStoreFactory.shared.create()) {
         self.store = store
         self.state = store.state.value
-        self.sidebarExpandedRepositoryIds = store.loadExpandedRepositoryIds() as! Set<String>
+        self.sidebarExpandedRepositoryIds = store.loadExpandedRepositoryIds() 
 
         self.cancellation =
             store.state.subscribe { [weak self] nextState in
