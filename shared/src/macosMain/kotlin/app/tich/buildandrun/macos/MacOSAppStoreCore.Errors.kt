@@ -8,7 +8,7 @@ internal fun MacOSAppStoreCore.mapFailureToErrorState(failure: DomainFailure): M
     return mapUiErrorToErrorState(uiError)
 }
 
-internal fun MacOSAppStoreCore.mapUiErrorToErrorState(uiError: UiError): MacOSAppStore.ErrorState {
+internal fun mapUiErrorToErrorState(uiError: UiError): MacOSAppStore.ErrorState {
     return MacOSAppStore.ErrorState(
         code = uiError.code,
         message = resolveText(text = uiError.message),

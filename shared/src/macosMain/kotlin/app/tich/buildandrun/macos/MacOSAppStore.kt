@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package app.tich.buildandrun.macos
 
 import app.tich.buildandrun.domain.entities.KanbanColumnType

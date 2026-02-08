@@ -14,6 +14,5 @@ data class UiError(
     enum class PrimaryAction {
         Retry,
         OpenSettings,
-        RevealInFinder,
     }
 }
