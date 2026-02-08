@@ -48,7 +48,6 @@ flowchart LR
 - `macosApp/` - primary macOS app host and SwiftUI screens
 - `composeApp/` - Compose Multiplatform app module (Android target)
 - `iosApp/` - iOS host app scaffold
-- `imported/` - imported legacy/reference sources used during migration
 
 ## Run locally
 
@@ -70,7 +69,7 @@ xcodebuild -project macosApp/macosApp.xcodeproj \
 ### Shared checks
 
 ```bash
-./gradlew :shared:test
+./gradlew :shared:allTests
 ./gradlew :shared:check
 ./gradlew ktlintCheck
 ```
