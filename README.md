@@ -1,40 +1,86 @@
-This is a Kotlin Multiplatform project targeting Android, iOS.
+# BuildAndRun
 
-* [/composeApp](./composeApp/src) is for code that will be shared across your Compose Multiplatform applications.
-  It contains several subfolders:
-    - [commonMain](./composeApp/src/commonMain/kotlin) is for code that’s common for all targets.
-    - Other folders are for Kotlin code that will be compiled for only the platform indicated in the folder name.
-      For example, if you want to use Apple’s CoreCrypto for the iOS part of your Kotlin app,
-      the [iosMain](./composeApp/src/iosMain/kotlin) folder would be the right place for such calls.
-      Similarly, if you want to edit the Desktop (JVM) specific part, the [jvmMain](./composeApp/src/jvmMain/kotlin)
-      folder is the appropriate location.
+BuildAndRun is a macOS-first Git worktree manager built with Kotlin Multiplatform (KMP).
+It helps you run parallel branch workflows without constant stash/switch cycles: create worktrees, track status, push/pull, and finish branches after PR merge.
 
-* [/iosApp](./iosApp/iosApp) contains iOS applications. Even if you’re sharing your UI with Compose Multiplatform,
-  you need this entry point for your iOS app. This is also where you should add SwiftUI code for your project.
+## What this project is
 
-* [/shared](./shared/src) is for the code that will be shared between all targets in the project.
-  The most important subfolder is [commonMain](./shared/src/commonMain/kotlin). If preferred, you
-  can add code to the platform-specific folders here too.
+BuildAndRun provides one workspace for:
 
-### Build and Run Android Application
+- repository management (add, remove, archive, restore)
+- worktree lifecycle (create, lock/unlock, prune, finish)
+- Git status visibility (modified, ahead/behind, clean)
+- branch and PR flow (push/pull, create/open PR, cleanup)
+- editor/system actions (open in editor, terminal, finder)
 
-To build and run the development version of the Android app, use the run configuration from the run widget
-in your IDE’s toolbar or build it directly from the terminal:
+The product goal is clear separation of concerns: UI in SwiftUI, domain/application/presentation in shared KMP.
 
-- on macOS/Linux
-  ```shell
-  ./gradlew :composeApp:assembleDebug
-  ```
-- on Windows
-  ```shell
-  .\gradlew.bat :composeApp:assembleDebug
-  ```
+## Why it exists
 
-### Build and Run iOS Application
+Git worktrees are powerful but inconvenient from raw CLI for day-to-day multi-tasking.
+BuildAndRun turns worktrees into a visual workflow so teams can:
 
-To build and run the development version of the iOS app, use the run configuration from the run widget
-in your IDE’s toolbar or open the [/iosApp](./iosApp) directory in Xcode and run it from there.
+- keep multiple feature/fix branches active in parallel
+- reduce branch-switch friction and mistakes
+- standardize “start -> code -> PR -> cleanup” flow
 
----
+## Architecture (DDD + Clean Architecture)
 
-Learn more about [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html)…
+```mermaid
+flowchart LR
+    UI["macOS SwiftUI (render + commands)"]
+    P["Shared Presentation"]
+    A["Shared Application Use Cases"]
+    D["Shared Domain Entities/Rules"]
+    Ports["Ports"]
+    Infra["macOS adapters (Git/FS/Prefs/Editor/System)"]
+
+    UI --> P
+    P --> A
+    A --> D
+    A --> Ports
+    Ports --> Infra
+```
+
+## Repository layout
+
+- `shared/` - core app logic (domain, use cases, presentation state, ports)
+- `macosApp/` - primary macOS app host and SwiftUI screens
+- `composeApp/` - Compose Multiplatform app module (Android target)
+- `iosApp/` - iOS host app scaffold
+- `imported/` - imported legacy/reference sources used during migration
+
+## Run locally
+
+### macOS app (main target)
+
+1. Open `macosApp/macosApp.xcodeproj` in Xcode.
+2. Run scheme `macosApp`.
+
+CLI build example:
+
+```bash
+xcodebuild -project macosApp/macosApp.xcodeproj \
+  -scheme macosApp \
+  -configuration Debug \
+  -sdk macosx \
+  CODE_SIGNING_ALLOWED=NO build
+```
+
+### Shared checks
+
+```bash
+./gradlew :shared:test
+./gradlew :shared:check
+./gradlew ktlintCheck
+```
+
+### Android module
+
+```bash
+./gradlew :composeApp:assembleDebug
+```
+
+## Current focus
+
+The project is in active KMP migration to keep non-UI business logic in `shared` and leave Swift as UI/wiring only.
