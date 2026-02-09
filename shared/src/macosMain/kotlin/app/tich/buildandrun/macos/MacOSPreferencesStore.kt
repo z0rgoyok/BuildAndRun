@@ -122,10 +122,7 @@ class MacOSPreferencesStore(
     }
 
     override var enabledEditorIds: Set<String>?
-        get() {
-            val rawValue = defaults.objectForKey(defaultName = PREFERENCE_KEY_ENABLED_EDITOR_IDS) ?: return null
-            return rawValue.asStringList().toSet()
-        }
+        get() = readStringListOrNull(key = PREFERENCE_KEY_ENABLED_EDITOR_IDS)?.toSet()
         set(value) {
             if (value == null) {
                 defaults.removeObjectForKey(defaultName = PREFERENCE_KEY_ENABLED_EDITOR_IDS)
@@ -242,15 +239,34 @@ class MacOSPreferencesStore(
     }
 
     private fun readStringList(key: String): List<String> {
-        val rawValue = defaults.objectForKey(defaultName = key) ?: return emptyList()
-        return rawValue.asStringList()
+        return readStringListOrNull(key = key).orEmpty()
+    }
+
+    private fun readStringListOrNull(key: String): List<String>? {
+        val rawValue = defaults.objectForKey(defaultName = key) ?: return null
+        val values = rawValue.asStringListOrNull()
+        if (values == null) {
+            defaults.removeObjectForKey(defaultName = key)
+        }
+        return values
     }
 
     private fun readStringMap(key: String): Map<String, String> {
         val rawValue = defaults.objectForKey(defaultName = key) ?: return emptyMap()
-        val map = rawValue as? Map<*, *> ?: error("Expected map for key: $key")
-        return map.mapKeys { entry -> entry.key as? String ?: error("Expected string key in map: $key") }
-            .mapValues { entry -> entry.value as? String ?: error("Expected string value in map: $key") }
+        val map =
+            (rawValue as? Map<*, *>) ?: return emptyMap<String, String>().also {
+                defaults.removeObjectForKey(defaultName = key)
+            }
+        val parsed = mutableMapOf<String, String>()
+        map.forEach { (entryKey, entryValue) ->
+            val parsedKey = entryKey as? String ?: return@forEach
+            val parsedValue = entryValue as? String ?: return@forEach
+            parsed[parsedKey] = parsedValue
+        }
+        if (parsed.size != map.size) {
+            writeStringMap(key = key, value = parsed)
+        }
+        return parsed
     }
 
     private fun writeStringMap(
@@ -265,9 +281,20 @@ class MacOSPreferencesStore(
 
     private fun readStringListMap(key: String): Map<String, List<String>> {
         val rawValue = defaults.objectForKey(defaultName = key) ?: return emptyMap()
-        val map = rawValue as? Map<*, *> ?: error("Expected map for key: $key")
-        return map.mapKeys { entry -> entry.key as? String ?: error("Expected string key in map: $key") }
-            .mapValues { entry -> (entry.value ?: error("Expected list value in map: $key")).asStringList() }
+        val map =
+            (rawValue as? Map<*, *>) ?: return emptyMap<String, List<String>>().also {
+                defaults.removeObjectForKey(defaultName = key)
+            }
+        val parsed = mutableMapOf<String, List<String>>()
+        map.forEach { (entryKey, entryValue) ->
+            val parsedKey = entryKey as? String ?: return@forEach
+            val parsedValue = entryValue?.asStringListOrNull() ?: return@forEach
+            parsed[parsedKey] = parsedValue
+        }
+        if (parsed.size != map.size) {
+            writeStringListMap(key = key, value = parsed)
+        }
+        return parsed
     }
 
     private fun writeStringListMap(
@@ -280,9 +307,13 @@ class MacOSPreferencesStore(
         )
     }
 
-    private fun Any.asStringList(): List<String> {
-        val values = this as? List<*> ?: error("Expected list value")
-        return values.map { value -> value as? String ?: error("Expected string list element") }
+    private fun Any.asStringListOrNull(): List<String>? {
+        val values = this as? List<*> ?: return null
+        val parsed = values.mapNotNull { value -> value as? String }
+        if (parsed.size != values.size) {
+            return null
+        }
+        return parsed
     }
 
     private fun Map<*, *>.requiredString(key: String): String = this[key] as? String ?: error("Expected string field: $key")

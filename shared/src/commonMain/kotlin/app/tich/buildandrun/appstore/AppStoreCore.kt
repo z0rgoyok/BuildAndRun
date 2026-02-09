@@ -1,9 +1,11 @@
 package app.tich.buildandrun.appstore
 
 import app.tich.buildandrun.domain.entities.*
+import app.tich.buildandrun.domain.failures.DomainFailureMapper
 import app.tich.buildandrun.presentation.errors.DomainFailureToUiErrorMapper
 import com.arkivanov.decompose.value.MutableValue
 import com.arkivanov.decompose.value.Value
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -12,7 +14,12 @@ internal class AppStoreCore(
     internal val graph: AppStoreGraph,
 ) {
     internal val failureToUiErrorMapper = DomainFailureToUiErrorMapper()
-    internal val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    internal val coroutineExceptionHandler =
+        CoroutineExceptionHandler { _, throwable ->
+            error = mapFailureToErrorState(DomainFailureMapper.fromThrowable(throwable))
+            publishState()
+        }
+    internal val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default + coroutineExceptionHandler)
     internal val mutableState = MutableValue(AppStore.State())
 
     internal var repositories: List<Repository> = emptyList()

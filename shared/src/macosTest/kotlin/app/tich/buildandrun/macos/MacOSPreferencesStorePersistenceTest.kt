@@ -11,12 +11,7 @@ import app.tich.buildandrun.testsupport.FakeGitClient
 import kotlinx.coroutines.runBlocking
 import platform.Foundation.NSUUID
 import platform.Foundation.NSUserDefaults
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 class MacOSPreferencesStorePersistenceTest {
     @Test
@@ -179,6 +174,31 @@ class MacOSPreferencesStorePersistenceTest {
                 assertNull(store.enabledEditorIds)
                 assertNull(store.lastSelectedRepositoryId)
                 assertNull(store.lastSelectedWorktreePath)
+            }
+        }
+
+    @Test
+    fun ignoresMalformedStructuredPreferencesValues() =
+        runBlocking {
+            withIsolatedDefaults { defaults ->
+                defaults.setObject(value = listOf(1, 2), forKey = "preferences.expandedRepositoryIds")
+                defaults.setObject(value = mapOf("invalid" to 1), forKey = "preferences.enabledEditorIds")
+                defaults.setObject(value = listOf(1, 2), forKey = "preferences.defaultCopyPatterns")
+                defaults.setObject(value = listOf("invalid"), forKey = "preferences.preferredEditorIds")
+                defaults.setObject(value = listOf("invalid"), forKey = "preferences.preferredBaseBranches")
+                defaults.setObject(value = listOf("invalid"), forKey = "preferences.worktreeBaseBranches")
+                defaults.setObject(value = mapOf("repo-1" to listOf(1, 2)), forKey = "preferences.repositoryCopyPatterns")
+
+                val store = MacOSPreferencesStore(defaults = defaults)
+                val repositoryId = RepositoryId(value = "repo-1")
+                assertEquals(emptySet(), store.expandedRepositoryIds)
+                assertNull(store.enabledEditorIds)
+                assertEquals(emptyList(), store.defaultCopyPatterns)
+                assertNull(store.preferredEditorId(forRepositoryId = repositoryId))
+                assertNull(store.preferredBaseBranch(forRepositoryId = repositoryId))
+                assertNull(store.worktreeBaseBranch(forWorktreePath = "/tmp/repo-1/wt"))
+                assertNull(store.copyPatterns(forRepositoryId = repositoryId))
+                assertEquals(emptyList(), store.effectiveCopyPatterns(forRepositoryId = repositoryId))
             }
         }
 
