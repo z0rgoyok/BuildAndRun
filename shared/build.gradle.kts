@@ -27,6 +27,8 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
+            implementation(projects.application)
+            implementation(projects.domain)
             implementation(libs.compose.components.resources)
             implementation(libs.decompose)
             implementation(libs.koin.core)

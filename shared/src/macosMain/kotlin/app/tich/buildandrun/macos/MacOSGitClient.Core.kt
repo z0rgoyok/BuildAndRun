@@ -1,9 +1,9 @@
 package app.tich.buildandrun.macos
 
-import app.tich.buildandrun.domain.entities.PRState
-import app.tich.buildandrun.domain.entities.PRStatus
-import app.tich.buildandrun.domain.entities.Worktree
-import app.tich.buildandrun.domain.errors.GitError
+import app.tich.buildandrun.domain.context.kanban.model.PRState
+import app.tich.buildandrun.domain.context.kanban.model.PRStatus
+import app.tich.buildandrun.domain.context.worktrees.model.Worktree
+import app.tich.buildandrun.domain.shared.error.GitError
 
 internal data class MacOSGitCommandResult(
     val exitCode: Int,

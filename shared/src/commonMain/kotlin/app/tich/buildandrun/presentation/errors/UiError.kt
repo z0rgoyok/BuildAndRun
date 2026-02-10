@@ -1,6 +1,6 @@
 package app.tich.buildandrun.presentation.errors
 
-import app.tich.buildandrun.domain.failures.DomainFailureCode
+import app.tich.buildandrun.domain.shared.failure.DomainFailureCode
 import app.tich.buildandrun.presentation.i18n.UiText
 
 data class UiError(

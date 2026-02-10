@@ -1,6 +1,6 @@
 package app.tich.buildandrun.macos
 
-import app.tich.buildandrun.application.ports.FileSystemHandling
+import app.tich.buildandrun.application.context.shared.port.FileSystemHandling
 import platform.Foundation.NSHomeDirectory
 
 class MacOSFileSystemHandling : FileSystemHandling {

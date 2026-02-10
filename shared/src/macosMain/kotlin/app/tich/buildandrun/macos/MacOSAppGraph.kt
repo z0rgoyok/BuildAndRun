@@ -1,20 +1,26 @@
 package app.tich.buildandrun.macos
 
-import app.tich.buildandrun.application.ports.*
-import app.tich.buildandrun.application.usecases.*
-import app.tich.buildandrun.appstore.AppStoreGraph
+import app.tich.buildandrun.application.context.repositories.port.PreferencesStore
+import app.tich.buildandrun.application.context.repositories.usecase.*
+import app.tich.buildandrun.application.context.shared.port.EditorOpening
+import app.tich.buildandrun.application.context.shared.port.FileSystemHandling
+import app.tich.buildandrun.application.context.shared.port.SystemOpening
+import app.tich.buildandrun.application.context.worktrees.port.GitClient
+import app.tich.buildandrun.application.context.worktrees.usecase.CreateWorktreeUseCase
+import app.tich.buildandrun.application.context.worktrees.usecase.LoadBranchesUseCase
+import app.tich.buildandrun.presentation.app.core.AppStoreGraph
 
-internal class MacOSAppGraph : AppStoreGraph {
-    override val preferencesStore: PreferencesStore = MacOSPreferencesStore()
-    override val gitClient: GitClient = MacOSGitClient()
-    override val fileSystem: FileSystemHandling = MacOSFileSystemHandling()
-    override val editorOpening: EditorOpening = MacOSEditorOpening()
-    override val systemOpening: SystemOpening = MacOSSystemOpening()
-    override val addRepositoryUseCase = AddRepositoryUseCase(gitClient = gitClient, preferencesStore = preferencesStore)
-    override val loadRepositoriesUseCase = LoadRepositoriesUseCase(preferencesStore = preferencesStore)
-    override val createWorktreeUseCase = CreateWorktreeUseCase(gitClient = gitClient)
-    override val removeRepositoryUseCase = RemoveRepositoryUseCase(preferencesStore = preferencesStore)
-    override val setRepositoryArchivedStateUseCase = SetRepositoryArchivedStateUseCase(preferencesStore = preferencesStore)
-    override val setRepositoryGroupUseCase = SetRepositoryGroupUseCase(preferencesStore = preferencesStore)
-    override val loadBranchesUseCase = LoadBranchesUseCase(gitClient = gitClient)
-}
+internal class MacOSAppGraph(
+    override val preferencesStore: PreferencesStore,
+    override val gitClient: GitClient,
+    override val fileSystem: FileSystemHandling,
+    override val editorOpening: EditorOpening,
+    override val systemOpening: SystemOpening,
+    override val addRepositoryUseCase: AddRepositoryUseCase,
+    override val loadRepositoriesUseCase: LoadRepositoriesUseCase,
+    override val createWorktreeUseCase: CreateWorktreeUseCase,
+    override val removeRepositoryUseCase: RemoveRepositoryUseCase,
+    override val setRepositoryArchivedStateUseCase: SetRepositoryArchivedStateUseCase,
+    override val setRepositoryGroupUseCase: SetRepositoryGroupUseCase,
+    override val loadBranchesUseCase: LoadBranchesUseCase,
+) : AppStoreGraph

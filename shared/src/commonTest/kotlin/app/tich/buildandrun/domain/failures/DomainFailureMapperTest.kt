@@ -1,7 +1,7 @@
-package app.tich.buildandrun.domain.failures
+package app.tich.buildandrun.domain.shared.failure
 
-import app.tich.buildandrun.domain.errors.AppError
-import app.tich.buildandrun.domain.errors.GitError
+import app.tich.buildandrun.domain.shared.error.AppError
+import app.tich.buildandrun.domain.shared.error.GitError
 import kotlin.test.Test
 
 class DomainFailureMapperTest {

@@ -1,9 +1,15 @@
 package app.tich.buildandrun.macos
 
-import app.tich.buildandrun.application.usecases.AddRepositoryUseCase
-import app.tich.buildandrun.application.usecases.LoadRepositoriesUseCase
-import app.tich.buildandrun.application.usecases.UseCaseResult
-import app.tich.buildandrun.domain.entities.*
+import app.tich.buildandrun.application.context.repositories.usecase.AddRepositoryUseCase
+import app.tich.buildandrun.application.context.repositories.usecase.LoadRepositoriesUseCase
+import app.tich.buildandrun.application.context.shared.usecase.UseCaseResult
+import app.tich.buildandrun.domain.context.copy.model.CopyPattern
+import app.tich.buildandrun.domain.context.kanban.model.KanbanColumnType
+import app.tich.buildandrun.domain.context.kanban.model.KanbanTask
+import app.tich.buildandrun.domain.context.kanban.model.KanbanTaskId
+import app.tich.buildandrun.domain.context.repositories.model.Repository
+import app.tich.buildandrun.domain.context.repositories.model.RepositoryId
+import app.tich.buildandrun.domain.context.worktrees.model.Worktree
 import app.tich.buildandrun.testsupport.FakeGitClient
 import kotlinx.coroutines.runBlocking
 import platform.Foundation.NSUUID

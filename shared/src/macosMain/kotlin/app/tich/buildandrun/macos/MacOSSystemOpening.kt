@@ -1,6 +1,6 @@
 package app.tich.buildandrun.macos
 
-import app.tich.buildandrun.application.ports.SystemOpening
+import app.tich.buildandrun.application.context.shared.port.SystemOpening
 
 class MacOSSystemOpening : SystemOpening {
     override fun openURL(url: String) {

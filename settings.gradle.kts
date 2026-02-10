@@ -10,3 +10,5 @@ pluginManagement {
 }
 
 include(":shared")
+include(":domain")
+include(":application")

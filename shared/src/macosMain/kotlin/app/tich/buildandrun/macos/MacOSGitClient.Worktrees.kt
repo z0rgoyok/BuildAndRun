@@ -1,8 +1,8 @@
 package app.tich.buildandrun.macos
 
-import app.tich.buildandrun.domain.entities.Worktree
-import app.tich.buildandrun.domain.entities.WorktreeStatus
-import app.tich.buildandrun.domain.errors.GitError
+import app.tich.buildandrun.domain.context.worktrees.model.Worktree
+import app.tich.buildandrun.domain.context.worktrees.model.WorktreeStatus
+import app.tich.buildandrun.domain.shared.error.GitError
 
 internal suspend fun macOsGitListWorktrees(atRepoPath: String): List<Worktree> {
     val repoPath = macOsGitNormalizePath(atRepoPath)

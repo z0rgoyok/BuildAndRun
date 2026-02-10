@@ -1,8 +1,8 @@
 package app.tich.buildandrun.macos
 
-import app.tich.buildandrun.application.ports.EditorOpening
-import app.tich.buildandrun.domain.entities.Editor
-import app.tich.buildandrun.domain.errors.AppError
+import app.tich.buildandrun.application.context.shared.port.EditorOpening
+import app.tich.buildandrun.domain.context.editors.model.Editor
+import app.tich.buildandrun.domain.shared.error.AppError
 
 class MacOSEditorOpening(
     private val executeCommand: (List<String>) -> Pair<Int, String> = { arguments ->
@@ -26,7 +26,7 @@ class MacOSEditorOpening(
                 isCommandAvailable(command = withEditor.command) ->
                     listOf(withEditor.command, targetPath)
                 withEditor.appName != null ->
-                    listOf("open", "-a", withEditor.appName, targetPath)
+                    listOf("open", "-a", withEditor.appName!!, targetPath)
                 else ->
                     listOf(withEditor.command, targetPath)
             }

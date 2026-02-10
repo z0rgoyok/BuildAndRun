@@ -1,7 +1,11 @@
 package app.tich.buildandrun.testsupport
 
-import app.tich.buildandrun.application.ports.PreferencesStore
-import app.tich.buildandrun.domain.entities.*
+import app.tich.buildandrun.application.context.repositories.port.PreferencesStore
+import app.tich.buildandrun.domain.context.copy.model.CopyPattern
+import app.tich.buildandrun.domain.context.kanban.model.KanbanTask
+import app.tich.buildandrun.domain.context.repositories.model.Repository
+import app.tich.buildandrun.domain.context.repositories.model.RepositoryGroup
+import app.tich.buildandrun.domain.context.repositories.model.RepositoryId
 
 class FakePreferencesStore(
     initialRepositories: List<Repository> = emptyList(),

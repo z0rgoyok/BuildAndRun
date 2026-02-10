@@ -1,7 +1,7 @@
 package app.tich.buildandrun.macos
 
-import app.tich.buildandrun.application.ports.GitClient
-import app.tich.buildandrun.domain.entities.WorktreeStatus
+import app.tich.buildandrun.application.context.worktrees.port.GitClient
+import app.tich.buildandrun.domain.context.worktrees.model.WorktreeStatus
 
 class MacOSGitClient : GitClient {
     override suspend fun getRepositoryRoot(atPath: String): String = macOsGitGetRepositoryRoot(atPath = atPath)

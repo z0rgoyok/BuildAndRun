@@ -1,6 +1,6 @@
 package app.tich.buildandrun.macos
 
-import app.tich.buildandrun.domain.errors.GitError
+import app.tich.buildandrun.domain.shared.error.GitError
 
 internal suspend fun macOsGitPush(
     atWorktreePath: String,

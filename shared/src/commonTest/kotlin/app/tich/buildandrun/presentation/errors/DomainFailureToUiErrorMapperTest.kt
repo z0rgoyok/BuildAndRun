@@ -1,7 +1,7 @@
 package app.tich.buildandrun.presentation.errors
 
-import app.tich.buildandrun.domain.failures.DomainFailure
-import app.tich.buildandrun.domain.failures.DomainFailureCode
+import app.tich.buildandrun.domain.shared.failure.DomainFailure
+import app.tich.buildandrun.domain.shared.failure.DomainFailureCode
 import app.tich.buildandrun.resources.Res
 import app.tich.buildandrun.resources.git_worktree_already_exists
 import kotlin.test.Test

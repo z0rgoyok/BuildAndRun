@@ -1,6 +1,8 @@
-package app.tich.buildandrun.application.usecases
+package app.tich.buildandrun.application.context.worktrees.usecase
 
-import app.tich.buildandrun.domain.failures.DomainFailureCode
+import app.tich.buildandrun.application.context.shared.usecase.UseCaseResult
+
+import app.tich.buildandrun.domain.shared.failure.DomainFailureCode
 import app.tich.buildandrun.testsupport.FakeGitClient
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test

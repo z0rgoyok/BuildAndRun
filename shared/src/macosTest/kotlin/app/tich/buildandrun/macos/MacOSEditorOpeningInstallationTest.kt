@@ -1,6 +1,6 @@
 package app.tich.buildandrun.macos
 
-import app.tich.buildandrun.domain.entities.Editor
+import app.tich.buildandrun.domain.context.editors.model.Editor
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse

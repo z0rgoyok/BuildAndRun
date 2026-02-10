@@ -1,8 +1,9 @@
-package app.tich.buildandrun.application.usecases
+package app.tich.buildandrun.application.context.repositories.usecase
 
-import app.tich.buildandrun.domain.entities.Repository
-import app.tich.buildandrun.domain.entities.Worktree
-import app.tich.buildandrun.domain.failures.DomainFailureCode
+import app.tich.buildandrun.application.context.shared.usecase.UseCaseResult
+import app.tich.buildandrun.domain.context.repositories.model.Repository
+import app.tich.buildandrun.domain.context.worktrees.model.Worktree
+import app.tich.buildandrun.domain.shared.failure.DomainFailureCode
 import app.tich.buildandrun.testsupport.FakeGitClient
 import app.tich.buildandrun.testsupport.FakePreferencesStore
 import kotlinx.coroutines.runBlocking
