@@ -87,7 +87,6 @@ struct TaskEditorView: View {
                 description = task.description_ ?? ""
                 columnId = task.columnId
             }
-            isTitleFocused = true
         }
     }
 
