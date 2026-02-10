@@ -10,31 +10,29 @@ struct SidebarSectionHeader: View {
     let onDelete: () -> Void
 
     var body: some View {
-        Button {
+        HStack(spacing: DS.Spacing.xs) {
+            Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(DS.Colors.textTertiary)
+                .frame(width: DS.Sizes.treeIconSize, height: DS.Sizes.treeIconSize)
+
+            Text(groupName.uppercased())
+                .font(DS.Typography.sectionHeader)
+                .foregroundStyle(DS.Colors.textTertiary)
+                .tracking(0.5)
+                .lineLimit(1)
+
+            Spacer()
+        }
+        .padding(.horizontal, DS.Spacing.md)
+        .padding(.vertical, DS.Spacing.sm)
+        .frame(height: DS.Sizes.treeRowHeight)
+        .contentShape(Rectangle())
+        .onTapGesture {
             withAnimation(DS.Animation.quick) {
                 isExpanded.toggle()
             }
-        } label: {
-            HStack(spacing: DS.Spacing.xs) {
-                Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
-                    .font(.system(size: 10, weight: .semibold))
-                    .foregroundStyle(DS.Colors.textTertiary)
-                    .frame(width: DS.Sizes.treeIconSize, height: DS.Sizes.treeIconSize)
-
-                Text(groupName.uppercased())
-                    .font(DS.Typography.sectionHeader)
-                    .foregroundStyle(DS.Colors.textTertiary)
-                    .tracking(0.5)
-                    .lineLimit(1)
-
-                Spacer()
-            }
-            .padding(.horizontal, DS.Spacing.md)
-            .padding(.vertical, DS.Spacing.sm)
-            .frame(height: DS.Sizes.treeRowHeight)
-            .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
         .padding(.horizontal, DS.Spacing.xs)
         .padding(.top, DS.Spacing.xs)
         .onDrag {

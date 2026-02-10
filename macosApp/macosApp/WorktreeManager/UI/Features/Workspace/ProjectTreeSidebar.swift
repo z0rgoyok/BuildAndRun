@@ -121,6 +121,7 @@ struct ProjectTreeSidebar: View {
                         onCopySettings: { root.presentSidebarCopySettings(for: repo) },
                         onNewGroupForRepository: { presentNewGroupAlert(forRepositoryId: $0) }
                     )
+                    .padding(.leading, DS.Spacing.sm)
                 }
             }
         } else {
