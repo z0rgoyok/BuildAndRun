@@ -55,13 +55,13 @@ struct ProjectTreeSidebar: View {
             ToolbarItem(placement: .primaryAction) {
                 Button {
                     withAnimation(DS.Animation.quick) {
-                        root.toggleSidebarAllRepositoriesExpansion(selection: selection)
+                        root.toggleVisibleSidebarRepositoriesExpansion(selection: selection)
                     }
                 } label: {
-                    Image(systemName: root.areAllSidebarRepositoriesExpanded ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right")
+                    Image(systemName: root.areVisibleSidebarRepositoriesExpanded() ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right")
                 }
                 .help(collapseExpandHelpText)
-                .disabled(allRepositoryIds.isEmpty)
+                .disabled(!root.hasVisibleSidebarRepositories())
             }
 
             ToolbarItem(placement: .primaryAction) {
@@ -124,7 +124,7 @@ struct ProjectTreeSidebar: View {
                 )
             )
 
-            if !root.sidebarCollapsedGroupIds.contains(groupId) {
+            if !root.isSidebarGroupCollapsed(groupId: groupId) {
                 ForEach(section.repositories, id: \.id) { repo in
                     ProjectTreeNode(
                         repository: repo,
@@ -159,12 +159,8 @@ struct ProjectTreeSidebar: View {
         }
     }
 
-    private var allRepositoryIds: Set<String> {
-        Set(root.state.repositories.map(\.id))
-    }
-
     private var collapseExpandHelpText: String {
-        if root.areAllSidebarRepositoriesExpanded {
+        if root.areVisibleSidebarRepositoriesExpanded() {
             return root.store.sidebarLabels.collapseAll
         }
         return root.store.sidebarLabels.expandAll
@@ -220,7 +216,7 @@ struct ProjectTreeSidebar: View {
 
     private func groupExpansionBinding(for groupId: String) -> Binding<Bool> {
         Binding(
-            get: { !root.sidebarCollapsedGroupIds.contains(groupId) },
+            get: { !root.isSidebarGroupCollapsed(groupId: groupId) },
             set: { expanded in
                 root.setSidebarGroupCollapsed(groupId: groupId, collapsed: !expanded)
             }
@@ -253,7 +249,7 @@ struct ProjectTreeSidebar: View {
 
     private func expansionBinding(for repo: AppStore.RepositoryItem) -> Binding<Bool> {
         Binding(
-            get: { root.sidebarExpandedRepositoryIds.contains(repo.id) },
+            get: { root.isSidebarRepositoryExpanded(repositoryId: repo.id) },
             set: { expanded in
                 root.setSidebarRepositoryExpanded(repositoryId: repo.id, expanded: expanded)
             }

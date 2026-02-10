@@ -42,6 +42,8 @@ internal class AppStoreCore(
     internal var createWorktreeState = AppStore.CreateWorktreeState()
     internal var selectedRepositoryId: String? = null
     internal var selectedWorktreePath: String? = null
+    internal var expandedRepositoryIds: Set<String> = graph.preferencesStore.expandedRepositoryIds
+    internal var collapsedGroupIds: Set<String> = graph.preferencesStore.collapsedGroupIds
     internal var activeChild: AppChild = AppChild.WORKSPACE
     internal var activeSheet: AppSheetState? = null
     internal var error: AppStore.ErrorState? = null

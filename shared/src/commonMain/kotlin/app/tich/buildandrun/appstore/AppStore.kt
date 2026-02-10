@@ -275,17 +275,39 @@ class AppStore internal constructor(
 
     fun resolveNewTaskIn(column: String): String = resolveNewTaskInText(column = column)
 
-    fun loadExpandedRepositoryIds(): Set<String> = core.graph.preferencesStore.expandedRepositoryIds
-
-    fun setExpandedRepositoryIds(ids: Set<String>) {
-        core.graph.preferencesStore.expandedRepositoryIds = ids
+    fun onSetSidebarRepositoryExpanded(
+        repositoryId: String,
+        expanded: Boolean,
+    ) {
+        core.onSetSidebarRepositoryExpanded(repositoryId = repositoryId, expanded = expanded)
     }
 
-    fun loadCollapsedGroupIds(): Set<String> = core.graph.preferencesStore.collapsedGroupIds
-
-    fun setCollapsedGroupIds(ids: Set<String>) {
-        core.graph.preferencesStore.collapsedGroupIds = ids
+    fun onSetSidebarGroupCollapsed(
+        groupId: String,
+        collapsed: Boolean,
+    ) {
+        core.onSetSidebarGroupCollapsed(groupId = groupId, collapsed = collapsed)
     }
+
+    fun onToggleVisibleSidebarRepositoriesExpansion(
+        includeArchivedRepositories: Boolean,
+        preferredRepositoryId: String?,
+    ) {
+        core.onToggleVisibleSidebarRepositoriesExpansion(
+            includeArchivedRepositories = includeArchivedRepositories,
+            preferredRepositoryId = preferredRepositoryId,
+        )
+    }
+
+    fun onSyncSidebarSelectionExpansion(repositoryId: String?) {
+        core.onSyncSidebarSelectionExpansion(repositoryId = repositoryId)
+    }
+
+    fun areVisibleSidebarRepositoriesExpanded(includeArchivedRepositories: Boolean): Boolean =
+        core.areVisibleSidebarRepositoriesExpanded(includeArchivedRepositories = includeArchivedRepositories)
+
+    fun hasVisibleSidebarRepositories(includeArchivedRepositories: Boolean): Boolean =
+        core.hasVisibleSidebarRepositories(includeArchivedRepositories = includeArchivedRepositories)
 
     fun onReorderRepositoryGroups(orderedGroupIds: List<String>) {
         core.onReorderRepositoryGroups(orderedGroupIds = orderedGroupIds)
@@ -329,6 +351,8 @@ class AppStore internal constructor(
         val loadingMessage: String? = null,
         val repositories: List<RepositoryItem> = emptyList(),
         val sidebarSections: List<SidebarSection> = emptyList(),
+        val expandedRepositoryIds: Set<String> = emptySet(),
+        val collapsedGroupIds: Set<String> = emptySet(),
         val repositoryGroups: List<RepositoryGroupItem> = emptyList(),
         val selectedRepositoryId: String? = null,
         val selectedWorktreePath: String? = null,

@@ -27,6 +27,8 @@ internal fun AppStoreCore.publishState() {
             loadingMessage = activityCenter.currentGlobalMessage,
             repositories = repositoryItems,
             sidebarSections = buildSidebarSections(repositoryItems),
+            expandedRepositoryIds = expandedRepositoryIds,
+            collapsedGroupIds = collapsedGroupIds,
             repositoryGroups = buildRepositoryGroupItems(),
             selectedRepositoryId = selectedRepositoryId,
             selectedWorktreePath = selectedWorktreePath,

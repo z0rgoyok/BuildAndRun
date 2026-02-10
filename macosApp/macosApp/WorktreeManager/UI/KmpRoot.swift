@@ -32,8 +32,6 @@ final class KmpRoot: ObservableObject {
     }
 
     @Published private(set) var state: AppStore.State
-    @Published var sidebarExpandedRepositoryIds: Set<String> = []
-    @Published var sidebarCollapsedGroupIds: Set<String> = []
     @Published var isSidebarArchivedSectionExpanded: Bool = false
     @Published var sidebarCopySettingsTarget: SidebarCopySettingsTarget?
 
@@ -44,8 +42,6 @@ final class KmpRoot: ObservableObject {
     init(store: AppStore = AppStoreFactory.shared.create()) {
         self.store = store
         self.state = store.state.value
-        self.sidebarExpandedRepositoryIds = store.loadExpandedRepositoryIds()
-        self.sidebarCollapsedGroupIds = store.loadCollapsedGroupIds()
 
         self.cancellation =
             store.state.subscribe { [weak self] nextState in
@@ -144,36 +140,32 @@ final class KmpRoot: ObservableObject {
         return selectedRepository?.worktrees.first { $0.path == selectedPath }
     }
 
-    var areAllSidebarRepositoriesExpanded: Bool {
-        let allRepositoryIds = Set(state.repositories.map(\.id))
-        return !allRepositoryIds.isEmpty && allRepositoryIds.isSubset(of: sidebarExpandedRepositoryIds)
+    func isSidebarRepositoryExpanded(repositoryId: String) -> Bool {
+        state.expandedRepositoryIds.contains(repositoryId)
+    }
+
+    func isSidebarGroupCollapsed(groupId: String) -> Bool {
+        state.collapsedGroupIds.contains(groupId)
     }
 
     func setSidebarRepositoryExpanded(repositoryId: String, expanded: Bool) {
-        if expanded {
-            sidebarExpandedRepositoryIds.insert(repositoryId)
-        } else {
-            sidebarExpandedRepositoryIds.remove(repositoryId)
-        }
-        store.setExpandedRepositoryIds(ids: sidebarExpandedRepositoryIds)
+        store.onSetSidebarRepositoryExpanded(repositoryId: repositoryId, expanded: expanded)
     }
 
-    func toggleSidebarAllRepositoriesExpansion(selection: SidebarSelection?) {
-        let allRepositoryIds = Set(state.repositories.map(\.id))
-        guard !allRepositoryIds.isEmpty else { return }
+    func toggleVisibleSidebarRepositoriesExpansion(selection: SidebarSelection?) {
+        let preferredRepositoryId = selection?.repositoryId ?? state.selectedRepositoryId
+        store.onToggleVisibleSidebarRepositoriesExpansion(
+            includeArchivedRepositories: isSidebarArchivedSectionExpanded,
+            preferredRepositoryId: preferredRepositoryId
+        )
+    }
 
-        if areAllSidebarRepositoriesExpanded {
-            sidebarExpandedRepositoryIds = []
-            if let selectedRepositoryId = selection?.repositoryId, !selectedRepositoryId.isEmpty {
-                sidebarExpandedRepositoryIds.insert(selectedRepositoryId)
-            } else if let selectedRepositoryId = state.selectedRepositoryId, !selectedRepositoryId.isEmpty {
-                sidebarExpandedRepositoryIds.insert(selectedRepositoryId)
-            }
-        } else {
-            sidebarExpandedRepositoryIds.formUnion(allRepositoryIds)
-        }
+    func areVisibleSidebarRepositoriesExpanded() -> Bool {
+        store.areVisibleSidebarRepositoriesExpanded(includeArchivedRepositories: isSidebarArchivedSectionExpanded)
+    }
 
-        store.setExpandedRepositoryIds(ids: sidebarExpandedRepositoryIds)
+    func hasVisibleSidebarRepositories() -> Bool {
+        store.hasVisibleSidebarRepositories(includeArchivedRepositories: isSidebarArchivedSectionExpanded)
     }
 
     func syncSidebarSelectionExpansion(selection: SidebarSelection?) {
@@ -181,8 +173,7 @@ final class KmpRoot: ObservableObject {
         let selectedRepositoryId = currentSelection.repositoryId
         guard !selectedRepositoryId.isEmpty else { return }
 
-        sidebarExpandedRepositoryIds.insert(selectedRepositoryId)
-        store.setExpandedRepositoryIds(ids: sidebarExpandedRepositoryIds)
+        store.onSyncSidebarSelectionExpansion(repositoryId: selectedRepositoryId)
 
         let selectedRepository = state.repositories.first { $0.id == selectedRepositoryId }
         if selectedRepository?.isArchived == true {
@@ -191,12 +182,7 @@ final class KmpRoot: ObservableObject {
     }
 
     func setSidebarGroupCollapsed(groupId: String, collapsed: Bool) {
-        if collapsed {
-            sidebarCollapsedGroupIds.insert(groupId)
-        } else {
-            sidebarCollapsedGroupIds.remove(groupId)
-        }
-        store.setCollapsedGroupIds(ids: sidebarCollapsedGroupIds)
+        store.onSetSidebarGroupCollapsed(groupId: groupId, collapsed: collapsed)
     }
 
     func presentSidebarCopySettings(for repository: AppStore.RepositoryItem) {

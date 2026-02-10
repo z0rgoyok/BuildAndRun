@@ -28,8 +28,8 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(libs.compose.components.resources)
-            implementation("com.arkivanov.decompose:decompose:3.4.0")
-            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
+            implementation(libs.decompose)
+            implementation(libs.kotlinx.coroutines.core)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
