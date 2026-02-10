@@ -2,12 +2,7 @@ package app.tich.buildandrun.presentation.app.context.texts.impl
 
 import app.tich.buildandrun.presentation.i18n.UiText
 import app.tich.buildandrun.presentation.i18n.UiTextLocalizer
-import app.tich.buildandrun.resources.Res
-import app.tich.buildandrun.resources.branch_conflict_message
-import app.tich.buildandrun.resources.branch_conflict_use_existing_detail
-import app.tich.buildandrun.resources.detail_behind
-import app.tich.buildandrun.resources.detail_new_task_in
-import app.tich.buildandrun.resources.detail_to_push
+import app.tich.buildandrun.resources.*
 
 internal fun resolveBranchConflictMessageText(branch: String): String =
     UiTextLocalizer.resolve(UiText(resource = Res.string.branch_conflict_message, args = listOf(branch)))

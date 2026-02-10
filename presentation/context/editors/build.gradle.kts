@@ -10,7 +10,8 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            implementation(projects.domain)
+            implementation(projects.domain.shared)
+            implementation(projects.domain.context.editors)
             implementation(projects.presentation.common)
             implementation(projects.presentation.resources)
             implementation(projects.presentation.runtime)

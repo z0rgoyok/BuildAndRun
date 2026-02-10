@@ -10,8 +10,15 @@ pluginManagement {
 }
 
 include(":bridge")
-include(":domain")
-include(":application")
+include(":domain:shared")
+include(":domain:context:copy")
+include(":domain:context:editors")
+include(":domain:context:kanban")
+include(":domain:context:repositories")
+include(":domain:context:worktrees")
+include(":application:shared")
+include(":application:context:repositories")
+include(":application:context:worktrees")
 include(":presentation:resources")
 include(":presentation:common")
 include(":presentation:navigation")

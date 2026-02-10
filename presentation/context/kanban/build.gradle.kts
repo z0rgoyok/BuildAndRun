@@ -10,7 +10,7 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            implementation(projects.domain)
+            implementation(projects.domain.context.kanban)
             implementation(projects.presentation.common)
             implementation(projects.presentation.resources)
             implementation(projects.presentation.runtime)

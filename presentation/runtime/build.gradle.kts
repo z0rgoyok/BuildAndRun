@@ -10,8 +10,15 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            implementation(projects.application)
-            implementation(projects.domain)
+            implementation(projects.application.shared)
+            implementation(projects.application.context.repositories)
+            implementation(projects.application.context.worktrees)
+            implementation(projects.domain.shared)
+            implementation(projects.domain.context.copy)
+            implementation(projects.domain.context.editors)
+            implementation(projects.domain.context.kanban)
+            implementation(projects.domain.context.repositories)
+            implementation(projects.domain.context.worktrees)
             implementation(projects.presentation.common)
             implementation(projects.presentation.resources)
             implementation(libs.decompose)

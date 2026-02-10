@@ -1,10 +1,6 @@
 package app.tich.buildandrun.macos
 
-import kotlinx.cinterop.ByteVar
-import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.cinterop.allocArray
-import kotlinx.cinterop.memScoped
-import kotlinx.cinterop.toKString
+import kotlinx.cinterop.*
 import platform.posix.fgets
 import platform.posix.pclose
 import platform.posix.popen
