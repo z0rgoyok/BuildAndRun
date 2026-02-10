@@ -1,142 +1,183 @@
 package app.tich.buildandrun.presentation.app.context.worktrees.impl
 
+import app.tich.buildandrun.application.context.repositories.port.PreferencesStore
+import app.tich.buildandrun.application.context.shared.port.EditorOpening
 import app.tich.buildandrun.application.context.shared.usecase.UseCaseResult
+import app.tich.buildandrun.application.context.worktrees.port.GitClient
+import app.tich.buildandrun.application.context.worktrees.usecase.CopyConfiguredFilesUseCase
 import app.tich.buildandrun.application.context.worktrees.usecase.CreateWorktreeUseCase
+import app.tich.buildandrun.application.context.worktrees.usecase.LoadBranchesUseCase
+import app.tich.buildandrun.domain.shared.failure.DomainFailureMapper
 import app.tich.buildandrun.presentation.app.AppWorktreesFeature
 import app.tich.buildandrun.presentation.app.SuccessState
-import app.tich.buildandrun.presentation.app.context.worktrees.impl.usecase.CopyConfiguredFilesUseCase
-import app.tich.buildandrun.presentation.app.context.worktrees.impl.usecase.LoadSelectedRepositoryBranchesUseCase
+import app.tich.buildandrun.presentation.app.context.state.MessagesContextState
+import app.tich.buildandrun.presentation.app.context.state.RepositoriesContextState
+import app.tich.buildandrun.presentation.app.context.state.WorktreesContextState
 import app.tich.buildandrun.presentation.app.core.*
 import app.tich.buildandrun.presentation.i18n.UiText
 import app.tich.buildandrun.resources.Res
+import app.tich.buildandrun.resources.loading_refreshing
 import app.tich.buildandrun.resources.screen_create_worktree_success
 import kotlinx.coroutines.launch
 
 class AppWorktreesService(
-    private val runtime: AppWiring,
-    private val loadSelectedRepositoryBranchesUseCase: LoadSelectedRepositoryBranchesUseCase,
+    private val executionScope: AppExecutionScope,
+    private val loadingRunner: AppLoadingRunner,
+    private val stateRefresher: AppStateRefresher,
+    private val errorMapper: AppErrorStateMapper,
+    private val repositoriesState: RepositoriesContextState,
+    private val worktreesState: WorktreesContextState,
+    private val messagesState: MessagesContextState,
+    private val gitClient: GitClient,
+    private val preferencesStore: PreferencesStore,
+    private val editorOpening: EditorOpening,
+    private val createWorktreeUseCase: CreateWorktreeUseCase,
+    private val loadBranchesUseCase: LoadBranchesUseCase,
     private val copyConfiguredFilesUseCase: CopyConfiguredFilesUseCase,
-) : AppWorktreesFeature {
+) : AppWorktreesFeature, WorktreesOperations {
     override fun onSelectWorktree(worktreePath: String?) {
-        runtime.worktreesState.selectedWorktreePath = worktreePath
-        runtime.persistSelection()
-        runtime.clearMessages()
-        runtime.publishState()
+        worktreesState.selectedWorktreePath = worktreePath
+        stateRefresher.persistSelection()
+        messagesState.clear()
+        stateRefresher.publishAll()
     }
 
     override fun onRefreshSelectedRepository() {
-        val repositoryPath = runtime.selectedRepository()?.path ?: return
-        runtime.clearMessages()
-        runtime.scope.launch { runtime.refreshInstalledEditors() }
-        runtime.loadWorktreesForRepository(path = repositoryPath)
-        loadSelectedRepositoryBranchesUseCase.execute()
+        val repositoryPath = repositoriesState.selectedRepository()?.path ?: return
+        messagesState.clear()
+        executionScope.scope.launch { stateRefresher.refreshInstalledEditors(editorOpening = editorOpening) }
+        loadWorktreesForRepository(path = repositoryPath)
+        loadSelectedRepositoryBranches()
     }
 
     override fun onRefreshWorktreeStatus(worktreePath: String) {
-        runtime.onRefreshWorktreeStatus(worktreePath = worktreePath)
+        val normalizedPath = normalizePath(worktreePath)
+        if (normalizedPath.isBlank()) {
+            return
+        }
+        if (worktreesState.worktreeStatusLoadingPaths.contains(normalizedPath)) {
+            return
+        }
+        executionScope.scope.launch {
+            worktreesState.worktreeStatusLoadingPaths += normalizedPath
+            stateRefresher.publishAll()
+            runCatching {
+                gitClient.getWorktreeStatus(atWorktreePath = normalizedPath)
+            }.onSuccess { status ->
+                worktreesState.worktreeStatusByPath[normalizedPath] = status
+            }.onFailure { throwable ->
+                val domainFailure = DomainFailureMapper.fromThrowable(throwable)
+                messagesState.error = errorMapper.mapFailureToErrorState(domainFailure)
+            }
+            worktreesState.worktreeStatusLoadingPaths -= normalizedPath
+            stateRefresher.publishAll()
+        }
     }
 
     override fun onCreateWorktreeBranchChanged(value: String) {
-        val selectedRepositoryPath = runtime.selectedRepository()?.path.orEmpty()
+        val selectedRepositoryPath = repositoriesState.selectedRepository()?.path.orEmpty()
         val normalizedBranch = value.trim()
-        val currentWorktreePath = runtime.worktreesState.createWorktreeState.worktreePathInput
+        val currentWorktreePath = worktreesState.createWorktreeState.worktreePathInput
         val updatedWorktreePath =
             if (currentWorktreePath.isBlank() && normalizedBranch.isNotBlank() && selectedRepositoryPath.isNotBlank()) {
                 suggestWorktreePath(repositoryPath = selectedRepositoryPath, branch = normalizedBranch)
             } else {
                 currentWorktreePath
             }
-        runtime.worktreesState.createWorktreeState =
-            runtime.worktreesState.createWorktreeState.copy(
+        worktreesState.createWorktreeState =
+            worktreesState.createWorktreeState.copy(
                 branchInput = value,
                 worktreePathInput = updatedWorktreePath,
                 createdWorktreePath = null,
             )
-        runtime.clearMessages()
-        runtime.publishState()
+        messagesState.clear()
+        stateRefresher.publishAll()
     }
 
     override fun onCreateWorktreePathChanged(value: String) {
-        runtime.worktreesState.createWorktreeState =
-            runtime.worktreesState.createWorktreeState.copy(
+        worktreesState.createWorktreeState =
+            worktreesState.createWorktreeState.copy(
                 worktreePathInput = value,
                 createdWorktreePath = null,
             )
-        runtime.clearMessages()
-        runtime.publishState()
+        messagesState.clear()
+        stateRefresher.publishAll()
     }
 
     override fun onCreateWorktreeBaseBranchChanged(value: String) {
-        runtime.worktreesState.createWorktreeState = runtime.worktreesState.createWorktreeState.copy(baseBranchInput = value)
-        runtime.clearMessages()
-        runtime.publishState()
+        worktreesState.createWorktreeState = worktreesState.createWorktreeState.copy(baseBranchInput = value)
+        messagesState.clear()
+        stateRefresher.publishAll()
     }
 
     override fun onCreateWorktreeCreateBranchChanged(value: Boolean) {
-        runtime.worktreesState.createWorktreeState = runtime.worktreesState.createWorktreeState.copy(createBranch = value)
-        runtime.clearMessages()
-        runtime.publishState()
+        worktreesState.createWorktreeState = worktreesState.createWorktreeState.copy(createBranch = value)
+        messagesState.clear()
+        stateRefresher.publishAll()
     }
 
     override fun onCreateWorktree() {
-        if (runtime.worktreesState.createWorktreeState.isSubmitting || runtime.activityCenter.isGlobalActive) {
+        if (worktreesState.createWorktreeState.isSubmitting || stateRefresher.isGlobalActive()) {
             return
         }
-        val repositoryPath = runtime.selectedRepository()?.path ?: return
-        runtime.scope.launch {
-            val repository = runtime.selectedRepository()
+        val repositoryPath = repositoriesState.selectedRepository()?.path ?: return
+        executionScope.scope.launch {
+            val repository = repositoriesState.selectedRepository()
             if (repository == null) {
-                runtime.worktreesState.createWorktreeState = runtime.worktreesState.createWorktreeState.copy(isSubmitting = false)
+                worktreesState.createWorktreeState = worktreesState.createWorktreeState.copy(isSubmitting = false)
                 return@launch
             }
-            runtime.worktreesState.createWorktreeState =
-                runtime.worktreesState.createWorktreeState.copy(
+            worktreesState.createWorktreeState =
+                worktreesState.createWorktreeState.copy(
                     isSubmitting = true,
                     createdWorktreePath = null,
                 )
-            runtime.clearMessages()
-            runtime.publishState()
+            messagesState.clear()
+            stateRefresher.publishAll()
             when (
                 val result =
-                    runtime.graph.createWorktreeUseCase.execute(
+                    createWorktreeUseCase.execute(
                         input =
                             CreateWorktreeUseCase.Input(
                                 repositoryPath = repositoryPath,
-                                branch = runtime.worktreesState.createWorktreeState.branchInput,
-                                worktreePath = runtime.worktreesState.createWorktreeState.worktreePathInput,
-                                createBranch = runtime.worktreesState.createWorktreeState.createBranch,
-                                baseBranch = runtime.worktreesState.createWorktreeState.baseBranchInput,
+                                branch = worktreesState.createWorktreeState.branchInput,
+                                worktreePath = worktreesState.createWorktreeState.worktreePathInput,
+                                createBranch = worktreesState.createWorktreeState.createBranch,
+                                baseBranch = worktreesState.createWorktreeState.baseBranchInput,
                             ),
                     )
             ) {
                 is UseCaseResult.Success -> {
-                    val preferredBaseBranch = runtime.worktreesState.createWorktreeState.baseBranchInput.trim().ifBlank { null }
+                    val preferredBaseBranch = worktreesState.createWorktreeState.baseBranchInput.trim().ifBlank { null }
                     preferredBaseBranch?.let { baseBranch ->
-                        runtime.graph.preferencesStore.setPreferredBaseBranch(
+                        preferencesStore.setPreferredBaseBranch(
                             branch = baseBranch,
                             forRepositoryId = repository.id,
                         )
-                        runtime.graph.preferencesStore.setWorktreeBaseBranch(
+                        preferencesStore.setWorktreeBaseBranch(
                             branch = baseBranch,
                             forWorktreePath = result.value.createdWorktree.path,
                         )
                     }
                     copyConfiguredFilesUseCase.execute(
-                        repositoryPath = repository.path,
-                        createdWorktreePath = result.value.createdWorktree.path,
-                        repositoryId = repository.id.value,
+                        input =
+                            CopyConfiguredFilesUseCase.Input(
+                                repositoryPath = repository.path,
+                                createdWorktreePath = result.value.createdWorktree.path,
+                                repositoryId = repository.id.value,
+                            ),
                     )
-                    val worktrees = runtime.graph.gitClient.listWorktrees(atRepoPath = repositoryPath)
-                    runtime.worktreesState.worktreesByRepositoryPath[repositoryPath] = worktrees
-                    runtime.worktreesState.selectedWorktreePath = result.value.createdWorktree.path
-                    runtime.persistSelection()
-                    runtime.worktreesState.createWorktreeState =
-                        runtime.worktreesState.createWorktreeState.copy(
+                    val worktrees = gitClient.listWorktrees(atRepoPath = repositoryPath)
+                    worktreesState.worktreesByRepositoryPath[repositoryPath] = worktrees
+                    worktreesState.selectedWorktreePath = result.value.createdWorktree.path
+                    stateRefresher.persistSelection()
+                    worktreesState.createWorktreeState =
+                        worktreesState.createWorktreeState.copy(
                             isSubmitting = false,
                             createdWorktreePath = result.value.createdWorktree.path,
                         )
-                    loadSelectedRepositoryBranchesUseCase.execute()
-                    runtime.messagesState.success =
+                    loadSelectedRepositoryBranches()
+                    messagesState.success =
                         SuccessState(
                             message =
                                 resolveText(
@@ -150,11 +191,80 @@ class AppWorktreesService(
                 }
 
                 is UseCaseResult.Failure -> {
-                    runtime.worktreesState.createWorktreeState = runtime.worktreesState.createWorktreeState.copy(isSubmitting = false)
-                    runtime.messagesState.error = runtime.mapFailureToErrorState(result.value)
+                    worktreesState.createWorktreeState = worktreesState.createWorktreeState.copy(isSubmitting = false)
+                    messagesState.error = errorMapper.mapFailureToErrorState(result.value)
                 }
             }
-            runtime.publishState()
+            stateRefresher.publishAll()
+        }
+    }
+
+    override fun loadWorktreesForRepository(path: String) {
+        executionScope.scope.launch {
+            loadingRunner.withGlobalLoading(Res.string.loading_refreshing) {
+                loadWorktreesForRepositoryInternal(path = path)
+            }
+        }
+    }
+
+    override suspend fun loadWorktreesForRepositoryInternal(path: String) {
+        val normalizedPath = normalizePath(path)
+        if (normalizedPath.isBlank()) {
+            return
+        }
+        runCatching {
+            gitClient.listWorktrees(atRepoPath = normalizedPath)
+        }.onSuccess { worktrees ->
+            worktreesState.worktreesByRepositoryPath[normalizedPath] =
+                worktrees.map { worktree ->
+                    val baseBranch =
+                        preferencesStore.worktreeBaseBranch(
+                            forWorktreePath = worktree.path,
+                        )
+                    worktree.withBaseBranch(baseBranch = baseBranch)
+                }
+            if (repositoriesState.selectedRepository()?.path == normalizedPath && worktreesState.selectedWorktreePath != null) {
+                val stillExists =
+                    worktreesState.worktreesByRepositoryPath[normalizedPath]
+                        .orEmpty()
+                        .any { it.path == worktreesState.selectedWorktreePath }
+                if (!stillExists) {
+                    worktreesState.selectedWorktreePath = null
+                    stateRefresher.persistSelection()
+                }
+            }
+            worktreesState.worktreesByRepositoryPath[normalizedPath].orEmpty().forEach { worktree ->
+                if (!worktreesState.worktreeStatusByPath.containsKey(worktree.path)) {
+                    onRefreshWorktreeStatus(worktreePath = worktree.path)
+                }
+            }
+        }.onFailure { throwable ->
+            val domainFailure = DomainFailureMapper.fromThrowable(throwable)
+            messagesState.error = errorMapper.mapFailureToErrorState(domainFailure)
+        }
+    }
+
+    private fun loadSelectedRepositoryBranches() {
+        val repositoryPath = repositoriesState.selectedRepository()?.path ?: return
+        executionScope.scope.launch {
+            when (
+                val result =
+                    loadBranchesUseCase.execute(
+                        input =
+                            LoadBranchesUseCase.Input(
+                                repositoryPath = repositoryPath,
+                            ),
+                    )
+            ) {
+                is UseCaseResult.Success -> {
+                    stateRefresher.settingsState.branches = result.value.branches
+                }
+
+                is UseCaseResult.Failure -> {
+                    messagesState.error = errorMapper.mapFailureToErrorState(result.value)
+                }
+            }
+            stateRefresher.publishAll()
         }
     }
 }

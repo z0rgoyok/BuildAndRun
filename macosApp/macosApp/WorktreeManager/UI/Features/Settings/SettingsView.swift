@@ -8,7 +8,7 @@ struct SettingsView: View {
             GeneralSettingsView(
                 worktreeBasePath:
                     Binding(
-                        get: { root.state.worktreeBasePath },
+                        get: { root.settingsState.worktreeBasePath },
                         set: { root.store.settings.onSetWorktreeBasePath(path: $0) }
                     )
             )
@@ -19,7 +19,7 @@ struct SettingsView: View {
             CopyPatternsSettingsView(
                 patterns:
                     Binding(
-                        get: { root.state.defaultCopyPatterns },
+                        get: { root.settingsState.defaultCopyPatterns },
                         set: { root.store.settings.onSetDefaultCopyPatterns(patterns: $0) }
                     )
             )

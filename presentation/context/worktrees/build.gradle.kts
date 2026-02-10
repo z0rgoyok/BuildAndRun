@@ -18,8 +18,6 @@ kotlin {
             implementation(projects.domain.context.worktrees)
             implementation(projects.presentation.common)
             implementation(projects.presentation.resources)
-            implementation(projects.presentation.runtime)
-            implementation(projects.presentation.context.settings)
             implementation(libs.kotlinx.coroutines.core)
         }
         commonTest.dependencies {

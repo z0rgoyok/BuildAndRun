@@ -15,7 +15,7 @@ struct CreatePRSheet: View {
 
     private var baseBranches: [String] {
         let common = ["main", "master", "develop"]
-        let available = root.state.branches.filter { common.contains($0) }
+        let available = root.settingsState.branches.filter { common.contains($0) }
         return available.isEmpty ? common : available
     }
 
@@ -70,7 +70,7 @@ struct CreatePRSheet: View {
                 }
                 .keyboardShortcut(.defaultAction)
                 .buttonStyle(.borderedProminent)
-                .disabled(root.state.branches.isEmpty || isPreparing || isSubmitting)
+                .disabled(root.settingsState.branches.isEmpty || isPreparing || isSubmitting)
             }
         }
         .padding(24)
@@ -92,7 +92,7 @@ struct CreatePRSheet: View {
         isPreparing = true
         defer { isPreparing = false }
 
-        if root.state.branches.isEmpty {
+        if root.settingsState.branches.isEmpty {
             root.store.settings.onLoadBranches()
         }
 

@@ -81,16 +81,16 @@ struct WorktreeMenuItems: View {
 
     private struct WorktreeBoundMenuItems: View {
         @ObservedObject var root: KmpRoot
-        let worktree: AppStore.WorktreeItem
+        let worktree: WorktreeItem
 
         private var labels: KanbanLabels { root.store.kanbanLabels }
 
-        private var configuredEditors: [AppStore.EditorItem] {
-            root.state.editors.filter { $0.isEnabled && $0.isInstalled }
+        private var configuredEditors: [EditorItem] {
+            root.editorsState.editors.filter { $0.isEnabled && $0.isInstalled }
         }
 
         private var selectedEditorId: String {
-            root.state.preferredEditorId ?? ""
+            root.editorsState.preferredEditorId ?? ""
         }
 
         var body: some View {
@@ -98,7 +98,7 @@ struct WorktreeMenuItems: View {
                 Button(labels.openInEditor) {
                     root.store.editors.onOpenInEditor(
                         worktreePath: worktree.path,
-                        editorId: root.state.preferredEditorId,
+                        editorId: root.editorsState.preferredEditorId,
                     )
                 }
                 .keyboardShortcut("o", modifiers: .command)
@@ -132,9 +132,9 @@ struct WorktreeMenuItems: View {
 
                     Divider()
 
-                    Button(root.state.rememberEditorChoice ? labels.forgetEditorChoice : labels.rememberEditorChoice) {
-                        root.store.editors.onSetRememberEditorChoice(value: !root.state.rememberEditorChoice)
-                        if root.state.rememberEditorChoice {
+                    Button(root.editorsState.rememberEditorChoice ? labels.forgetEditorChoice : labels.rememberEditorChoice) {
+                        root.store.editors.onSetRememberEditorChoice(value: !root.editorsState.rememberEditorChoice)
+                        if root.editorsState.rememberEditorChoice {
                             root.store.editors.onSetPreferredEditor(editorId: nil)
                         }
                     }

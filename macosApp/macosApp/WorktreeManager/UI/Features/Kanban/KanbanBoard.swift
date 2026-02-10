@@ -67,7 +67,7 @@ struct KanbanBoard: View {
         .onChange(of: selection) { _ in
             editorMode = nil
         }
-        .onChange(of: root.state.kanbanTasks.map(\.id)) { taskIds in
+        .onChange(of: root.kanbanState.kanbanTasks.map(\.id)) { taskIds in
             guard case let .editing(taskId) = editorMode,
                   !taskIds.contains(taskId) else { return }
             editorMode = nil
@@ -94,8 +94,8 @@ struct KanbanBoard: View {
         ]
     }
 
-    private func tasks(for columnId: KanbanColumnType) -> [AppStore.KanbanTaskItem] {
-        root.state.kanbanTasks
+    private func tasks(for columnId: KanbanColumnType) -> [KanbanTaskItem] {
+        root.kanbanState.kanbanTasks
             .filter { $0.columnId === columnId }
             .sorted { $0.order < $1.order }
     }

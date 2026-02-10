@@ -75,7 +75,7 @@ struct ProjectTreeSidebar: View {
         }
         .onAppear { root.syncSidebarSelectionExpansion(selection: selection) }
         .onChange(of: selection) { _, _ in root.syncSidebarSelectionExpansion(selection: selection) }
-        .onChange(of: root.state.selectedRepositoryId) { _, _ in root.syncSidebarSelectionExpansion(selection: selection) }
+        .onChange(of: root.repositoriesState.selectedRepositoryId) { _, _ in root.syncSidebarSelectionExpansion(selection: selection) }
         .sheet(item: sidebarCopySettingsTargetBinding) { target in
             RepositoryCopyPatternsSheet(
                 repositoryId: target.id,
@@ -96,7 +96,7 @@ struct ProjectTreeSidebar: View {
     }
 
     @ViewBuilder
-    private func sidebarSection(_ section: AppStore.SidebarSection) -> some View {
+    private func sidebarSection(_ section: SidebarSection) -> some View {
         if let groupName = section.groupName, let groupId = section.groupId {
             SidebarSectionHeader(
                 groupId: groupId,
@@ -148,12 +148,12 @@ struct ProjectTreeSidebar: View {
         }
     }
 
-    private var archivedRepositories: [AppStore.RepositoryItem] {
-        root.state.repositories.filter { $0.isArchived }
+    private var archivedRepositories: [RepositoryItem] {
+        root.repositoriesState.repositories.filter { $0.isArchived }
     }
 
-    private var sidebarSectionsWithStableIds: [(id: String, section: AppStore.SidebarSection)] {
-        root.state.sidebarSections.map { section in
+    private var sidebarSectionsWithStableIds: [(id: String, section: SidebarSection)] {
+        root.repositoriesState.sidebarSections.map { section in
             let id = section.groupId.map { "group:\($0)" } ?? "ungrouped"
             return (id: id, section: section)
         }
@@ -228,7 +228,7 @@ struct ProjectTreeSidebar: View {
         targetId: String,
         placement: GroupSectionDropDelegate.DropPlacement,
     ) {
-        var orderedGroupIds = root.state.sidebarSections.compactMap(\.groupId)
+        var orderedGroupIds = root.repositoriesState.sidebarSections.compactMap(\.groupId)
         guard let fromIndex = orderedGroupIds.firstIndex(of: draggedId),
               let targetIndex = orderedGroupIds.firstIndex(of: targetId) else { return }
 
@@ -247,7 +247,7 @@ struct ProjectTreeSidebar: View {
         root.store.groups.onReorderRepositoryGroups(orderedGroupIds: orderedGroupIds)
     }
 
-    private func expansionBinding(for repo: AppStore.RepositoryItem) -> Binding<Bool> {
+    private func expansionBinding(for repo: RepositoryItem) -> Binding<Bool> {
         Binding(
             get: { root.isSidebarRepositoryExpanded(repositoryId: repo.id) },
             set: { expanded in

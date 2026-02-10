@@ -4,7 +4,7 @@ import SwiftUI
 
 struct ProjectTreeNode: View {
     @EnvironmentObject var root: KmpRoot
-    let repository: AppStore.RepositoryItem
+    let repository: RepositoryItem
     @Binding var selection: SidebarSelection?
     @Binding var isExpanded: Bool
     let onCopySettings: () -> Void
@@ -158,14 +158,14 @@ struct ProjectTreeNode: View {
     @ViewBuilder
     private var groupMenu: some View {
         Menu(root.store.sidebarLabels.moveToGroup) {
-            ForEach(root.state.repositoryGroups, id: \.id) { group in
+            ForEach(root.repositoriesState.repositoryGroups, id: \.id) { group in
                 Button(group.name) {
                     root.store.groups.onSetRepositoryGroup(repositoryId: repository.id, groupId: group.id)
                 }
                 .disabled(repository.groupId == group.id)
             }
 
-            if !root.state.repositoryGroups.isEmpty {
+            if !root.repositoriesState.repositoryGroups.isEmpty {
                 Divider()
             }
 
@@ -195,7 +195,7 @@ struct ProjectTreeNode: View {
         }
     }
 
-    private var sortedWorktrees: [AppStore.WorktreeItem] {
+    private var sortedWorktrees: [WorktreeItem] {
         repository.worktrees.sorted { lhs, rhs in
             if lhs.isMain && !rhs.isMain { return true }
             if !lhs.isMain && rhs.isMain { return false }

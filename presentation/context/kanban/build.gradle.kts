@@ -10,10 +10,9 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            implementation(projects.domain.context.kanban)
+            api(projects.domain.context.kanban)
             implementation(projects.presentation.common)
             implementation(projects.presentation.resources)
-            implementation(projects.presentation.runtime)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

@@ -82,7 +82,7 @@ struct TaskEditorView: View {
             description = ""
             isTitleFocused = true
         case let .editing(taskId):
-            if let task = root.state.kanbanTasks.first(where: { $0.id == taskId }) {
+            if let task = root.kanbanState.kanbanTasks.first(where: { $0.id == taskId }) {
                 title = task.title
                 description = task.description_ ?? ""
                 columnId = task.columnId
@@ -100,7 +100,7 @@ struct TaskEditorView: View {
             root.store.kanban.onAddTask(title: trimmedTitle, description: desc, column: columnId)
         case let .editing(taskId):
             root.store.kanban.onUpdateTask(taskId: taskId, title: trimmedTitle, description: desc)
-            if let task = root.state.kanbanTasks.first(where: { $0.id == taskId }),
+            if let task = root.kanbanState.kanbanTasks.first(where: { $0.id == taskId }),
                task.columnId !== columnId
             {
                 root.store.kanban.onMoveTask(taskId: taskId, column: columnId)

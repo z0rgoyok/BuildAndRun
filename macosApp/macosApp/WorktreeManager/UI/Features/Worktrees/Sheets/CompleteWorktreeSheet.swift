@@ -16,7 +16,7 @@ struct CompleteWorktreeSheet: View {
     @State private var isPreparing = false
     @State private var isSubmitting = false
 
-    private var worktree: AppStore.WorktreeItem? {
+    private var worktree: WorktreeItem? {
         root.selectedRepository?.worktrees.first { $0.path == worktreePath }
     }
 
@@ -198,7 +198,7 @@ struct CompleteWorktreeSheet: View {
 
         root.store.gitActions.onLoadHasRemoteBranch(worktreePath: worktreePath)
         hasRemoteBranch =
-            root.state.remoteBranches
+            root.worktreesState.remoteBranches
                 .first(where: { $0.worktreePath == worktreePath })?
                 .hasRemote
                 ?? false

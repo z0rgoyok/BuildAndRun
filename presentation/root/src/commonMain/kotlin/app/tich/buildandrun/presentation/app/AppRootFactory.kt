@@ -15,7 +15,7 @@ fun createAppRootComponent(
         koinApplication {
             printLogger(Level.NONE)
             modules(
-                appStoreModule(
+                appRootModule(
                     graph = graph,
                     componentContext = componentContext,
                     onDestroy = {

@@ -31,27 +31,77 @@ final class KmpRoot: ObservableObject {
         }
     }
 
-    @Published private(set) var state: AppStore.State
+    @Published private(set) var navigationState: AppNavigationState
+    @Published private(set) var activityState: ActivityState
+    @Published private(set) var repositoriesState: RepositoriesState
+    @Published private(set) var worktreesState: WorktreesState
+    @Published private(set) var settingsState: SettingsState
+    @Published private(set) var editorsState: EditorsState
+    @Published private(set) var kanbanState: KanbanState
+    @Published private(set) var messagesState: MessagesState
     @Published var isSidebarArchivedSectionExpanded: Bool = false
     @Published var sidebarCopySettingsTarget: SidebarCopySettingsTarget?
 
     let store: AppRootComponent
-    private var cancellation: DecomposeCancellation?
+    private var cancellations: [DecomposeCancellation] = []
 
-    init(store: AppRootComponent = AppStoreFactory.shared.create()) {
+    init(store: AppRootComponent = AppRootFactory.shared.create()) {
         self.store = store
-        self.state = store.state.value
+        self.navigationState = store.navigationState.value
+        self.activityState = store.activityState.value
+        self.repositoriesState = store.repositoriesState.value
+        self.worktreesState = store.worktreesState.value
+        self.settingsState = store.settingsState.value
+        self.editorsState = store.editorsState.value
+        self.kanbanState = store.kanbanState.value
+        self.messagesState = store.messagesState.value
 
-        self.cancellation =
-            store.state.subscribe { [weak self] nextState in
+        cancellations = [
+            store.navigationState.subscribe { [weak self] nextState in
                 Task { @MainActor [weak self] in
-                    self?.state = nextState
+                    self?.navigationState = nextState
+                }
+            },
+            store.activityState.subscribe { [weak self] nextState in
+                Task { @MainActor [weak self] in
+                    self?.activityState = nextState
+                }
+            },
+            store.repositoriesState.subscribe { [weak self] nextState in
+                Task { @MainActor [weak self] in
+                    self?.repositoriesState = nextState
+                }
+            },
+            store.worktreesState.subscribe { [weak self] nextState in
+                Task { @MainActor [weak self] in
+                    self?.worktreesState = nextState
+                }
+            },
+            store.settingsState.subscribe { [weak self] nextState in
+                Task { @MainActor [weak self] in
+                    self?.settingsState = nextState
+                }
+            },
+            store.editorsState.subscribe { [weak self] nextState in
+                Task { @MainActor [weak self] in
+                    self?.editorsState = nextState
+                }
+            },
+            store.kanbanState.subscribe { [weak self] nextState in
+                Task { @MainActor [weak self] in
+                    self?.kanbanState = nextState
+                }
+            },
+            store.messagesState.subscribe { [weak self] nextState in
+                Task { @MainActor [weak self] in
+                    self?.messagesState = nextState
                 }
             }
+        ]
     }
 
     deinit {
-        cancellation?.cancel()
+        cancellations.forEach { $0.cancel() }
         store.destroy()
     }
 
@@ -88,32 +138,32 @@ final class KmpRoot: ObservableObject {
     }
 
     var child: Child {
-        if state.activeChild === AppChild.workspace {
+        if navigationState.activeChild == .workspace {
             return .workspace
         }
-        if state.activeChild === AppChild.settings {
+        if navigationState.activeChild == .settings {
             return .settings
         }
         return .help
     }
 
     var sheet: Sheet? {
-        guard let activeSheet = state.activeSheet else {
+        guard let activeSheet = navigationState.activeSheet else {
             return nil
         }
-        if activeSheet.kind === AppSheetKind.addRepository {
+        if activeSheet.kind == .addRepository {
             return .addRepository
         }
-        if activeSheet.kind === AppSheetKind.addWorktree {
+        if activeSheet.kind == .addWorktree {
             return .addWorktree
         }
-        if activeSheet.kind === AppSheetKind.configureEditors {
+        if activeSheet.kind == .configureEditors {
             return .configureEditors
         }
-        if activeSheet.kind === AppSheetKind.help {
+        if activeSheet.kind == .help {
             return .help
         }
-        if activeSheet.kind === AppSheetKind.createPr {
+        if activeSheet.kind == .createPr {
             guard let worktreePath = activeSheet.worktreePath else {
                 return nil
             }
@@ -125,26 +175,26 @@ final class KmpRoot: ObservableObject {
         return .completeWorktree(worktreePath: worktreePath)
     }
 
-    var repositories: [AppStore.RepositoryItem] {
-        state.repositories
+    var repositories: [RepositoryItem] {
+        repositoriesState.repositories
     }
 
-    var selectedRepository: AppStore.RepositoryItem? {
-        guard let selectedId = state.selectedRepositoryId else { return nil }
-        return state.repositories.first { $0.id == selectedId }
+    var selectedRepository: RepositoryItem? {
+        guard let selectedId = repositoriesState.selectedRepositoryId else { return nil }
+        return repositoriesState.repositories.first { $0.id == selectedId }
     }
 
-    var selectedWorktree: AppStore.WorktreeItem? {
-        guard let selectedPath = state.selectedWorktreePath else { return nil }
+    var selectedWorktree: WorktreeItem? {
+        guard let selectedPath = worktreesState.selectedWorktreePath else { return nil }
         return selectedRepository?.worktrees.first { $0.path == selectedPath }
     }
 
     func isSidebarRepositoryExpanded(repositoryId: String) -> Bool {
-        state.expandedRepositoryIds.contains(repositoryId)
+        repositoriesState.expandedRepositoryIds.contains(repositoryId)
     }
 
     func isSidebarGroupCollapsed(groupId: String) -> Bool {
-        state.collapsedGroupIds.contains(groupId)
+        repositoriesState.collapsedGroupIds.contains(groupId)
     }
 
     func setSidebarRepositoryExpanded(repositoryId: String, expanded: Bool) {
@@ -152,7 +202,7 @@ final class KmpRoot: ObservableObject {
     }
 
     func toggleVisibleSidebarRepositoriesExpansion(selection: SidebarSelection?) {
-        let preferredRepositoryId = selection?.repositoryId ?? state.selectedRepositoryId
+        let preferredRepositoryId = selection?.repositoryId ?? repositoriesState.selectedRepositoryId
         store.sidebar.onToggleVisibleSidebarRepositoriesExpansion(
             includeArchivedRepositories: isSidebarArchivedSectionExpanded,
             preferredRepositoryId: preferredRepositoryId
@@ -174,7 +224,7 @@ final class KmpRoot: ObservableObject {
 
         store.sidebar.onSyncSidebarSelectionExpansion(repositoryId: selectedRepositoryId)
 
-        let selectedRepository = state.repositories.first { $0.id == selectedRepositoryId }
+        let selectedRepository = repositoriesState.repositories.first { $0.id == selectedRepositoryId }
         if selectedRepository?.isArchived == true {
             isSidebarArchivedSectionExpanded = true
         }
@@ -184,7 +234,7 @@ final class KmpRoot: ObservableObject {
         store.sidebar.onSetSidebarGroupCollapsed(groupId: groupId, collapsed: collapsed)
     }
 
-    func presentSidebarCopySettings(for repository: AppStore.RepositoryItem) {
+    func presentSidebarCopySettings(for repository: RepositoryItem) {
         sidebarCopySettingsTarget =
             SidebarCopySettingsTarget(
                 id: repository.id,

@@ -1,18 +1,16 @@
 package app.tich.buildandrun.presentation.app.context.messages.impl
 
 import app.tich.buildandrun.presentation.app.AppMessagesFeature
-import app.tich.buildandrun.presentation.app.core.AppWiring
-import app.tich.buildandrun.presentation.app.core.onDismissError
-import app.tich.buildandrun.presentation.app.core.onDismissSuccess
+import app.tich.buildandrun.presentation.app.context.state.MessagesContextState
 
 class AppMessagesService(
-    private val runtime: AppWiring,
+    private val messagesState: MessagesContextState,
 ) : AppMessagesFeature {
     override fun onDismissError() {
-        runtime.onDismissError()
+        messagesState.dismissError()
     }
 
     override fun onDismissSuccess() {
-        runtime.onDismissSuccess()
+        messagesState.dismissSuccess()
     }
 }

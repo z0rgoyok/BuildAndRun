@@ -7,16 +7,16 @@ struct OpenEditorMenu: View {
 
     private var labels: KanbanLabels { root.store.kanbanLabels }
 
-    private var configuredEditors: [AppStore.EditorItem] {
-        root.state.editors.filter { $0.isInstalled && $0.isEnabled }
+    private var configuredEditors: [EditorItem] {
+        root.editorsState.editors.filter { $0.isInstalled && $0.isEnabled }
     }
 
     private var hasRememberedEditor: Bool {
-        root.state.rememberEditorChoice && root.state.preferredEditorId != nil
+        root.editorsState.rememberEditorChoice && root.editorsState.preferredEditorId != nil
     }
 
     private var selectedEditorId: String {
-        root.state.preferredEditorId ?? ""
+        root.editorsState.preferredEditorId ?? ""
     }
 
     var body: some View {
@@ -35,7 +35,7 @@ struct OpenEditorMenu: View {
         } primaryAction: {
             root.store.editors.onOpenInEditor(
                 worktreePath: worktreePath,
-                editorId: root.state.preferredEditorId,
+                editorId: root.editorsState.preferredEditorId,
             )
         }
         .disabled(configuredEditors.isEmpty)
@@ -79,9 +79,9 @@ struct OpenEditorMenu: View {
 
         Divider()
 
-        Button(root.state.rememberEditorChoice ? labels.forgetEditorChoice : labels.rememberEditorChoice) {
-            root.store.editors.onSetRememberEditorChoice(value: !root.state.rememberEditorChoice)
-            if root.state.rememberEditorChoice {
+        Button(root.editorsState.rememberEditorChoice ? labels.forgetEditorChoice : labels.rememberEditorChoice) {
+            root.store.editors.onSetRememberEditorChoice(value: !root.editorsState.rememberEditorChoice)
+            if root.editorsState.rememberEditorChoice {
                 root.store.editors.onSetPreferredEditor(editorId: nil)
             }
         }

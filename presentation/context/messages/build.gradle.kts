@@ -10,7 +10,7 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            implementation(projects.presentation.runtime)
+            implementation(projects.presentation.common)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

@@ -1,11 +1,10 @@
 package app.tich.buildandrun.presentation.app
 
-import app.tich.buildandrun.presentation.app.core.AppWiring
-import app.tich.buildandrun.presentation.app.core.destroy
+import app.tich.buildandrun.presentation.app.core.AppExecutionScope
 import com.arkivanov.decompose.value.Value
 
 class AppRootComponent internal constructor(
-    private val runtime: AppWiring,
+    private val executionScope: AppExecutionScope,
     val navigation: AppNavigationFeature,
     val repositories: AppRepositoriesFeature,
     val worktrees: AppWorktreesFeature,
@@ -19,28 +18,32 @@ class AppRootComponent internal constructor(
     val texts: AppTextsFeature,
     val sidebarLabels: SidebarLabels,
     val kanbanLabels: KanbanLabels,
+    val activityState: Value<ActivityState>,
+    val repositoriesState: Value<RepositoriesState>,
+    val worktreesState: Value<WorktreesState>,
+    val settingsState: Value<SettingsState>,
+    val editorsState: Value<EditorsState>,
+    val kanbanState: Value<KanbanState>,
+    val messagesState: Value<MessagesState>,
     private val onDestroy: (() -> Unit)? = null,
 ) {
     val navigationState: Value<AppNavigationState> = navigation.state
-    val activityState: Value<ActivityState> = runtime.activityState
-    val repositoriesState: Value<RepositoriesState> = runtime.repositoriesUiState
-    val worktreesState: Value<WorktreesState> = runtime.worktreesUiState
-    val settingsState: Value<SettingsState> = runtime.settingsUiState
-    val editorsState: Value<EditorsState> = runtime.editorsUiState
-    val kanbanState: Value<KanbanState> = runtime.kanbanUiState
-    val messagesState: Value<MessagesState> = runtime.messagesUiState
 
     fun destroy() {
         navigationState
         activityState
+        worktreesState
         settingsState
         editorsState
+        settings
+        editors
         gitActions
         groups
         messages
         texts
         sidebarLabels
-        runtime.destroy()
+        kanbanLabels
+        executionScope.destroy()
         onDestroy?.invoke()
     }
 }

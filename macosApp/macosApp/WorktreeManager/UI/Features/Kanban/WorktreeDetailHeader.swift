@@ -4,7 +4,7 @@ import SwiftUI
 
 struct WorktreeDetailHeader: View {
     @EnvironmentObject var root: KmpRoot
-    let worktree: AppStore.WorktreeItem
+    let worktree: WorktreeItem
 
     private var labels: KanbanLabels { root.store.kanbanLabels }
 

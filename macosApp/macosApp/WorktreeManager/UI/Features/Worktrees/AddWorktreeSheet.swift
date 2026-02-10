@@ -46,7 +46,7 @@ struct AddWorktreeSheet: View {
                 worktreeName = newValue
             }
         }
-        .onChange(of: root.state.createWorktree.createdWorktreePath) { _, next in
+        .onChange(of: root.worktreesState.createWorktree.createdWorktreePath) { _, next in
             if next != nil { dismiss() }
         }
         .sheet(isPresented: $showBranchConflict) {
@@ -71,7 +71,7 @@ private extension AddWorktreeSheet {
 
     @ViewBuilder
     var baseBranchPicker: some View {
-        if root.state.branches.isEmpty {
+        if root.settingsState.branches.isEmpty {
             branchLoadingRow
         } else {
             Picker(labels.createBaseBranch, selection: $baseBranch) {
@@ -84,7 +84,7 @@ private extension AddWorktreeSheet {
 
     @ViewBuilder
     var existingBranchPicker: some View {
-        if root.state.branches.isEmpty {
+        if root.settingsState.branches.isEmpty {
             branchLoadingRow
         } else {
             Picker(labels.createBranchPicker, selection: $selectedExistingBranch) {
@@ -122,7 +122,7 @@ private extension AddWorktreeSheet {
             Spacer()
             Button(labels.createButton) { attemptCreate() }
                 .keyboardShortcut(.defaultAction)
-                .disabled(!isValid || root.state.branches.isEmpty || isPreparing || createState.isSubmitting)
+                .disabled(!isValid || root.settingsState.branches.isEmpty || isPreparing || createState.isSubmitting)
         }
     }
 
@@ -154,9 +154,9 @@ private extension AddWorktreeSheet {
 // MARK: - Logic
 
 private extension AddWorktreeSheet {
-    var createState: AppStore.CreateWorktreeState { root.state.createWorktree }
+    var createState: CreateWorktreeState { root.worktreesState.createWorktree }
 
-    var allBranches: [String] { root.state.branches as [String] }
+    var allBranches: [String] { root.settingsState.branches as [String] }
 
     var sortedBranches: [String] {
         let priorityNames = ["main", "master", "develop", "development"]
@@ -176,7 +176,7 @@ private extension AddWorktreeSheet {
     func buildWorktreePath() -> String {
         guard let repo = root.selectedRepository else { return "" }
         let name = worktreeName.trimmingCharacters(in: .whitespacesAndNewlines)
-        return "\(root.state.worktreeBasePath)/\(repo.name)/\(name)"
+        return "\(root.settingsState.worktreeBasePath)/\(repo.name)/\(name)"
     }
 
     func syncToKmpState(createBranch: Bool) {
@@ -205,7 +205,7 @@ private extension AddWorktreeSheet {
         root.store.settings.onLoadBranches()
 
         Task {
-            while root.state.branches.isEmpty {
+            while root.settingsState.branches.isEmpty {
                 try? await Task.sleep(for: .milliseconds(100))
             }
             await MainActor.run {

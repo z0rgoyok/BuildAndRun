@@ -7,7 +7,7 @@ struct WorktreeCommands: Commands {
 
     var body: some Commands {
         CommandMenu("Worktree") {
-            WorktreeMenuItems(root: root, worktreePath: root.state.selectedWorktreePath, includeNewWorktree: true)
+            WorktreeMenuItems(root: root, worktreePath: root.worktreesState.selectedWorktreePath, includeNewWorktree: true)
         }
 
         CommandMenu("Repository") {

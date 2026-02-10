@@ -12,6 +12,8 @@ kotlin {
         commonMain.dependencies {
             implementation(projects.application.shared)
             implementation(projects.domain.shared)
+            implementation(projects.domain.context.copy)
+            implementation(projects.domain.context.repositories)
             implementation(projects.domain.context.worktrees)
         }
         commonTest.dependencies {

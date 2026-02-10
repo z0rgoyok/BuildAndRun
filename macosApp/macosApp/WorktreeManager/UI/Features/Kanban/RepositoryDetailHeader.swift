@@ -3,7 +3,7 @@ import SwiftUI
 
 struct RepositoryDetailHeader: View {
     @EnvironmentObject var root: KmpRoot
-    let repository: AppStore.RepositoryItem
+    let repository: RepositoryItem
 
     private var labels: KanbanLabels { root.store.kanbanLabels }
 

@@ -3,7 +3,7 @@ import SwiftUI
 
 struct WorktreeTreeRow: View {
     @EnvironmentObject var root: KmpRoot
-    let worktree: AppStore.WorktreeItem
+    let worktree: WorktreeItem
     let repositoryId: String
     @Binding var selection: SidebarSelection?
 
