@@ -10,28 +10,7 @@ import app.tich.buildandrun.domain.failures.DomainFailureMapper
 import kotlinx.coroutines.launch
 
 internal fun AppStoreCore.onCreateRepositoryGroup(name: String) {
-    val trimmedName = name.trim()
-    if (trimmedName.isBlank()) {
-        error = mapFailureToErrorState(
-            DomainFailure.Validation(
-                code = DomainFailureCode.APP_GROUP_NAME_BLANK,
-                args = emptyList(),
-            ),
-        )
-        publishState()
-        return
-    }
-    if (repositoryGroups.any { it.name.equals(trimmedName, ignoreCase = true) }) {
-        error = mapFailureToErrorState(
-            DomainFailure.Conflict(
-                code = DomainFailureCode.APP_GROUP_NAME_DUPLICATE,
-                args = listOf(trimmedName),
-                isRetryable = false,
-            ),
-        )
-        publishState()
-        return
-    }
+    val trimmedName = validateNewRepositoryGroupName(name) ?: return
     val nextSortOrder = (repositoryGroups.maxOfOrNull { it.sortOrder } ?: -1) + 1
     val group = RepositoryGroup.create(name = trimmedName, sortOrder = nextSortOrder)
     repositoryGroups = repositoryGroups + group
@@ -144,13 +123,14 @@ internal fun AppStoreCore.onReorderRepositoryGroups(orderedGroupIds: List<String
     }
     val missingGroups = repositoryGroups.filter { it.id.value !in orderedGroupIds }
     repositoryGroups = reordered + missingGroups
+    publishState()
     scope.launch {
         runCatching {
             graph.preferencesStore.saveRepositoryGroups(repositoryGroups)
         }.onFailure { throwable ->
             error = mapFailureToErrorState(DomainFailureMapper.fromThrowable(throwable))
+            publishState()
         }
-        publishState()
     }
 }
 
@@ -158,28 +138,7 @@ internal fun AppStoreCore.onCreateGroupAndAssignRepository(
     name: String,
     repositoryId: String,
 ) {
-    val trimmedName = name.trim()
-    if (trimmedName.isBlank()) {
-        error = mapFailureToErrorState(
-            DomainFailure.Validation(
-                code = DomainFailureCode.APP_GROUP_NAME_BLANK,
-                args = emptyList(),
-            ),
-        )
-        publishState()
-        return
-    }
-    if (repositoryGroups.any { it.name.equals(trimmedName, ignoreCase = true) }) {
-        error = mapFailureToErrorState(
-            DomainFailure.Conflict(
-                code = DomainFailureCode.APP_GROUP_NAME_DUPLICATE,
-                args = listOf(trimmedName),
-                isRetryable = false,
-            ),
-        )
-        publishState()
-        return
-    }
+    val trimmedName = validateNewRepositoryGroupName(name) ?: return
     val nextSortOrder = (repositoryGroups.maxOfOrNull { it.sortOrder } ?: -1) + 1
     val group = RepositoryGroup.create(name = trimmedName, sortOrder = nextSortOrder)
     repositoryGroups = repositoryGroups + group
@@ -206,4 +165,30 @@ internal fun AppStoreCore.onCreateGroupAndAssignRepository(
         }
         publishState()
     }
+}
+
+private fun AppStoreCore.validateNewRepositoryGroupName(name: String): String? {
+    val trimmedName = name.trim()
+    if (trimmedName.isBlank()) {
+        error = mapFailureToErrorState(
+            DomainFailure.Validation(
+                code = DomainFailureCode.APP_GROUP_NAME_BLANK,
+                args = emptyList(),
+            ),
+        )
+        publishState()
+        return null
+    }
+    if (repositoryGroups.any { it.name.equals(trimmedName, ignoreCase = true) }) {
+        error = mapFailureToErrorState(
+            DomainFailure.Conflict(
+                code = DomainFailureCode.APP_GROUP_NAME_DUPLICATE,
+                args = listOf(trimmedName),
+                isRetryable = false,
+            ),
+        )
+        publishState()
+        return null
+    }
+    return trimmedName
 }
