@@ -20,8 +20,8 @@ struct ProjectTreeSidebar: View {
     var body: some View {
         ScrollView {
             LazyVStack(spacing: 0) {
-                ForEach(Array(root.state.sidebarSections.enumerated()), id: \.offset) { _, section in
-                    sidebarSection(section)
+                ForEach(sidebarSectionsWithStableIds, id: \.id) { item in
+                    sidebarSection(item.section)
                 }
 
                 if !archivedRepositories.isEmpty {
@@ -133,7 +133,6 @@ struct ProjectTreeSidebar: View {
                         onCopySettings: { root.presentSidebarCopySettings(for: repo) },
                         onNewGroupForRepository: { presentNewGroupAlert(forRepositoryId: $0) }
                     )
-                    .padding(.leading, DS.Spacing.sm)
                 }
             }
         } else {
@@ -151,6 +150,13 @@ struct ProjectTreeSidebar: View {
 
     private var archivedRepositories: [AppStore.RepositoryItem] {
         root.state.repositories.filter { $0.isArchived }
+    }
+
+    private var sidebarSectionsWithStableIds: [(id: String, section: AppStore.SidebarSection)] {
+        root.state.sidebarSections.map { section in
+            let id = section.groupId.map { "group:\($0)" } ?? "ungrouped"
+            return (id: id, section: section)
+        }
     }
 
     private var allRepositoryIds: Set<String> {

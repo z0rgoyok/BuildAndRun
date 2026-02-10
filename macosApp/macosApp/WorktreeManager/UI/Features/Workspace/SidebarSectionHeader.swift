@@ -11,6 +11,7 @@ struct SidebarSectionHeader: View {
     let onDragStart: (String) -> Void
     let onRename: (String) -> Void
     let onDelete: () -> Void
+    @State private var isHovered = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -21,11 +22,6 @@ struct SidebarSectionHeader: View {
             }
 
             HStack(spacing: DS.Spacing.xs) {
-                Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
-                    .font(.system(size: 10, weight: .semibold))
-                    .foregroundStyle(DS.Colors.textTertiary)
-                    .frame(width: DS.Sizes.treeIconSize, height: DS.Sizes.treeIconSize)
-
                 Text(groupName.uppercased())
                     .font(DS.Typography.sectionHeader)
                     .foregroundStyle(DS.Colors.textTertiary)
@@ -33,11 +29,18 @@ struct SidebarSectionHeader: View {
                     .lineLimit(1)
 
                 Spacer()
+
+                Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(DS.Colors.textTertiary)
+                    .frame(width: DS.Sizes.treeIconSize, height: DS.Sizes.treeIconSize)
+                    .opacity(isHovered ? 1 : 0)
             }
             .padding(.horizontal, DS.Spacing.md)
             .padding(.vertical, DS.Spacing.sm)
             .frame(height: DS.Sizes.treeRowHeight)
             .contentShape(Rectangle())
+            .onHover { isHovered = $0 }
             .onTapGesture {
                 withAnimation(DS.Animation.quick) {
                     isExpanded.toggle()
