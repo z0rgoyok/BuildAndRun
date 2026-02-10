@@ -14,6 +14,8 @@ struct ProjectTreeSidebar: View {
     @State private var renameGroupName = ""
 
     @State private var draggedGroupId: String?
+    @State private var activeDropTargetGroupId: String?
+    @State private var activeDropPlacement: GroupSectionDropDelegate.DropPlacement = .before
 
     var body: some View {
         ScrollView {
@@ -99,7 +101,13 @@ struct ProjectTreeSidebar: View {
             SidebarSectionHeader(
                 groupId: groupId,
                 groupName: groupName,
+                isDropTargetBefore: activeDropTargetGroupId == groupId && activeDropPlacement == .before,
+                isDropTargetAfter: activeDropTargetGroupId == groupId && activeDropPlacement == .after,
                 isExpanded: groupExpansionBinding(for: groupId),
+                onDragStart: { draggedId in
+                    draggedGroupId = draggedId
+                    activeDropTargetGroupId = nil
+                },
                 onRename: { id in presentRenameGroupAlert(groupId: id, currentName: groupName) },
                 onDelete: { root.store.onDeleteRepositoryGroup(groupId: groupId) }
             )
@@ -108,7 +116,11 @@ struct ProjectTreeSidebar: View {
                 delegate: GroupSectionDropDelegate(
                     targetGroupId: groupId,
                     draggedGroupId: $draggedGroupId,
-                    onReorder: { draggedId, targetId in reorderGroup(draggedId: draggedId, targetId: targetId) }
+                    activeTargetGroupId: $activeDropTargetGroupId,
+                    activeDropPlacement: $activeDropPlacement,
+                    onReorder: { draggedId, targetId, placement in
+                        reorderGroup(draggedId: draggedId, targetId: targetId, placement: placement)
+                    }
                 )
             )
 
@@ -209,12 +221,27 @@ struct ProjectTreeSidebar: View {
         )
     }
 
-    private func reorderGroup(draggedId: String, targetId: String) {
+    private func reorderGroup(
+        draggedId: String,
+        targetId: String,
+        placement: GroupSectionDropDelegate.DropPlacement,
+    ) {
         var orderedGroupIds = root.state.sidebarSections.compactMap(\.groupId)
         guard let fromIndex = orderedGroupIds.firstIndex(of: draggedId),
-              let toIndex = orderedGroupIds.firstIndex(of: targetId) else { return }
+              let targetIndex = orderedGroupIds.firstIndex(of: targetId) else { return }
+
         orderedGroupIds.remove(at: fromIndex)
-        orderedGroupIds.insert(draggedId, at: toIndex)
+
+        var insertionIndex = targetIndex
+        if fromIndex < targetIndex {
+            insertionIndex -= 1
+        }
+        if placement == .after {
+            insertionIndex += 1
+        }
+
+        insertionIndex = min(max(insertionIndex, 0), orderedGroupIds.count)
+        orderedGroupIds.insert(draggedId, at: insertionIndex)
         root.store.onReorderRepositoryGroups(orderedGroupIds: orderedGroupIds)
     }
 
