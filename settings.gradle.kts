@@ -9,6 +9,21 @@ pluginManagement {
     }
 }
 
-include(":shared")
+include(":bridge")
 include(":domain")
 include(":application")
+include(":presentation:resources")
+include(":presentation:common")
+include(":presentation:navigation")
+include(":presentation:runtime")
+include(":presentation:context:repositories")
+include(":presentation:context:worktrees")
+include(":presentation:context:settings")
+include(":presentation:context:editors")
+include(":presentation:context:gitactions")
+include(":presentation:context:groups")
+include(":presentation:context:kanban")
+include(":presentation:context:sidebar")
+include(":presentation:context:messages")
+include(":presentation:context:texts")
+include(":presentation:root")
