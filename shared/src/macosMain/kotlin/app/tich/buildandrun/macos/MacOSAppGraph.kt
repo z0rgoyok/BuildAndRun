@@ -15,5 +15,6 @@ internal class MacOSAppGraph : AppStoreGraph {
     override val createWorktreeUseCase = CreateWorktreeUseCase(gitClient = gitClient)
     override val removeRepositoryUseCase = RemoveRepositoryUseCase(preferencesStore = preferencesStore)
     override val setRepositoryArchivedStateUseCase = SetRepositoryArchivedStateUseCase(preferencesStore = preferencesStore)
+    override val setRepositoryGroupUseCase = SetRepositoryGroupUseCase(preferencesStore = preferencesStore)
     override val loadBranchesUseCase = LoadBranchesUseCase(gitClient = gitClient)
 }

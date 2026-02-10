@@ -1,15 +1,13 @@
 package app.tich.buildandrun.testsupport
 
 import app.tich.buildandrun.application.ports.PreferencesStore
-import app.tich.buildandrun.domain.entities.CopyPattern
-import app.tich.buildandrun.domain.entities.KanbanTask
-import app.tich.buildandrun.domain.entities.Repository
-import app.tich.buildandrun.domain.entities.RepositoryId
+import app.tich.buildandrun.domain.entities.*
 
 class FakePreferencesStore(
     initialRepositories: List<Repository> = emptyList(),
 ) : PreferencesStore {
     private var repositoriesStorage = initialRepositories.toMutableList()
+    private var groupsStorage = mutableListOf<RepositoryGroup>()
     private val preferredEditors = mutableMapOf<String, String>()
     private val preferredBranches = mutableMapOf<String, String>()
     private val worktreeBaseBranches = mutableMapOf<String, String>()
@@ -20,6 +18,12 @@ class FakePreferencesStore(
 
     override suspend fun saveRepositories(repositories: List<Repository>) {
         repositoriesStorage = repositories.toMutableList()
+    }
+
+    override suspend fun loadRepositoryGroups(): List<RepositoryGroup> = groupsStorage.toList()
+
+    override suspend fun saveRepositoryGroups(groups: List<RepositoryGroup>) {
+        groupsStorage = groups.toMutableList()
     }
 
     override var worktreeBasePath: String = ""

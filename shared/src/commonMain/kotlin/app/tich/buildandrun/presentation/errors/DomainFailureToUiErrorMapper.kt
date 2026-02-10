@@ -72,6 +72,9 @@ class DomainFailureToUiErrorMapper {
         when (code) {
             DomainFailureCode.APP_CANCELLED -> Res.string.app_unknown
             DomainFailureCode.APP_CANNOT_REMOVE_MAIN_WORKTREE -> Res.string.app_cannot_remove_main_worktree
+            DomainFailureCode.APP_GROUP_NAME_BLANK -> Res.string.app_group_name_blank
+            DomainFailureCode.APP_GROUP_NAME_DUPLICATE -> Res.string.app_group_name_duplicate
+            DomainFailureCode.APP_GROUP_NOT_FOUND -> Res.string.app_group_not_found
             DomainFailureCode.APP_INVALID_URL -> Res.string.app_invalid_url
             DomainFailureCode.APP_NO_EDITOR_CONFIGURED -> Res.string.app_no_editor_configured
             DomainFailureCode.APP_REPOSITORY_ALREADY_ADDED -> Res.string.app_repository_already_added

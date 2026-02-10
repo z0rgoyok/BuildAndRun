@@ -15,6 +15,12 @@ data class SidebarLabels(
     val restoreProject: String,
     val archiveProject: String,
     val removeFromList: String,
+    val moveToGroup: String,
+    val newGroup: String,
+    val removeFromGroup: String,
+    val renameGroup: String,
+    val deleteGroup: String,
+    val groupNamePrompt: String,
 )
 
 internal fun buildSidebarLabels(): SidebarLabels =
@@ -30,4 +36,10 @@ internal fun buildSidebarLabels(): SidebarLabels =
         restoreProject = resolveText(text = UiText(resource = Res.string.action_restore_project)),
         archiveProject = resolveText(text = UiText(resource = Res.string.action_archive_project)),
         removeFromList = resolveText(text = UiText(resource = Res.string.action_remove_from_list)),
+        moveToGroup = resolveText(text = UiText(resource = Res.string.sidebar_move_to_group)),
+        newGroup = resolveText(text = UiText(resource = Res.string.sidebar_new_group)),
+        removeFromGroup = resolveText(text = UiText(resource = Res.string.sidebar_remove_from_group)),
+        renameGroup = resolveText(text = UiText(resource = Res.string.sidebar_rename_group)),
+        deleteGroup = resolveText(text = UiText(resource = Res.string.sidebar_delete_group)),
+        groupNamePrompt = resolveText(text = UiText(resource = Res.string.sidebar_group_name_prompt)),
     )

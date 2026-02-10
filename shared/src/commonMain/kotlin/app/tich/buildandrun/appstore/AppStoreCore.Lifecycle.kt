@@ -14,6 +14,7 @@ internal fun AppStoreCore.loadInitial() {
                 when (val result = graph.loadRepositoriesUseCase.execute()) {
                     is UseCaseResult.Success -> {
                         repositories = result.value
+                        repositoryGroups = graph.preferencesStore.loadRepositoryGroups()
                         selectedRepositoryId =
                             graph.preferencesStore.lastSelectedRepositoryId
                                 ?.takeIf { selectedId -> repositories.any { it.id.value == selectedId } }

@@ -20,11 +20,14 @@ internal fun AppStoreCore.publishState() {
             repositoryPath = selectedRepositoryPath,
         )
 
+    val repositoryItems = buildRepositoryItems()
     mutableState.value =
         AppStore.State(
             isLoading = activityCenter.isGlobalActive,
             loadingMessage = activityCenter.currentGlobalMessage,
-            repositories = buildRepositoryItems(),
+            repositories = repositoryItems,
+            sidebarSections = buildSidebarSections(repositoryItems),
+            repositoryGroups = buildRepositoryGroupItems(),
             selectedRepositoryId = selectedRepositoryId,
             selectedWorktreePath = selectedWorktreePath,
             addRepositoryPathInput = addRepositoryPathInput,
@@ -53,6 +56,7 @@ internal fun AppStoreCore.buildRepositoryItems(): List<AppStore.RepositoryItem> 
             name = repository.name,
             path = repository.path,
             isArchived = repository.isArchived,
+            groupId = repository.groupId?.value,
             worktrees =
                 worktreesByRepositoryPath[repository.path]
                     .orEmpty()
@@ -138,3 +142,42 @@ internal fun AppStoreCore.selectedScopeKey(): String? {
     val repository = selectedRepository() ?: return null
     return repositoryScopeKey(repositoryId = repository.id.value)
 }
+
+internal fun AppStoreCore.buildSidebarSections(
+    repositoryItems: List<AppStore.RepositoryItem>,
+): List<AppStore.SidebarSection> {
+    val activeRepos = repositoryItems.filter { !it.isArchived }
+    val ungrouped = activeRepos.filter { it.groupId == null }
+    val groupedByGroupId = activeRepos.filter { it.groupId != null }.groupBy { it.groupId }
+    val sortedGroups = repositoryGroups.sortedBy { it.sortOrder }
+
+    val sections = mutableListOf<AppStore.SidebarSection>()
+    if (ungrouped.isNotEmpty()) {
+        sections += AppStore.SidebarSection(
+            groupId = null,
+            groupName = null,
+            repositories = ungrouped,
+        )
+    }
+    for (group in sortedGroups) {
+        val repos = groupedByGroupId[group.id.value].orEmpty()
+        if (repos.isNotEmpty()) {
+            sections += AppStore.SidebarSection(
+                groupId = group.id.value,
+                groupName = group.name,
+                repositories = repos,
+            )
+        }
+    }
+    return sections
+}
+
+internal fun AppStoreCore.buildRepositoryGroupItems(): List<AppStore.RepositoryGroupItem> =
+    repositoryGroups
+        .sortedBy { it.sortOrder }
+        .map { group ->
+            AppStore.RepositoryGroupItem(
+                id = group.id.value,
+                name = group.name,
+            )
+        }

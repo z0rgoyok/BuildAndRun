@@ -281,6 +281,35 @@ class AppStore internal constructor(
         core.graph.preferencesStore.expandedRepositoryIds = ids
     }
 
+    fun onCreateRepositoryGroup(name: String) {
+        core.onCreateRepositoryGroup(name = name)
+    }
+
+    fun onRenameRepositoryGroup(
+        groupId: String,
+        newName: String,
+    ) {
+        core.onRenameRepositoryGroup(groupId = groupId, newName = newName)
+    }
+
+    fun onDeleteRepositoryGroup(groupId: String) {
+        core.onDeleteRepositoryGroup(groupId = groupId)
+    }
+
+    fun onSetRepositoryGroup(
+        repositoryId: String,
+        groupId: String?,
+    ) {
+        core.onSetRepositoryGroup(repositoryId = repositoryId, groupId = groupId)
+    }
+
+    fun onCreateGroupAndAssignRepository(
+        name: String,
+        repositoryId: String,
+    ) {
+        core.onCreateGroupAndAssignRepository(name = name, repositoryId = repositoryId)
+    }
+
     fun destroy() {
         core.destroy()
     }
@@ -289,6 +318,8 @@ class AppStore internal constructor(
         val isLoading: Boolean = false,
         val loadingMessage: String? = null,
         val repositories: List<RepositoryItem> = emptyList(),
+        val sidebarSections: List<SidebarSection> = emptyList(),
+        val repositoryGroups: List<RepositoryGroupItem> = emptyList(),
         val selectedRepositoryId: String? = null,
         val selectedWorktreePath: String? = null,
         val addRepositoryPathInput: String = "",
@@ -314,6 +345,7 @@ class AppStore internal constructor(
         val name: String,
         val path: String,
         val isArchived: Boolean,
+        val groupId: String? = null,
         val worktrees: List<WorktreeItem>,
     )
 
@@ -369,5 +401,16 @@ class AppStore internal constructor(
 
     data class SuccessState(
         val message: String,
+    )
+
+    data class SidebarSection(
+        val groupId: String?,
+        val groupName: String?,
+        val repositories: List<RepositoryItem>,
+    )
+
+    data class RepositoryGroupItem(
+        val id: String,
+        val name: String,
     )
 }

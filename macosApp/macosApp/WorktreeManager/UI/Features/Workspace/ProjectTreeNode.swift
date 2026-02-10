@@ -8,6 +8,7 @@ struct ProjectTreeNode: View {
     @Binding var selection: SidebarSelection?
     @Binding var isExpanded: Bool
     let onCopySettings: () -> Void
+    let onNewGroupForRepository: (String) -> Void
 
     @State private var isHovered = false
 
@@ -125,6 +126,11 @@ struct ProjectTreeNode: View {
                 Label(root.store.sidebarLabels.copyFilesSettings, systemImage: "doc.on.doc")
             }
 
+            if !repository.isArchived {
+                Divider()
+                groupMenu
+            }
+
             Divider()
 
             if repository.isArchived {
@@ -145,6 +151,34 @@ struct ProjectTreeNode: View {
 
             Button(root.store.sidebarLabels.removeFromList, role: .destructive) {
                 root.store.onRemoveRepository(repositoryId: repository.id)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var groupMenu: some View {
+        Menu(root.store.sidebarLabels.moveToGroup) {
+            ForEach(root.state.repositoryGroups, id: \.id) { group in
+                Button(group.name) {
+                    root.store.onSetRepositoryGroup(repositoryId: repository.id, groupId: group.id)
+                }
+                .disabled(repository.groupId == group.id)
+            }
+
+            if !root.state.repositoryGroups.isEmpty {
+                Divider()
+            }
+
+            Button(root.store.sidebarLabels.newGroup) {
+                onNewGroupForRepository(repository.id)
+            }
+
+            if repository.groupId != nil {
+                Divider()
+
+                Button(root.store.sidebarLabels.removeFromGroup) {
+                    root.store.onSetRepositoryGroup(repositoryId: repository.id, groupId: nil)
+                }
             }
         }
     }

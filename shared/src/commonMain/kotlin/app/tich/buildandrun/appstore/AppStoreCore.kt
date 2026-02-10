@@ -23,6 +23,7 @@ internal class AppStoreCore(
     internal val mutableState = MutableValue(AppStore.State())
 
     internal var repositories: List<Repository> = emptyList()
+    internal var repositoryGroups: List<RepositoryGroup> = emptyList()
     internal val worktreesByRepositoryPath = mutableMapOf<String, List<Worktree>>()
     internal val worktreeStatusByPath = mutableMapOf<String, WorktreeStatus>()
     internal val worktreeStatusLoadingPaths = mutableSetOf<String>()

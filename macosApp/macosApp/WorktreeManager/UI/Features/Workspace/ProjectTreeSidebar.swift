@@ -5,16 +5,19 @@ struct ProjectTreeSidebar: View {
     @EnvironmentObject var root: KmpRoot
     @Binding var selection: SidebarSelection?
 
+    @State private var isNewGroupAlertPresented = false
+    @State private var newGroupName = ""
+    @State private var newGroupRepositoryId: String?
+
+    @State private var isRenameGroupAlertPresented = false
+    @State private var renameGroupId: String?
+    @State private var renameGroupName = ""
+
     var body: some View {
         ScrollView {
             LazyVStack(spacing: 0) {
-                ForEach(activeRepositories, id: \.id) { repo in
-                    ProjectTreeNode(
-                        repository: repo,
-                        selection: $selection,
-                        isExpanded: expansionBinding(for: repo),
-                        onCopySettings: { root.presentSidebarCopySettings(for: repo) }
-                    )
+                ForEach(Array(root.state.sidebarSections.enumerated()), id: \.offset) { _, section in
+                    sidebarSection(section)
                 }
 
                 if !archivedRepositories.isEmpty {
@@ -26,7 +29,8 @@ struct ProjectTreeSidebar: View {
                                 repository: repo,
                                 selection: $selection,
                                 isExpanded: expansionBinding(for: repo),
-                                onCopySettings: { root.presentSidebarCopySettings(for: repo) }
+                                onCopySettings: { root.presentSidebarCopySettings(for: repo) },
+                                onNewGroupForRepository: { presentNewGroupAlert(forRepositoryId: $0) }
                             )
                         }
                     }
@@ -75,10 +79,38 @@ struct ProjectTreeSidebar: View {
             )
             .environmentObject(root)
         }
+        .alert(root.store.sidebarLabels.newGroup, isPresented: $isNewGroupAlertPresented) {
+            TextField(root.store.sidebarLabels.groupNamePrompt, text: $newGroupName)
+            Button(role: .cancel) { resetNewGroupState() } label: { Text("Cancel") }
+            Button("OK") { submitNewGroup() }
+        }
+        .alert(root.store.sidebarLabels.renameGroup, isPresented: $isRenameGroupAlertPresented) {
+            TextField(root.store.sidebarLabels.groupNamePrompt, text: $renameGroupName)
+            Button(role: .cancel) { resetRenameGroupState() } label: { Text("Cancel") }
+            Button("OK") { submitRenameGroup() }
+        }
     }
 
-    private var activeRepositories: [AppStore.RepositoryItem] {
-        root.state.repositories.filter { !$0.isArchived }
+    @ViewBuilder
+    private func sidebarSection(_ section: AppStore.SidebarSection) -> some View {
+        if let groupName = section.groupName, let groupId = section.groupId {
+            SidebarSectionHeader(
+                groupId: groupId,
+                groupName: groupName,
+                onRename: { id in presentRenameGroupAlert(groupId: id, currentName: groupName) },
+                onDelete: { root.store.onDeleteRepositoryGroup(groupId: groupId) }
+            )
+        }
+
+        ForEach(section.repositories, id: \.id) { repo in
+            ProjectTreeNode(
+                repository: repo,
+                selection: $selection,
+                isExpanded: expansionBinding(for: repo),
+                onCopySettings: { root.presentSidebarCopySettings(for: repo) },
+                onNewGroupForRepository: { presentNewGroupAlert(forRepositoryId: $0) }
+            )
+        }
     }
 
     private var archivedRepositories: [AppStore.RepositoryItem] {
@@ -151,6 +183,46 @@ struct ProjectTreeSidebar: View {
                 root.setSidebarRepositoryExpanded(repositoryId: repo.id, expanded: expanded)
             }
         )
+    }
+
+    private func presentNewGroupAlert(forRepositoryId repositoryId: String?) {
+        newGroupName = ""
+        newGroupRepositoryId = repositoryId
+        isNewGroupAlertPresented = true
+    }
+
+    private func resetNewGroupState() {
+        newGroupName = ""
+        newGroupRepositoryId = nil
+    }
+
+    private func submitNewGroup() {
+        let name = newGroupName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty else { return }
+        if let repositoryId = newGroupRepositoryId {
+            root.store.onCreateGroupAndAssignRepository(name: name, repositoryId: repositoryId)
+        } else {
+            root.store.onCreateRepositoryGroup(name: name)
+        }
+        resetNewGroupState()
+    }
+
+    private func presentRenameGroupAlert(groupId: String, currentName: String) {
+        renameGroupId = groupId
+        renameGroupName = currentName
+        isRenameGroupAlertPresented = true
+    }
+
+    private func resetRenameGroupState() {
+        renameGroupId = nil
+        renameGroupName = ""
+    }
+
+    private func submitRenameGroup() {
+        let name = renameGroupName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty, let groupId = renameGroupId else { return }
+        root.store.onRenameRepositoryGroup(groupId: groupId, newName: name)
+        resetRenameGroupState()
     }
 }
 

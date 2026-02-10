@@ -5,6 +5,9 @@
     <string name="screen_repositories_repository_added">Репозиторій додано: %1$s</string>
 
     <string name="app_cannot_remove_main_worktree">Неможливо видалити основний worktree.</string>
+    <string name="app_group_name_blank">Вкажіть назву групи.</string>
+    <string name="app_group_name_duplicate">Група вже існує: %1$s.</string>
+    <string name="app_group_not_found">Групу не знайдено.</string>
     <string name="app_invalid_url">Некоректний URL: %1$s.</string>
     <string name="app_no_editor_configured">Редактор не налаштовано.</string>
     <string name="app_repository_already_added">Репозиторій уже додано: %1$s.</string>
@@ -30,6 +33,12 @@
     <string name="git_worktree_has_uncommitted_changes">У worktree є незакомічені зміни: %1$s.</string>
     <string name="git_worktree_not_found">Worktree не знайдено: %1$s.</string>
 
+    <string name="sidebar_move_to_group">Перемістити до групи</string>
+    <string name="sidebar_new_group">Нова група\u2026</string>
+    <string name="sidebar_remove_from_group">Прибрати з групи</string>
+    <string name="sidebar_rename_group">Перейменувати групу\u2026</string>
+    <string name="sidebar_delete_group">Видалити групу</string>
+    <string name="sidebar_group_name_prompt">Назва групи</string>
     <string name="sidebar_archived">Архів</string>
     <string name="sidebar_add_repository">Додати репозиторій</string>
     <string name="sidebar_expand_all">Розгорнути все</string>

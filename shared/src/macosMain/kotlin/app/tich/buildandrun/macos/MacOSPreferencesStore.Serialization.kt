@@ -20,6 +20,12 @@ internal const val REPOSITORY_FIELD_ID = "id"
 internal const val REPOSITORY_FIELD_PATH = "path"
 internal const val REPOSITORY_FIELD_NAME = "name"
 internal const val REPOSITORY_FIELD_IS_ARCHIVED = "isArchived"
+internal const val REPOSITORY_FIELD_GROUP_ID = "groupId"
+
+internal const val PREFERENCE_KEY_REPOSITORY_GROUPS = "preferences.repositoryGroups"
+internal const val GROUP_FIELD_ID = "id"
+internal const val GROUP_FIELD_NAME = "name"
+internal const val GROUP_FIELD_SORT_ORDER = "sortOrder"
 
 internal const val KANBAN_TASK_FIELD_ID = "id"
 internal const val KANBAN_TASK_FIELD_TITLE = "title"

@@ -1,14 +1,15 @@
 package app.tich.buildandrun.application.ports
 
-import app.tich.buildandrun.domain.entities.CopyPattern
-import app.tich.buildandrun.domain.entities.KanbanTask
-import app.tich.buildandrun.domain.entities.Repository
-import app.tich.buildandrun.domain.entities.RepositoryId
+import app.tich.buildandrun.domain.entities.*
 
 interface PreferencesStore {
     suspend fun loadRepositories(): List<Repository>
 
     suspend fun saveRepositories(repositories: List<Repository>)
+
+    suspend fun loadRepositoryGroups(): List<RepositoryGroup>
+
+    suspend fun saveRepositoryGroups(groups: List<RepositoryGroup>)
 
     var worktreeBasePath: String
 

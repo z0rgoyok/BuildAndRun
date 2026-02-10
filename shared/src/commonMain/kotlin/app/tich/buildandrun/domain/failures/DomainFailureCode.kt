@@ -3,6 +3,9 @@ package app.tich.buildandrun.domain.failures
 enum class DomainFailureCode {
     APP_CANCELLED,
     APP_CANNOT_REMOVE_MAIN_WORKTREE,
+    APP_GROUP_NAME_BLANK,
+    APP_GROUP_NAME_DUPLICATE,
+    APP_GROUP_NOT_FOUND,
     APP_INVALID_URL,
     APP_NO_EDITOR_CONFIGURED,
     APP_REPOSITORY_ALREADY_ADDED,

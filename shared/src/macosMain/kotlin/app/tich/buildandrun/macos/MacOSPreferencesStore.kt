@@ -13,27 +13,63 @@ class MacOSPreferencesStore(
             val path = dictionary.requiredString(key = REPOSITORY_FIELD_PATH)
             val name = dictionary.requiredString(key = REPOSITORY_FIELD_NAME)
             val isArchived = dictionary.requiredBoolean(key = REPOSITORY_FIELD_IS_ARCHIVED)
+            val groupId = (dictionary[REPOSITORY_FIELD_GROUP_ID] as? String)?.let { RepositoryGroupId(it) }
             Repository(
                 id = RepositoryId(value = id),
                 path = path,
                 name = name,
                 isArchived = isArchived,
+                groupId = groupId,
             )
         }
 
     override suspend fun saveRepositories(repositories: List<Repository>) {
         val payload =
             repositories.map { repository ->
-                mapOf<String, Any>(
-                    REPOSITORY_FIELD_ID to repository.id.value,
-                    REPOSITORY_FIELD_PATH to repository.path,
-                    REPOSITORY_FIELD_NAME to repository.name,
-                    REPOSITORY_FIELD_IS_ARCHIVED to repository.isArchived,
-                )
+                val base =
+                    mutableMapOf<String, Any>(
+                        REPOSITORY_FIELD_ID to repository.id.value,
+                        REPOSITORY_FIELD_PATH to repository.path,
+                        REPOSITORY_FIELD_NAME to repository.name,
+                        REPOSITORY_FIELD_IS_ARCHIVED to repository.isArchived,
+                    )
+                repository.groupId?.let { base[REPOSITORY_FIELD_GROUP_ID] = it.value }
+                base.toMap()
             }
         defaults.setObject(
             value = payload,
             forKey = PREFERENCE_KEY_REPOSITORIES,
+        )
+    }
+
+    override suspend fun loadRepositoryGroups(): List<RepositoryGroup> =
+        defaults.readDictionaryList(key = PREFERENCE_KEY_REPOSITORY_GROUPS).map { dictionary ->
+            val id = dictionary.requiredString(key = GROUP_FIELD_ID)
+            val name = dictionary.requiredString(key = GROUP_FIELD_NAME)
+            val sortOrder =
+                when (val raw = dictionary[GROUP_FIELD_SORT_ORDER]) {
+                    is Number -> raw.toInt()
+                    else -> 0
+                }
+            RepositoryGroup(
+                id = RepositoryGroupId(value = id),
+                name = name,
+                sortOrder = sortOrder,
+            )
+        }
+
+    override suspend fun saveRepositoryGroups(groups: List<RepositoryGroup>) {
+        val payload =
+            groups.map { group ->
+                mapOf<String, Any>(
+                    GROUP_FIELD_ID to group.id.value,
+                    GROUP_FIELD_NAME to group.name,
+                    GROUP_FIELD_SORT_ORDER to group.sortOrder,
+                )
+            }
+        defaults.setObject(
+            value = payload,
+            forKey = PREFERENCE_KEY_REPOSITORY_GROUPS,
         )
     }
 

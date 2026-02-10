@@ -14,5 +14,6 @@ internal interface AppStoreGraph {
     val createWorktreeUseCase: CreateWorktreeUseCase
     val removeRepositoryUseCase: RemoveRepositoryUseCase
     val setRepositoryArchivedStateUseCase: SetRepositoryArchivedStateUseCase
+    val setRepositoryGroupUseCase: SetRepositoryGroupUseCase
     val loadBranchesUseCase: LoadBranchesUseCase
 }

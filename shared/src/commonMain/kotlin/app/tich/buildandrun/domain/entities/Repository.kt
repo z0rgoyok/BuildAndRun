@@ -5,6 +5,7 @@ data class Repository(
     val path: String,
     val name: String,
     val isArchived: Boolean,
+    val groupId: RepositoryGroupId? = null,
 ) {
     init {
         require(path.isNotBlank()) { "Repository path cannot be blank" }
@@ -16,6 +17,7 @@ data class Repository(
             path: String,
             name: String? = null,
             isArchived: Boolean = false,
+            groupId: RepositoryGroupId? = null,
         ): Repository {
             val derivedName = name ?: path.substringAfterLast('/')
             return Repository(
@@ -23,6 +25,7 @@ data class Repository(
                 path = path,
                 name = derivedName,
                 isArchived = isArchived,
+                groupId = groupId,
             )
         }
     }
