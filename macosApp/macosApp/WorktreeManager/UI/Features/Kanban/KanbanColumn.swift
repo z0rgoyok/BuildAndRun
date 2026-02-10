@@ -44,23 +44,7 @@ struct KanbanColumn: View {
                     if tasks.isEmpty {
                         EmptyColumnPlaceholder(onAdd: onAddTask)
                     } else {
-                        Button(action: onAddTask) {
-                            HStack(spacing: DS.Spacing.xs) {
-                                Image(systemName: "plus")
-                                    .font(.system(size: 11, weight: .medium))
-                                Text(labels.addTask)
-                                    .font(.system(size: 12))
-                            }
-                            .foregroundStyle(DS.Colors.textSecondary)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, DS.Spacing.sm)
-                        }
-                        .buttonStyle(.plain)
-                        .background(
-                            RoundedRectangle(cornerRadius: DS.Radius.md)
-                                .stroke(style: StrokeStyle(lineWidth: 1, dash: [5, 3]))
-                                .foregroundStyle(DS.Colors.borderSubtle)
-                        )
+                        DashedAddButton(title: labels.addTask, action: onAddTask)
 	                    }
 	                }
 	                .id(tasks.map(\.id).joined(separator: "|"))

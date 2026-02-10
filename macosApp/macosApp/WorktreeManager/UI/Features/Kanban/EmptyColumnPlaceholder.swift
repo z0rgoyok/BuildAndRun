@@ -17,14 +17,7 @@ struct EmptyColumnPlaceholder: View {
                 .font(.subheadline)
                 .foregroundStyle(DS.Colors.textTertiary)
 
-            Button {
-                onAdd()
-            } label: {
-                Label(labels.addTask, systemImage: "plus")
-                    .font(.system(size: 12, weight: .medium))
-            }
-            .buttonStyle(.bordered)
-            .controlSize(.small)
+            DashedAddButton(title: labels.addTask, action: onAdd)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, DS.Spacing.xxl)
