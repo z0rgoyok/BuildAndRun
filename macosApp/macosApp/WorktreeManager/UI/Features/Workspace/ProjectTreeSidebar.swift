@@ -13,6 +13,8 @@ struct ProjectTreeSidebar: View {
     @State private var renameGroupId: String?
     @State private var renameGroupName = ""
 
+    @State private var draggedGroupId: String?
+
     var body: some View {
         ScrollView {
             LazyVStack(spacing: 0) {
@@ -97,19 +99,40 @@ struct ProjectTreeSidebar: View {
             SidebarSectionHeader(
                 groupId: groupId,
                 groupName: groupName,
+                isExpanded: groupExpansionBinding(for: groupId),
                 onRename: { id in presentRenameGroupAlert(groupId: id, currentName: groupName) },
                 onDelete: { root.store.onDeleteRepositoryGroup(groupId: groupId) }
             )
-        }
-
-        ForEach(section.repositories, id: \.id) { repo in
-            ProjectTreeNode(
-                repository: repo,
-                selection: $selection,
-                isExpanded: expansionBinding(for: repo),
-                onCopySettings: { root.presentSidebarCopySettings(for: repo) },
-                onNewGroupForRepository: { presentNewGroupAlert(forRepositoryId: $0) }
+            .onDrop(
+                of: [.text],
+                delegate: GroupSectionDropDelegate(
+                    targetGroupId: groupId,
+                    draggedGroupId: $draggedGroupId,
+                    onReorder: { draggedId, targetId in reorderGroup(draggedId: draggedId, targetId: targetId) }
+                )
             )
+
+            if !root.sidebarCollapsedGroupIds.contains(groupId) {
+                ForEach(section.repositories, id: \.id) { repo in
+                    ProjectTreeNode(
+                        repository: repo,
+                        selection: $selection,
+                        isExpanded: expansionBinding(for: repo),
+                        onCopySettings: { root.presentSidebarCopySettings(for: repo) },
+                        onNewGroupForRepository: { presentNewGroupAlert(forRepositoryId: $0) }
+                    )
+                }
+            }
+        } else {
+            ForEach(section.repositories, id: \.id) { repo in
+                ProjectTreeNode(
+                    repository: repo,
+                    selection: $selection,
+                    isExpanded: expansionBinding(for: repo),
+                    onCopySettings: { root.presentSidebarCopySettings(for: repo) },
+                    onNewGroupForRepository: { presentNewGroupAlert(forRepositoryId: $0) }
+                )
+            }
         }
     }
 
@@ -174,6 +197,24 @@ struct ProjectTreeSidebar: View {
         .buttonStyle(.plain)
         .padding(.horizontal, DS.Spacing.xs)
         .padding(.top, DS.Spacing.xs)
+    }
+
+    private func groupExpansionBinding(for groupId: String) -> Binding<Bool> {
+        Binding(
+            get: { !root.sidebarCollapsedGroupIds.contains(groupId) },
+            set: { expanded in
+                root.setSidebarGroupCollapsed(groupId: groupId, collapsed: !expanded)
+            }
+        )
+    }
+
+    private func reorderGroup(draggedId: String, targetId: String) {
+        var orderedGroupIds = root.state.sidebarSections.compactMap(\.groupId)
+        guard let fromIndex = orderedGroupIds.firstIndex(of: draggedId),
+              let toIndex = orderedGroupIds.firstIndex(of: targetId) else { return }
+        orderedGroupIds.remove(at: fromIndex)
+        orderedGroupIds.insert(draggedId, at: toIndex)
+        root.store.onReorderRepositoryGroups(orderedGroupIds: orderedGroupIds)
     }
 
     private func expansionBinding(for repo: AppStore.RepositoryItem) -> Binding<Bool> {

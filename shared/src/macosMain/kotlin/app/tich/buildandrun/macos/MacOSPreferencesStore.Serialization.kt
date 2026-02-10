@@ -5,6 +5,7 @@ import platform.Foundation.NSUserDefaults
 internal const val PREFERENCE_KEY_REPOSITORIES = "preferences.repositories"
 internal const val PREFERENCE_KEY_WORKTREE_BASE_PATH = "preferences.worktreeBasePath"
 internal const val PREFERENCE_KEY_EXPANDED_REPOSITORY_IDS = "preferences.expandedRepositoryIds"
+internal const val PREFERENCE_KEY_COLLAPSED_GROUP_IDS = "preferences.collapsedGroupIds"
 internal const val PREFERENCE_KEY_LAST_SELECTED_REPOSITORY_ID = "preferences.lastSelectedRepositoryId"
 internal const val PREFERENCE_KEY_LAST_SELECTED_WORKTREE_PATH = "preferences.lastSelectedWorktreePath"
 internal const val PREFERENCE_KEY_REMEMBER_EDITOR_CHOICE = "preferences.rememberEditorChoice"

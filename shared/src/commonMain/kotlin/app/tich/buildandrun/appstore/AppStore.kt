@@ -281,6 +281,16 @@ class AppStore internal constructor(
         core.graph.preferencesStore.expandedRepositoryIds = ids
     }
 
+    fun loadCollapsedGroupIds(): Set<String> = core.graph.preferencesStore.collapsedGroupIds
+
+    fun setCollapsedGroupIds(ids: Set<String>) {
+        core.graph.preferencesStore.collapsedGroupIds = ids
+    }
+
+    fun onReorderRepositoryGroups(orderedGroupIds: List<String>) {
+        core.onReorderRepositoryGroups(orderedGroupIds = orderedGroupIds)
+    }
+
     fun onCreateRepositoryGroup(name: String) {
         core.onCreateRepositoryGroup(name = name)
     }

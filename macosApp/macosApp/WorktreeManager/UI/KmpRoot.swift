@@ -33,6 +33,7 @@ final class KmpRoot: ObservableObject {
 
     @Published private(set) var state: AppStore.State
     @Published var sidebarExpandedRepositoryIds: Set<String> = []
+    @Published var sidebarCollapsedGroupIds: Set<String> = []
     @Published var isSidebarArchivedSectionExpanded: Bool = false
     @Published var sidebarCopySettingsTarget: SidebarCopySettingsTarget?
 
@@ -43,7 +44,8 @@ final class KmpRoot: ObservableObject {
     init(store: AppStore = AppStoreFactory.shared.create()) {
         self.store = store
         self.state = store.state.value
-        self.sidebarExpandedRepositoryIds = store.loadExpandedRepositoryIds() 
+        self.sidebarExpandedRepositoryIds = store.loadExpandedRepositoryIds()
+        self.sidebarCollapsedGroupIds = store.loadCollapsedGroupIds()
 
         self.cancellation =
             store.state.subscribe { [weak self] nextState in
@@ -186,6 +188,15 @@ final class KmpRoot: ObservableObject {
         if selectedRepository?.isArchived == true {
             isSidebarArchivedSectionExpanded = true
         }
+    }
+
+    func setSidebarGroupCollapsed(groupId: String, collapsed: Bool) {
+        if collapsed {
+            sidebarCollapsedGroupIds.insert(groupId)
+        } else {
+            sidebarCollapsedGroupIds.remove(groupId)
+        }
+        store.setCollapsedGroupIds(ids: sidebarCollapsedGroupIds)
     }
 
     func presentSidebarCopySettings(for repository: AppStore.RepositoryItem) {

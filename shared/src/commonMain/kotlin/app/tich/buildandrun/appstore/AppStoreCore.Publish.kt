@@ -161,13 +161,11 @@ internal fun AppStoreCore.buildSidebarSections(
     }
     for (group in sortedGroups) {
         val repos = groupedByGroupId[group.id.value].orEmpty()
-        if (repos.isNotEmpty()) {
-            sections += AppStore.SidebarSection(
-                groupId = group.id.value,
-                groupName = group.name,
-                repositories = repos,
-            )
-        }
+        sections += AppStore.SidebarSection(
+            groupId = group.id.value,
+            groupName = group.name,
+            repositories = repos,
+        )
     }
     return sections
 }

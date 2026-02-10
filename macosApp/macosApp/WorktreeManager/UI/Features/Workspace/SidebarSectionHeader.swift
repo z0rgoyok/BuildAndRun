@@ -5,24 +5,41 @@ struct SidebarSectionHeader: View {
     @EnvironmentObject var root: KmpRoot
     let groupId: String
     let groupName: String
+    @Binding var isExpanded: Bool
     let onRename: (String) -> Void
     let onDelete: () -> Void
 
     var body: some View {
-        HStack(spacing: DS.Spacing.xs) {
-            Text(groupName.uppercased())
-                .font(DS.Typography.sectionHeader)
-                .foregroundStyle(DS.Colors.textTertiary)
-                .tracking(0.5)
-                .lineLimit(1)
+        Button {
+            withAnimation(DS.Animation.quick) {
+                isExpanded.toggle()
+            }
+        } label: {
+            HStack(spacing: DS.Spacing.xs) {
+                Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(DS.Colors.textTertiary)
+                    .frame(width: DS.Sizes.treeIconSize, height: DS.Sizes.treeIconSize)
 
-            Spacer()
+                Text(groupName.uppercased())
+                    .font(DS.Typography.sectionHeader)
+                    .foregroundStyle(DS.Colors.textTertiary)
+                    .tracking(0.5)
+                    .lineLimit(1)
+
+                Spacer()
+            }
+            .padding(.horizontal, DS.Spacing.md)
+            .padding(.vertical, DS.Spacing.sm)
+            .frame(height: DS.Sizes.treeRowHeight)
+            .contentShape(Rectangle())
         }
-        .padding(.horizontal, DS.Spacing.md)
-        .padding(.vertical, DS.Spacing.sm)
-        .frame(height: DS.Sizes.treeRowHeight)
+        .buttonStyle(.plain)
         .padding(.horizontal, DS.Spacing.xs)
         .padding(.top, DS.Spacing.xs)
+        .onDrag {
+            NSItemProvider(object: groupId as NSString)
+        }
         .contextMenu {
             Button(root.store.sidebarLabels.renameGroup) {
                 onRename(groupId)

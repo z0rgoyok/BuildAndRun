@@ -15,6 +15,8 @@ interface PreferencesStore {
 
     var expandedRepositoryIds: Set<String>
 
+    var collapsedGroupIds: Set<String>
+
     var lastSelectedRepositoryId: String?
 
     var lastSelectedWorktreePath: String?

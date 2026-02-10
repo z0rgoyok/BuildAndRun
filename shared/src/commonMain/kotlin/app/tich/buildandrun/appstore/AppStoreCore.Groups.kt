@@ -137,6 +137,23 @@ internal fun AppStoreCore.onSetRepositoryGroup(
     }
 }
 
+internal fun AppStoreCore.onReorderRepositoryGroups(orderedGroupIds: List<String>) {
+    val groupById = repositoryGroups.associateBy { it.id.value }
+    val reordered = orderedGroupIds.mapIndexedNotNull { index, id ->
+        groupById[id]?.copy(sortOrder = index)
+    }
+    val missingGroups = repositoryGroups.filter { it.id.value !in orderedGroupIds }
+    repositoryGroups = reordered + missingGroups
+    scope.launch {
+        runCatching {
+            graph.preferencesStore.saveRepositoryGroups(repositoryGroups)
+        }.onFailure { throwable ->
+            error = mapFailureToErrorState(DomainFailureMapper.fromThrowable(throwable))
+        }
+        publishState()
+    }
+}
+
 internal fun AppStoreCore.onCreateGroupAndAssignRepository(
     name: String,
     repositoryId: String,

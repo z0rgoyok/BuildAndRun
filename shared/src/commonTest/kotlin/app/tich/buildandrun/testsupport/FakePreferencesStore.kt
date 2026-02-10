@@ -28,6 +28,7 @@ class FakePreferencesStore(
 
     override var worktreeBasePath: String = ""
     override var expandedRepositoryIds: Set<String> = emptySet()
+    override var collapsedGroupIds: Set<String> = emptySet()
     override var lastSelectedRepositoryId: String? = null
     override var lastSelectedWorktreePath: String? = null
     override var rememberEditorChoice: Boolean = true

@@ -91,6 +91,15 @@ class MacOSPreferencesStore(
             )
         }
 
+    override var collapsedGroupIds: Set<String>
+        get() = defaults.readStringList(key = PREFERENCE_KEY_COLLAPSED_GROUP_IDS).toSet()
+        set(value) {
+            defaults.setObject(
+                value = value.toList(),
+                forKey = PREFERENCE_KEY_COLLAPSED_GROUP_IDS,
+            )
+        }
+
     override var lastSelectedRepositoryId: String?
         get() = defaults.stringForKey(PREFERENCE_KEY_LAST_SELECTED_REPOSITORY_ID)
         set(value) {
