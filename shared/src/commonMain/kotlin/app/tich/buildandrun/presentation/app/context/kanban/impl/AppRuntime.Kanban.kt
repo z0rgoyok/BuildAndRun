@@ -3,7 +3,7 @@ package app.tich.buildandrun.presentation.app.context.kanban.impl
 import app.tich.buildandrun.domain.context.kanban.model.KanbanColumnType
 import app.tich.buildandrun.domain.context.kanban.model.KanbanTask
 import app.tich.buildandrun.domain.shared.failure.DomainFailureCode
-import app.tich.buildandrun.presentation.app.AppStore
+import app.tich.buildandrun.presentation.app.ErrorState
 import app.tich.buildandrun.presentation.app.core.*
 import app.tich.buildandrun.presentation.i18n.UiText
 import app.tich.buildandrun.resources.Res
@@ -119,7 +119,7 @@ private fun AppRuntime.normalizedTaskTitleOrPublishError(title: String): String?
     val normalizedTitle = title.trim()
     if (normalizedTitle.isBlank()) {
         messagesState.error =
-            AppStore.ErrorState(
+            ErrorState(
                 code = DomainFailureCode.APP_VALIDATION_TASK_TITLE_BLANK,
                 message = resolveText(text = UiText(resource = Res.string.app_validation_task_title_blank)),
                 details = null,

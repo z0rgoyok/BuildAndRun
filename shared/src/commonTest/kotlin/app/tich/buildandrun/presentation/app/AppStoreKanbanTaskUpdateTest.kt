@@ -33,7 +33,7 @@ class AppStoreKanbanTaskUpdateTest {
                 description = "Initial description",
                 column = KanbanColumnType.TODO,
             )
-            val taskBefore = assertNotNull(store.state.value.kanbanTasks.firstOrNull())
+            val taskBefore = assertNotNull(store.kanbanState.value.kanbanTasks.firstOrNull())
 
             store.kanban.onUpdateTask(
                 taskId = taskBefore.id,
@@ -41,10 +41,10 @@ class AppStoreKanbanTaskUpdateTest {
                 description = "Updated **markdown** text",
             )
 
-            val taskAfter = assertNotNull(store.state.value.kanbanTasks.firstOrNull())
+            val taskAfter = assertNotNull(store.kanbanState.value.kanbanTasks.firstOrNull())
             assertEquals("Updated title", taskAfter.title)
             assertEquals("Updated **markdown** text", taskAfter.description)
-            assertNull(store.state.value.error)
+            assertNull(store.messagesState.value.error)
 
             store.destroy()
         }
@@ -64,7 +64,7 @@ class AppStoreKanbanTaskUpdateTest {
                 description = "Task description",
                 column = KanbanColumnType.TODO,
             )
-            val originalTask = assertNotNull(store.state.value.kanbanTasks.firstOrNull())
+            val originalTask = assertNotNull(store.kanbanState.value.kanbanTasks.firstOrNull())
 
             store.kanban.onUpdateTask(
                 taskId = originalTask.id,
@@ -72,11 +72,11 @@ class AppStoreKanbanTaskUpdateTest {
                 description = "Should not apply",
             )
 
-            val state = store.state.value
+            val state = store.kanbanState.value
             val unchangedTask = assertNotNull(state.kanbanTasks.firstOrNull())
             assertEquals("Task title", unchangedTask.title)
             assertEquals("Task description", unchangedTask.description)
-            assertEquals(DomainFailureCode.APP_VALIDATION_TASK_TITLE_BLANK, state.error?.code)
+            assertEquals(DomainFailureCode.APP_VALIDATION_TASK_TITLE_BLANK, store.messagesState.value.error?.code)
 
             store.destroy()
         }
@@ -86,7 +86,7 @@ class AppStoreKanbanTaskUpdateTest {
         expectedCount: Int,
     ) {
         repeat(200) {
-            if (store.state.value.repositories.size == expectedCount) {
+            if (store.repositoriesState.value.repositories.size == expectedCount) {
                 return
             }
             delay(10)

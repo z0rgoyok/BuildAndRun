@@ -52,17 +52,17 @@ class AppStoreSidebarExpansionTest {
 
             assertEquals(
                 setOf(ungroupedRepository.id.value, visibleRepository.id.value),
-                store.state.value.expandedRepositoryIds,
+                store.repositoriesState.value.expandedRepositoryIds,
             )
-            assertEquals(store.state.value.expandedRepositoryIds, preferences.expandedRepositoryIds)
+            assertEquals(store.repositoriesState.value.expandedRepositoryIds, preferences.expandedRepositoryIds)
 
             store.sidebar.onToggleVisibleSidebarRepositoriesExpansion(
                 includeArchivedRepositories = false,
                 preferredRepositoryId = visibleRepository.id.value,
             )
 
-            assertEquals(setOf(visibleRepository.id.value), store.state.value.expandedRepositoryIds)
-            assertEquals(store.state.value.expandedRepositoryIds, preferences.expandedRepositoryIds)
+            assertEquals(setOf(visibleRepository.id.value), store.repositoriesState.value.expandedRepositoryIds)
+            assertEquals(store.repositoriesState.value.expandedRepositoryIds, preferences.expandedRepositoryIds)
 
             store.destroy()
         }
@@ -85,14 +85,14 @@ class AppStoreSidebarExpansionTest {
             store.sidebar.onSetSidebarRepositoryExpanded(repositoryId = repository.id.value, expanded = true)
             store.sidebar.onSetSidebarGroupCollapsed(groupId = group.id.value, collapsed = true)
 
-            assertEquals(setOf(repository.id.value), store.state.value.expandedRepositoryIds)
-            assertEquals(setOf(group.id.value), store.state.value.collapsedGroupIds)
-            assertEquals(store.state.value.expandedRepositoryIds, preferences.expandedRepositoryIds)
-            assertEquals(store.state.value.collapsedGroupIds, preferences.collapsedGroupIds)
+            assertEquals(setOf(repository.id.value), store.repositoriesState.value.expandedRepositoryIds)
+            assertEquals(setOf(group.id.value), store.repositoriesState.value.collapsedGroupIds)
+            assertEquals(store.repositoriesState.value.expandedRepositoryIds, preferences.expandedRepositoryIds)
+            assertEquals(store.repositoriesState.value.collapsedGroupIds, preferences.collapsedGroupIds)
 
             store.sidebar.onSyncSidebarSelectionExpansion(repositoryId = repository.id.value)
-            assertTrue(store.state.value.expandedRepositoryIds.contains(repository.id.value))
-            assertEquals(store.state.value.expandedRepositoryIds, preferences.expandedRepositoryIds)
+            assertTrue(store.repositoriesState.value.expandedRepositoryIds.contains(repository.id.value))
+            assertEquals(store.repositoriesState.value.expandedRepositoryIds, preferences.expandedRepositoryIds)
 
             store.destroy()
         }
@@ -102,7 +102,7 @@ class AppStoreSidebarExpansionTest {
         expectedCount: Int,
     ) {
         repeat(200) {
-            if (store.state.value.repositories.size == expectedCount) {
+            if (store.repositoriesState.value.repositories.size == expectedCount) {
                 return
             }
             delay(10)

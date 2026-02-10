@@ -6,7 +6,6 @@ import com.arkivanov.decompose.value.Value
 
 class AppRootComponent internal constructor(
     private val runtime: AppRuntime,
-    private val stateFeature: AppStateFeature,
     val navigation: AppNavigationFeature,
     val repositories: AppRepositoriesFeature,
     val worktrees: AppWorktreesFeature,
@@ -22,10 +21,25 @@ class AppRootComponent internal constructor(
     val kanbanLabels: KanbanLabels,
     private val onDestroy: (() -> Unit)? = null,
 ) {
-    val state: Value<AppStore.State> = stateFeature.state
+    val navigationState: Value<AppNavigationState> = navigation.state
+    val activityState: Value<ActivityState> = runtime.activityState
+    val repositoriesState: Value<RepositoriesState> = runtime.repositoriesUiState
+    val worktreesState: Value<WorktreesState> = runtime.worktreesUiState
+    val settingsState: Value<SettingsState> = runtime.settingsUiState
+    val editorsState: Value<EditorsState> = runtime.editorsUiState
+    val kanbanState: Value<KanbanState> = runtime.kanbanUiState
+    val messagesState: Value<MessagesState> = runtime.messagesUiState
 
     fun destroy() {
-        (stateFeature as? AppStateService)?.destroy()
+        navigationState
+        activityState
+        settingsState
+        editorsState
+        gitActions
+        groups
+        messages
+        texts
+        sidebarLabels
         runtime.destroy()
         onDestroy?.invoke()
     }

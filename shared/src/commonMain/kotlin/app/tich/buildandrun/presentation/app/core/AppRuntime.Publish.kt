@@ -4,7 +4,7 @@ import app.tich.buildandrun.domain.context.copy.model.CopyPattern
 import app.tich.buildandrun.domain.context.kanban.model.KanbanTask
 import app.tich.buildandrun.domain.context.repositories.model.Repository
 import app.tich.buildandrun.domain.context.worktrees.model.Worktree
-import app.tich.buildandrun.presentation.app.AppStore
+import app.tich.buildandrun.presentation.app.*
 
 internal fun AppRuntime.publishState() {
     val preferredSelection = preferredSelectedRepository()
@@ -22,37 +22,54 @@ internal fun AppRuntime.publishState() {
         )
 
     val repositoryItems = buildRepositoryItems()
-    mutableState.value =
-        AppStore.State(
+
+    mutableActivityState.value =
+        ActivityState(
             isLoading = activityCenter.isGlobalActive,
             loadingMessage = activityCenter.currentGlobalMessage,
+        )
+
+    mutableRepositoriesState.value =
+        RepositoriesState(
             repositories = repositoryItems,
             sidebarSections = buildSidebarSections(repositoryItems),
             expandedRepositoryIds = repositoriesState.expandedRepositoryIds,
             collapsedGroupIds = repositoriesState.collapsedGroupIds,
             repositoryGroups = buildRepositoryGroupItems(),
             selectedRepositoryId = repositoriesState.selectedRepositoryId,
-            selectedWorktreePath = worktreesState.selectedWorktreePath,
             addRepositoryPathInput = repositoriesState.addRepositoryPathInput,
+        )
+
+    mutableWorktreesState.value =
+        WorktreesState(
+            selectedWorktreePath = worktreesState.selectedWorktreePath,
+            remoteBranches = buildRemoteBranchItems(),
+            createWorktree = worktreesState.createWorktreeState,
+        )
+
+    mutableSettingsState.value =
+        SettingsState(
             branches = settingsState.branches,
             worktreeBasePath = settingsState.worktreeBasePath,
             defaultCopyPatterns = settingsState.defaultCopyPatterns.map(CopyPattern::pattern),
             selectedRepositoryCustomCopyPatterns = selectedRepositoryCustomCopyPatterns(),
             selectedRepositoryEffectiveCopyPatterns = selectedRepositoryEffectiveCopyPatterns(),
+        )
+
+    mutableEditorsState.value =
+        EditorsState(
             rememberEditorChoice = editorsState.rememberEditorChoice,
             preferredEditorId = preferredEditorIdForSelectedRepository(),
             editors = buildEditorItems(),
-            remoteBranches = buildRemoteBranchItems(),
-            createWorktree = worktreesState.createWorktreeState,
-            kanbanTasks = currentKanbanTasks(),
-            error = messagesState.error,
-            success = messagesState.success,
         )
+
+    mutableKanbanState.value = KanbanState(kanbanTasks = currentKanbanTasks())
+    mutableMessagesState.value = MessagesState(error = messagesState.error, success = messagesState.success)
 }
 
-internal fun AppRuntime.buildRepositoryItems(): List<AppStore.RepositoryItem> =
+internal fun AppRuntime.buildRepositoryItems(): List<RepositoryItem> =
     repositoriesState.repositories.map { repository ->
-        AppStore.RepositoryItem(
+        RepositoryItem(
             id = repository.id.value,
             name = repository.name,
             path = repository.path,
@@ -65,7 +82,7 @@ internal fun AppRuntime.buildRepositoryItems(): List<AppStore.RepositoryItem> =
                         compareByDescending<Worktree> { it.isMain }
                             .thenBy { it.name.lowercase() },
                     ).map {
-                        AppStore.WorktreeItem(
+                        WorktreeItem(
                             path = it.path,
                             name = it.name,
                             branch = it.branch,
@@ -80,14 +97,14 @@ internal fun AppRuntime.buildRepositoryItems(): List<AppStore.RepositoryItem> =
         )
     }
 
-internal fun AppRuntime.currentKanbanTasks(): List<AppStore.KanbanTaskItem> {
+internal fun AppRuntime.currentKanbanTasks(): List<KanbanTaskItem> {
     selectedRepository() ?: return emptyList()
     val scopeKey = selectedScopeKey() ?: return emptyList()
     val tasks = kanbanState.tasksByScope[scopeKey].orEmpty()
     return tasks
         .sortedWith(compareBy<KanbanTask> { it.columnId.ordinal }.thenBy { it.order })
         .map {
-            AppStore.KanbanTaskItem(
+            KanbanTaskItem(
                 id = it.id.value,
                 title = it.title,
                 description = it.description,
@@ -97,9 +114,9 @@ internal fun AppRuntime.currentKanbanTasks(): List<AppStore.KanbanTaskItem> {
         }
 }
 
-internal fun AppRuntime.buildEditorItems(): List<AppStore.EditorItem> =
+internal fun AppRuntime.buildEditorItems(): List<EditorItem> =
     editorsState.allEditors.map { editor ->
-        AppStore.EditorItem(
+        EditorItem(
             id = editor.id,
             name = editor.name,
             icon = editor.icon,
@@ -108,9 +125,9 @@ internal fun AppRuntime.buildEditorItems(): List<AppStore.EditorItem> =
         )
     }
 
-internal fun AppRuntime.buildRemoteBranchItems(): List<AppStore.RemoteBranchItem> =
+internal fun AppRuntime.buildRemoteBranchItems(): List<RemoteBranchItem> =
     worktreesState.hasRemoteBranchByWorktreePath.map { (worktreePath, hasRemote) ->
-        AppStore.RemoteBranchItem(
+        RemoteBranchItem(
             worktreePath = worktreePath,
             hasRemote = hasRemote,
         )
@@ -144,16 +161,16 @@ internal fun AppRuntime.selectedScopeKey(): String? {
     return repositoryScopeKey(repositoryId = repository.id.value)
 }
 
-internal fun AppRuntime.buildSidebarSections(repositoryItems: List<AppStore.RepositoryItem>): List<AppStore.SidebarSection> {
+internal fun AppRuntime.buildSidebarSections(repositoryItems: List<RepositoryItem>): List<SidebarSection> {
     val activeRepos = repositoryItems.filter { !it.isArchived }
     val ungrouped = activeRepos.filter { it.groupId == null }
     val groupedByGroupId = activeRepos.filter { it.groupId != null }.groupBy { it.groupId }
     val sortedGroups = repositoriesState.repositoryGroups.sortedBy { it.sortOrder }
 
-    val sections = mutableListOf<AppStore.SidebarSection>()
+    val sections = mutableListOf<SidebarSection>()
     if (ungrouped.isNotEmpty()) {
         sections +=
-            AppStore.SidebarSection(
+            SidebarSection(
                 groupId = null,
                 groupName = null,
                 repositories = ungrouped,
@@ -162,7 +179,7 @@ internal fun AppRuntime.buildSidebarSections(repositoryItems: List<AppStore.Repo
     for (group in sortedGroups) {
         val repos = groupedByGroupId[group.id.value].orEmpty()
         sections +=
-            AppStore.SidebarSection(
+            SidebarSection(
                 groupId = group.id.value,
                 groupName = group.name,
                 repositories = repos,
@@ -171,11 +188,11 @@ internal fun AppRuntime.buildSidebarSections(repositoryItems: List<AppStore.Repo
     return sections
 }
 
-internal fun AppRuntime.buildRepositoryGroupItems(): List<AppStore.RepositoryGroupItem> =
+internal fun AppRuntime.buildRepositoryGroupItems(): List<RepositoryGroupItem> =
     repositoriesState.repositoryGroups
         .sortedBy { it.sortOrder }
         .map { group ->
-            AppStore.RepositoryGroupItem(
+            RepositoryGroupItem(
                 id = group.id.value,
                 name = group.name,
             )

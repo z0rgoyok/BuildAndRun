@@ -3,7 +3,7 @@ package app.tich.buildandrun.presentation.app.context.gitactions.impl
 import app.tich.buildandrun.domain.context.worktrees.model.CompleteWorktreeOptions
 import app.tich.buildandrun.domain.shared.error.AppError
 import app.tich.buildandrun.domain.shared.failure.DomainFailureMapper
-import app.tich.buildandrun.presentation.app.AppStore
+import app.tich.buildandrun.presentation.app.SuccessState
 import app.tich.buildandrun.presentation.app.context.worktrees.impl.loadWorktreesForRepositoryInternal
 import app.tich.buildandrun.presentation.app.core.*
 import app.tich.buildandrun.resources.*
@@ -22,7 +22,7 @@ internal fun AppRuntime.onPush(worktreePath: String) {
                 graph.gitClient.getWorktreeStatus(atWorktreePath = pair.second.path)
             }.onSuccess { status ->
                 worktreesState.worktreeStatusByPath[pair.second.path] = status
-                messagesState.success = AppStore.SuccessState(message = "Push completed")
+                messagesState.success = SuccessState(message = "Push completed")
             }.onFailure { throwable ->
                 messagesState.error = mapFailureToErrorState(DomainFailureMapper.fromThrowable(throwable))
             }
@@ -39,7 +39,7 @@ internal fun AppRuntime.onPull(worktreePath: String) {
                 graph.gitClient.getWorktreeStatus(atWorktreePath = pair.second.path)
             }.onSuccess { status ->
                 worktreesState.worktreeStatusByPath[pair.second.path] = status
-                messagesState.success = AppStore.SuccessState(message = "Pull completed")
+                messagesState.success = SuccessState(message = "Pull completed")
             }.onFailure { throwable ->
                 messagesState.error = mapFailureToErrorState(DomainFailureMapper.fromThrowable(throwable))
             }
@@ -76,7 +76,7 @@ internal fun AppRuntime.onCreatePullRequest(
             }.onSuccess { result ->
                 worktreesState.worktreeStatusByPath[pair.second.path] = result.second
                 graph.systemOpening.openURL(url = result.first)
-                messagesState.success = AppStore.SuccessState(message = "Pull request created")
+                messagesState.success = SuccessState(message = "Pull request created")
             }.onFailure { throwable ->
                 messagesState.error = mapFailureToErrorState(DomainFailureMapper.fromThrowable(throwable))
             }
@@ -114,7 +114,7 @@ internal fun AppRuntime.onLockWorktree(worktreePath: String) {
                 )
                 loadWorktreesForRepositoryInternal(path = pair.first.path)
             }.onSuccess {
-                messagesState.success = AppStore.SuccessState(message = "Worktree locked")
+                messagesState.success = SuccessState(message = "Worktree locked")
             }.onFailure { throwable ->
                 messagesState.error = mapFailureToErrorState(DomainFailureMapper.fromThrowable(throwable))
             }
@@ -133,7 +133,7 @@ internal fun AppRuntime.onUnlockWorktree(worktreePath: String) {
                 )
                 loadWorktreesForRepositoryInternal(path = pair.first.path)
             }.onSuccess {
-                messagesState.success = AppStore.SuccessState(message = "Worktree unlocked")
+                messagesState.success = SuccessState(message = "Worktree unlocked")
             }.onFailure { throwable ->
                 messagesState.error = mapFailureToErrorState(DomainFailureMapper.fromThrowable(throwable))
             }
@@ -173,7 +173,7 @@ internal fun AppRuntime.onRemoveWorktree(
                 loadWorktreesForRepositoryInternal(path = pair.first.path)
                 settingsState.branches = graph.gitClient.listBranches(atRepoPath = pair.first.path)
             }.onSuccess {
-                messagesState.success = AppStore.SuccessState(message = "Worktree removed")
+                messagesState.success = SuccessState(message = "Worktree removed")
             }.onFailure { throwable ->
                 messagesState.error = mapFailureToErrorState(DomainFailureMapper.fromThrowable(throwable))
             }
@@ -246,7 +246,7 @@ internal fun AppRuntime.onCompleteWorktree(
                 loadWorktreesForRepositoryInternal(path = pair.first.path)
                 settingsState.branches = graph.gitClient.listBranches(atRepoPath = pair.first.path)
             }.onSuccess {
-                messagesState.success = AppStore.SuccessState(message = "Worktree completed")
+                messagesState.success = SuccessState(message = "Worktree completed")
             }.onFailure { throwable ->
                 messagesState.error = mapFailureToErrorState(DomainFailureMapper.fromThrowable(throwable))
             }
@@ -280,7 +280,7 @@ internal fun AppRuntime.onPruneWorktrees() {
                 graph.gitClient.pruneWorktrees(atRepoPath = repositoryPath)
                 loadWorktreesForRepositoryInternal(path = repositoryPath)
             }.onSuccess {
-                messagesState.success = AppStore.SuccessState(message = "Worktrees pruned")
+                messagesState.success = SuccessState(message = "Worktrees pruned")
             }.onFailure { throwable ->
                 messagesState.error = mapFailureToErrorState(DomainFailureMapper.fromThrowable(throwable))
             }

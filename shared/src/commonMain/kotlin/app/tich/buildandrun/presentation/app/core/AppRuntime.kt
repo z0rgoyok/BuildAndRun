@@ -1,7 +1,7 @@
 package app.tich.buildandrun.presentation.app.core
 
 import app.tich.buildandrun.domain.shared.failure.DomainFailureMapper
-import app.tich.buildandrun.presentation.app.AppStore
+import app.tich.buildandrun.presentation.app.*
 import app.tich.buildandrun.presentation.app.context.state.*
 import app.tich.buildandrun.presentation.errors.DomainFailureToUiErrorMapper
 import com.arkivanov.decompose.value.MutableValue
@@ -31,10 +31,22 @@ internal class AppRuntime(
             publishState()
         }
     internal val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default + coroutineExceptionHandler)
-    internal val mutableState = MutableValue(AppStore.State())
+    internal val mutableActivityState = MutableValue(ActivityState())
+    internal val mutableRepositoriesState = MutableValue(RepositoriesState())
+    internal val mutableWorktreesState = MutableValue(WorktreesState())
+    internal val mutableSettingsState = MutableValue(SettingsState())
+    internal val mutableEditorsState = MutableValue(EditorsState())
+    internal val mutableKanbanState = MutableValue(KanbanState())
+    internal val mutableMessagesState = MutableValue(MessagesState())
     internal val activityCenter = ActivityCenter()
 
-    internal val state: Value<AppStore.State> = mutableState
+    internal val activityState: Value<ActivityState> = mutableActivityState
+    internal val repositoriesUiState: Value<RepositoriesState> = mutableRepositoriesState
+    internal val worktreesUiState: Value<WorktreesState> = mutableWorktreesState
+    internal val settingsUiState: Value<SettingsState> = mutableSettingsState
+    internal val editorsUiState: Value<EditorsState> = mutableEditorsState
+    internal val kanbanUiState: Value<KanbanState> = mutableKanbanState
+    internal val messagesUiState: Value<MessagesState> = mutableMessagesState
 
     init {
         loadInitial()

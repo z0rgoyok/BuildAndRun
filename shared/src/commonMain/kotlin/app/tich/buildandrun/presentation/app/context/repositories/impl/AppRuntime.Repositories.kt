@@ -4,7 +4,7 @@ import app.tich.buildandrun.application.context.repositories.usecase.AddReposito
 import app.tich.buildandrun.application.context.repositories.usecase.RemoveRepositoryUseCase
 import app.tich.buildandrun.application.context.repositories.usecase.SetRepositoryArchivedStateUseCase
 import app.tich.buildandrun.application.context.shared.usecase.UseCaseResult
-import app.tich.buildandrun.presentation.app.AppStore
+import app.tich.buildandrun.presentation.app.SuccessState
 import app.tich.buildandrun.presentation.app.context.worktrees.impl.loadWorktreesForRepository
 import app.tich.buildandrun.presentation.app.core.*
 import app.tich.buildandrun.presentation.i18n.UiText
@@ -45,7 +45,7 @@ internal fun AppRuntime.onAddRepository() {
                             createdWorktreePath = null,
                         )
                     messagesState.success =
-                        AppStore.SuccessState(
+                        SuccessState(
                             message =
                                 resolveText(
                                     text =

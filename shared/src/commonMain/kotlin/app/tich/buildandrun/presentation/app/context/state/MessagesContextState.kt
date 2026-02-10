@@ -1,8 +1,9 @@
 package app.tich.buildandrun.presentation.app.context.state
 
-import app.tich.buildandrun.presentation.app.AppStore
+import app.tich.buildandrun.presentation.app.ErrorState
+import app.tich.buildandrun.presentation.app.SuccessState
 
 internal class MessagesContextState {
-    var error: AppStore.ErrorState? = null
-    var success: AppStore.SuccessState? = null
+    var error: ErrorState? = null
+    var success: SuccessState? = null
 }

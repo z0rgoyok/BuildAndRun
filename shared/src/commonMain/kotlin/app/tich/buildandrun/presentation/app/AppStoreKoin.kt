@@ -26,12 +26,6 @@ internal fun appStoreModule(
         single<ComponentContext> { componentContext }
         single { AppRuntime(graph = get()) }
         single<AppNavigationFeature> { AppNavigationComponent(componentContext = get()) }
-        single<AppStateFeature> {
-            AppStateService(
-                runtime = get(),
-                navigation = get(),
-            )
-        }
         single<AppRepositoriesFeature> { AppRepositoriesService(runtime = get()) }
         single<AppWorktreesFeature> { AppWorktreesService(runtime = get()) }
         single<AppSettingsFeature> { AppSettingsService(runtime = get()) }
@@ -45,7 +39,6 @@ internal fun appStoreModule(
         single {
             AppRootComponent(
                 runtime = get(),
-                stateFeature = get(),
                 navigation = get(),
                 repositories = get(),
                 worktrees = get(),

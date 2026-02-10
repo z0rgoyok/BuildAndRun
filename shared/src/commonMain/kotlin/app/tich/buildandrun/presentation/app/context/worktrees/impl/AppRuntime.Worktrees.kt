@@ -3,7 +3,7 @@ package app.tich.buildandrun.presentation.app.context.worktrees.impl
 import app.tich.buildandrun.application.context.shared.usecase.UseCaseResult
 import app.tich.buildandrun.application.context.worktrees.usecase.CreateWorktreeUseCase
 import app.tich.buildandrun.domain.shared.failure.DomainFailureMapper
-import app.tich.buildandrun.presentation.app.AppStore
+import app.tich.buildandrun.presentation.app.SuccessState
 import app.tich.buildandrun.presentation.app.context.settings.impl.onLoadBranches
 import app.tich.buildandrun.presentation.app.core.*
 import app.tich.buildandrun.presentation.i18n.UiText
@@ -128,7 +128,7 @@ internal fun AppRuntime.onCreateWorktree() {
                     )
                 onLoadBranches()
                 messagesState.success =
-                    AppStore.SuccessState(
+                    SuccessState(
                         message =
                             resolveText(
                                 text =
