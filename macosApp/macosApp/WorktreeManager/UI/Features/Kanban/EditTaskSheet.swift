@@ -1,24 +1,36 @@
 import Shared
 import SwiftUI
 
-struct AddTaskSheet: View {
+struct EditTaskSheet: View {
     @EnvironmentObject var root: KmpRoot
+    let taskId: String
     let columnId: KanbanColumnType
-    let onAdd: (String, String?) -> Void
+    let onSave: (String, String, String?) -> Void
 
     @Environment(\.dismiss) private var dismiss
-    @State private var title = ""
-    @State private var description = ""
+    @State private var title: String
+    @State private var description: String
     @FocusState private var isTitleFocused: Bool
+
+    init(
+        task: AppStore.KanbanTaskItem,
+        onSave: @escaping (String, String, String?) -> Void,
+    ) {
+        taskId = task.id
+        columnId = task.columnId
+        self.onSave = onSave
+        _title = State(initialValue: task.title)
+        _description = State(initialValue: task.description_ ?? "")
+    }
 
     private var labels: KanbanLabels { root.store.kanbanLabels }
 
     var body: some View {
         VStack(spacing: DS.Spacing.lg) {
-            HStack {
-                Image(systemName: iconName)
+            HStack(spacing: DS.Spacing.sm) {
+                Image(systemName: columnId.icon)
                     .foregroundStyle(columnColor)
-                Text(root.store.resolveNewTaskIn(column: columnTitle))
+                Text(labels.editTaskAction)
                     .font(.headline)
             }
 
@@ -47,8 +59,8 @@ struct AddTaskSheet: View {
 
                 Spacer()
 
-                Button(labels.addTask) {
-                    onAdd(title, description.isEmpty ? nil : description)
+                Button(labels.saveAction) {
+                    onSave(taskId, title, description.isEmpty ? nil : description)
                     dismiss()
                 }
                 .buttonStyle(.borderedProminent)
@@ -61,14 +73,6 @@ struct AddTaskSheet: View {
         .onAppear {
             isTitleFocused = true
         }
-    }
-
-    private var iconName: String {
-        columnId.icon
-    }
-
-    private var columnTitle: String {
-        columnId.displayName
     }
 
     private var columnColor: Color {

@@ -227,6 +227,18 @@ class AppStore internal constructor(
         core.onDeleteTask(taskId = taskId)
     }
 
+    fun onUpdateTask(
+        taskId: String,
+        title: String,
+        description: String?,
+    ) {
+        core.onUpdateTask(
+            taskId = taskId,
+            title = title,
+            description = description,
+        )
+    }
+
     fun onSelectChild(child: AppChild) {
         core.onSelectChild(child = child)
     }
@@ -256,6 +268,12 @@ class AppStore internal constructor(
     fun resolveBranchConflictMessage(branch: String): String = resolveBranchConflictMessageText(branch = branch)
 
     fun resolveBranchConflictUseExistingDetail(branch: String): String = resolveBranchConflictUseExistingDetailText(branch = branch)
+
+    fun resolveStatusToPush(commits: String): String = resolveStatusToPushText(commits = commits)
+
+    fun resolveStatusBehind(commits: String): String = resolveStatusBehindText(commits = commits)
+
+    fun resolveNewTaskIn(column: String): String = resolveNewTaskInText(column = column)
 
     fun loadExpandedRepositoryIds(): Set<String> = core.graph.preferencesStore.expandedRepositoryIds
 

@@ -1,6 +1,7 @@
 package app.tich.buildandrun.application.ports
 
 import app.tich.buildandrun.domain.entities.CopyPattern
+import app.tich.buildandrun.domain.entities.KanbanTask
 import app.tich.buildandrun.domain.entities.Repository
 import app.tich.buildandrun.domain.entities.RepositoryId
 
@@ -66,4 +67,13 @@ interface PreferencesStore {
     fun removeCopyPatterns(forRepositoryId: RepositoryId)
 
     fun effectiveCopyPatterns(forRepositoryId: RepositoryId): List<CopyPattern>
+
+    fun loadKanbanTasks(forRepositoryId: RepositoryId): List<KanbanTask>
+
+    fun setKanbanTasks(
+        tasks: List<KanbanTask>,
+        forRepositoryId: RepositoryId,
+    )
+
+    fun removeKanbanTasks(forRepositoryId: RepositoryId)
 }

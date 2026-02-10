@@ -2,6 +2,7 @@ package app.tich.buildandrun.testsupport
 
 import app.tich.buildandrun.application.ports.PreferencesStore
 import app.tich.buildandrun.domain.entities.CopyPattern
+import app.tich.buildandrun.domain.entities.KanbanTask
 import app.tich.buildandrun.domain.entities.Repository
 import app.tich.buildandrun.domain.entities.RepositoryId
 
@@ -13,6 +14,7 @@ class FakePreferencesStore(
     private val preferredBranches = mutableMapOf<String, String>()
     private val worktreeBaseBranches = mutableMapOf<String, String>()
     private val repositoryCopyPatterns = mutableMapOf<String, List<CopyPattern>>()
+    private val repositoryKanbanTasks = mutableMapOf<String, List<KanbanTask>>()
 
     override suspend fun loadRepositories(): List<Repository> = repositoriesStorage.toList()
 
@@ -97,4 +99,17 @@ class FakePreferencesStore(
 
     override fun effectiveCopyPatterns(forRepositoryId: RepositoryId): List<CopyPattern> =
         repositoryCopyPatterns[forRepositoryId.value] ?: defaultCopyPatterns
+
+    override fun loadKanbanTasks(forRepositoryId: RepositoryId): List<KanbanTask> = repositoryKanbanTasks[forRepositoryId.value].orEmpty()
+
+    override fun setKanbanTasks(
+        tasks: List<KanbanTask>,
+        forRepositoryId: RepositoryId,
+    ) {
+        repositoryKanbanTasks[forRepositoryId.value] = tasks.toList()
+    }
+
+    override fun removeKanbanTasks(forRepositoryId: RepositoryId) {
+        repositoryKanbanTasks.remove(forRepositoryId.value)
+    }
 }

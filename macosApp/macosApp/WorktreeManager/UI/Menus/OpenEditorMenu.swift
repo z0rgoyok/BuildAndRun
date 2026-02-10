@@ -5,6 +5,8 @@ struct OpenEditorMenu: View {
     @ObservedObject var root: KmpRoot
     let worktreePath: String
 
+    private var labels: KanbanLabels { root.store.kanbanLabels }
+
     private var configuredEditors: [AppStore.EditorItem] {
         root.state.editors.filter { $0.isInstalled && $0.isEnabled }
     }
@@ -29,7 +31,7 @@ struct OpenEditorMenu: View {
         Menu {
             menuContent
         } label: {
-            Label("Open", systemImage: "arrow.up.forward.app")
+            Label(labels.open, systemImage: "arrow.up.forward.app")
         } primaryAction: {
             root.store.onOpenInEditor(
                 worktreePath: worktreePath,
@@ -43,7 +45,7 @@ struct OpenEditorMenu: View {
         Menu {
             menuContent
         } label: {
-            Label("Open", systemImage: "arrow.up.forward.app")
+            Label(labels.open, systemImage: "arrow.up.forward.app")
         }
         .disabled(configuredEditors.isEmpty)
     }
@@ -51,7 +53,7 @@ struct OpenEditorMenu: View {
     @ViewBuilder
     private var menuContent: some View {
         if configuredEditors.isEmpty {
-            Text("No configured editors")
+            Text(labels.noConfiguredEditors)
                 .foregroundStyle(.secondary)
         } else {
             Picker(
@@ -77,14 +79,14 @@ struct OpenEditorMenu: View {
 
         Divider()
 
-        Button(root.state.rememberEditorChoice ? "Forget Editor Choice" : "Remember Editor Choice") {
+        Button(root.state.rememberEditorChoice ? labels.forgetEditorChoice : labels.rememberEditorChoice) {
             root.store.onSetRememberEditorChoice(value: !root.state.rememberEditorChoice)
             if root.state.rememberEditorChoice {
                 root.store.onSetPreferredEditor(editorId: nil)
             }
         }
 
-        Button("Configure Editors...") {
+        Button(labels.configureEditors) {
             root.presentSheet(.configureEditors)
         }
     }

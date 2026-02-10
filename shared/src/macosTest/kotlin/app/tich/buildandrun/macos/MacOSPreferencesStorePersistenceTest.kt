@@ -3,10 +3,7 @@ package app.tich.buildandrun.macos
 import app.tich.buildandrun.application.usecases.AddRepositoryUseCase
 import app.tich.buildandrun.application.usecases.LoadRepositoriesUseCase
 import app.tich.buildandrun.application.usecases.UseCaseResult
-import app.tich.buildandrun.domain.entities.CopyPattern
-import app.tich.buildandrun.domain.entities.Repository
-import app.tich.buildandrun.domain.entities.RepositoryId
-import app.tich.buildandrun.domain.entities.Worktree
+import app.tich.buildandrun.domain.entities.*
 import app.tich.buildandrun.testsupport.FakeGitClient
 import kotlinx.coroutines.runBlocking
 import platform.Foundation.NSUUID
@@ -64,6 +61,21 @@ class MacOSPreferencesStorePersistenceTest {
                     patterns = listOf(CopyPattern(pattern = ".npmrc")),
                     forRepositoryId = repositoryId,
                 )
+                writer.setKanbanTasks(
+                    tasks =
+                        listOf(
+                            KanbanTask(
+                                id = KanbanTaskId(value = "task-1"),
+                                title = "Persist kanban",
+                                description = "Task must survive restart",
+                                columnId = KanbanColumnType.IN_PROGRESS,
+                                worktreePath = null,
+                                createdAt = 101L,
+                                order = 3,
+                            ),
+                        ),
+                    forRepositoryId = repositoryId,
+                )
 
                 val reader = MacOSPreferencesStore(defaults = defaults)
                 assertEquals("/tmp/worktrees", reader.worktreeBasePath)
@@ -83,6 +95,10 @@ class MacOSPreferencesStorePersistenceTest {
                 assertEquals(
                     listOf(".npmrc"),
                     reader.effectiveCopyPatterns(forRepositoryId = repositoryId).map(CopyPattern::pattern),
+                )
+                assertEquals(
+                    listOf("Persist kanban"),
+                    reader.loadKanbanTasks(forRepositoryId = repositoryId).map(KanbanTask::title),
                 )
             }
         }
@@ -151,6 +167,22 @@ class MacOSPreferencesStorePersistenceTest {
                 writer.removePreferredEditorId(forRepositoryId = repositoryId)
                 writer.removeWorktreeBaseBranch(forWorktreePath = worktreePath)
                 writer.removeCopyPatterns(forRepositoryId = repositoryId)
+                writer.setKanbanTasks(
+                    tasks =
+                        listOf(
+                            KanbanTask(
+                                id = KanbanTaskId(value = "task-temp"),
+                                title = "Temp",
+                                description = null,
+                                columnId = KanbanColumnType.TODO,
+                                worktreePath = null,
+                                createdAt = 11L,
+                                order = 1,
+                            ),
+                        ),
+                    forRepositoryId = repositoryId,
+                )
+                writer.removeKanbanTasks(forRepositoryId = repositoryId)
 
                 val reader = MacOSPreferencesStore(defaults = defaults)
                 assertNull(reader.lastSelectedRepositoryId)
@@ -159,6 +191,7 @@ class MacOSPreferencesStorePersistenceTest {
                 assertNull(reader.preferredEditorId(forRepositoryId = repositoryId))
                 assertNull(reader.worktreeBaseBranch(forWorktreePath = worktreePath))
                 assertNull(reader.copyPatterns(forRepositoryId = repositoryId))
+                assertEquals(emptyList(), reader.loadKanbanTasks(forRepositoryId = repositoryId))
             }
         }
 
@@ -174,6 +207,7 @@ class MacOSPreferencesStorePersistenceTest {
                 assertNull(store.enabledEditorIds)
                 assertNull(store.lastSelectedRepositoryId)
                 assertNull(store.lastSelectedWorktreePath)
+                assertEquals(emptyList(), store.loadKanbanTasks(forRepositoryId = RepositoryId(value = "repo-default")))
             }
         }
 
@@ -188,6 +222,7 @@ class MacOSPreferencesStorePersistenceTest {
                 defaults.setObject(value = listOf("invalid"), forKey = "preferences.preferredBaseBranches")
                 defaults.setObject(value = listOf("invalid"), forKey = "preferences.worktreeBaseBranches")
                 defaults.setObject(value = mapOf("repo-1" to listOf(1, 2)), forKey = "preferences.repositoryCopyPatterns")
+                defaults.setObject(value = mapOf("repo-1" to listOf(1, 2)), forKey = "preferences.repositoryKanbanTasks")
 
                 val store = MacOSPreferencesStore(defaults = defaults)
                 val repositoryId = RepositoryId(value = "repo-1")
@@ -199,6 +234,7 @@ class MacOSPreferencesStorePersistenceTest {
                 assertNull(store.worktreeBaseBranch(forWorktreePath = "/tmp/repo-1/wt"))
                 assertNull(store.copyPatterns(forRepositoryId = repositoryId))
                 assertEquals(emptyList(), store.effectiveCopyPatterns(forRepositoryId = repositoryId))
+                assertEquals(emptyList(), store.loadKanbanTasks(forRepositoryId = repositoryId))
             }
         }
 

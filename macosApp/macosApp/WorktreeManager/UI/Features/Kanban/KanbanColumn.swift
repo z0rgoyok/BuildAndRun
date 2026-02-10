@@ -2,15 +2,19 @@ import Shared
 import SwiftUI
 
 struct KanbanColumn: View {
+    @EnvironmentObject var root: KmpRoot
     let title: String
     let columnId: KanbanColumnType
     let tasks: [AppStore.KanbanTaskItem]
     @Binding var draggedTaskId: String?
     let onAddTask: () -> Void
     let onMoveTask: (String, KanbanColumnType) -> Void
+    let onEditTask: (AppStore.KanbanTaskItem) -> Void
     let onDeleteTask: (String) -> Void
 
     @State private var isTargeted = false
+
+    private var labels: KanbanLabels { root.store.kanbanLabels }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -28,6 +32,7 @@ struct KanbanColumn: View {
                             task: task,
                             isDragging: draggedTaskId == task.id,
                             onMoveTask: onMoveTask,
+                            onEdit: { onEditTask(task) },
                             onDelete: { onDeleteTask(task.id) }
                         )
                         .onDrag {
@@ -43,7 +48,7 @@ struct KanbanColumn: View {
                             HStack(spacing: DS.Spacing.xs) {
                                 Image(systemName: "plus")
                                     .font(.system(size: 11, weight: .medium))
-                                Text("Add task")
+                                Text(labels.addTask)
                                     .font(.system(size: 12))
                             }
                             .foregroundStyle(DS.Colors.textSecondary)
@@ -56,11 +61,12 @@ struct KanbanColumn: View {
                                 .stroke(style: StrokeStyle(lineWidth: 1, dash: [5, 3]))
                                 .foregroundStyle(DS.Colors.borderSubtle)
                         )
-                    }
-                }
-                .padding(DS.Spacing.sm)
-            }
-        }
+	                    }
+	                }
+	                .id(tasks.map(\.id).joined(separator: "|"))
+	                .padding(DS.Spacing.sm)
+	            }
+	        }
         .frame(minWidth: DS.Sizes.columnMinWidth, idealWidth: DS.Sizes.columnIdealWidth, maxWidth: DS.Sizes.columnMaxWidth)
         .columnStyle()
         .dropTargetStyle(isTargeted: isTargeted && draggedTaskId != nil)

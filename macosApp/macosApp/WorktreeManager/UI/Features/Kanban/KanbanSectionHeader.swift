@@ -1,7 +1,11 @@
+import Shared
 import SwiftUI
 
 struct KanbanSectionHeader: View {
+    @EnvironmentObject var root: KmpRoot
     let onAddTask: () -> Void
+
+    private var labels: KanbanLabels { root.store.kanbanLabels }
 
     var body: some View {
         HStack {
@@ -10,7 +14,7 @@ struct KanbanSectionHeader: View {
                     .font(.system(size: 14))
                     .foregroundStyle(DS.Colors.textSecondary)
 
-                Text("Tasks")
+                Text(labels.tasks)
                     .font(DS.Typography.sectionHeader)
                     .foregroundStyle(DS.Colors.textSecondary)
                     .textCase(.uppercase)
@@ -21,7 +25,7 @@ struct KanbanSectionHeader: View {
             Button {
                 onAddTask()
             } label: {
-                Label("Add Task", systemImage: "plus")
+                Label(labels.addTask, systemImage: "plus")
             }
             .buttonStyle(.bordered)
             .controlSize(.small)
@@ -31,4 +35,3 @@ struct KanbanSectionHeader: View {
         .background(DS.Colors.surfaceTertiary)
     }
 }
-

@@ -2,12 +2,15 @@ import Shared
 import SwiftUI
 
 struct WorktreePRBadge: View {
+    @EnvironmentObject var root: KmpRoot
     let pr: PRStatus
+
+    private var labels: KanbanLabels { root.store.kanbanLabels }
 
     var body: some View {
         HStack(spacing: 3) {
             Image(systemName: prIcon)
-            Text("PR #\(pr.number)")
+            Text("\(labels.prShort) #\(pr.number)")
         }
         .foregroundStyle(prColor)
     }

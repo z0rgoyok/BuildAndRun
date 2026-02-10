@@ -68,8 +68,9 @@ struct RepositoryCopyPatternsSheet: View {
                 Spacer()
 
                 Button("Save") {
-                    save()
-                    dismiss()
+                    if save() {
+                        dismiss()
+                    }
                 }
                 .keyboardShortcut(.defaultAction)
             }
@@ -79,26 +80,30 @@ struct RepositoryCopyPatternsSheet: View {
         .onAppear {
             load()
         }
+        .onChange(of: root.state.selectedRepositoryId) { _, _ in
+            load()
+        }
     }
 
     private func load() {
-        guard root.state.selectedRepositoryId == repositoryId else {
-            useCustomPatterns = false
-            patterns = root.state.defaultCopyPatterns
+        if root.state.selectedRepositoryId != repositoryId {
+            root.store.onSelectRepository(repositoryId: repositoryId)
             return
         }
         patterns = root.state.selectedRepositoryEffectiveCopyPatterns
         useCustomPatterns = root.state.selectedRepositoryCustomCopyPatterns != nil
     }
 
-    private func save() {
+    private func save() -> Bool {
         guard root.state.selectedRepositoryId == repositoryId else {
-            return
+            root.store.onSelectRepository(repositoryId: repositoryId)
+            return false
         }
         if useCustomPatterns {
             root.store.onSetRepositoryCopyPatterns(patterns: patterns)
         } else {
             root.store.onSetRepositoryCopyPatterns(patterns: nil)
         }
+        return true
     }
 }

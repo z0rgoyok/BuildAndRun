@@ -6,6 +6,8 @@ struct ContentView: View {
     @EnvironmentObject var root: KmpRoot
     @State private var presentedAlert: PresentedAlert?
 
+    private var labels: KanbanLabels { root.store.kanbanLabels }
+
     var body: some View {
         splitView
             .frame(minWidth: 900, minHeight: 550)
@@ -20,7 +22,7 @@ struct ContentView: View {
                 Alert(
                     title: Text(alert.title),
                     message: Text(alert.message),
-                    dismissButton: .default(Text("OK")) {
+                    dismissButton: .default(Text(labels.ok)) {
                         if alert.isError {
                             root.store.onDismissError()
                         } else {
@@ -72,7 +74,7 @@ struct ContentView: View {
                 Button {
                     root.presentSheet(.addWorktree)
                 } label: {
-                    Label("New Worktree", systemImage: "plus.square.on.square")
+                    Label(labels.newWorktree, systemImage: "plus.square.on.square")
                 }
                 .help(root.store.kanbanLabels.toolbarNewWorktree)
 
@@ -82,14 +84,14 @@ struct ContentView: View {
                     Button {
                         root.store.onOpenInFinder(worktreePath: selectedWorktreePath)
                     } label: {
-                        Label("Finder", systemImage: "folder")
+                        Label(labels.finder, systemImage: "folder")
                     }
                     .help(root.store.kanbanLabels.toolbarFinder)
 
                     Button {
                         root.store.onOpenInTerminal(worktreePath: selectedWorktreePath)
                     } label: {
-                        Label("Terminal", systemImage: "terminal")
+                        Label(labels.terminal, systemImage: "terminal")
                     }
                     .help(root.store.kanbanLabels.toolbarTerminal)
                 }
@@ -97,7 +99,7 @@ struct ContentView: View {
                 Button {
                     root.store.onRefreshSelectedRepository()
                 } label: {
-                    Label("Refresh", systemImage: "arrow.clockwise")
+                    Label(labels.refresh, systemImage: "arrow.clockwise")
                 }
                 .help(root.store.kanbanLabels.toolbarRefresh)
             }
@@ -125,7 +127,7 @@ struct ContentView: View {
         if let repo = root.selectedRepository {
             return repo.name
         }
-        return "Worktree Manager"
+        return labels.appTitle
     }
 
     private var currentSelection: SidebarSelection? {

@@ -7,6 +7,8 @@ struct WorktreeMenuItems: View {
     let worktreePath: String?
     let includeNewWorktree: Bool
 
+    private var labels: KanbanLabels { root.store.kanbanLabels }
+
     init(root: KmpRoot, worktreePath: String?, includeNewWorktree: Bool) {
         self.root = root
         self.worktreePath = worktreePath
@@ -20,55 +22,57 @@ struct WorktreeMenuItems: View {
 
                 if includeNewWorktree {
                     Divider()
-                    Button("New Worktree...") {
+                    Button(labels.newWorktree + "…") {
                         root.presentSheet(.addWorktree)
                     }
                     .keyboardShortcut("n", modifiers: .command)
                     .disabled(root.selectedRepository == nil)
                 }
             } else {
-                WorktreeUnboundMenuItems()
+                WorktreeUnboundMenuItems(labels: labels)
             }
         }
     }
 
     private struct WorktreeUnboundMenuItems: View {
+        let labels: KanbanLabels
+
         var body: some View {
             Section {
-                Button("Open in Editor") {}
+                Button(labels.openInEditor) {}
                     .keyboardShortcut("o", modifiers: .command)
                     .disabled(true)
 
-                Menu("Open in...") {}
+                Menu(labels.openIn) {}
                     .disabled(true)
             }
 
             Section {
-                Button("Show in Finder") {}
+                Button(labels.showInFinder) {}
                     .keyboardShortcut("f", modifiers: [.command, .shift])
                     .disabled(true)
 
-                Button("Open in Terminal") {}
+                Button(labels.openInTerminal) {}
                     .keyboardShortcut("t", modifiers: [.command, .shift])
                     .disabled(true)
 
-                Button("Copy Path") {}
+                Button(labels.copyPath) {}
                     .keyboardShortcut("c", modifiers: [.command, .shift])
                     .disabled(true)
             }
 
             Section {
-                Button("Push") {}
+                Button(labels.push) {}
                     .keyboardShortcut("p", modifiers: [.command, .shift])
                     .disabled(true)
 
-                Button("Pull") {}
+                Button(labels.pull) {}
                     .keyboardShortcut("p", modifiers: [.command, .option])
                     .disabled(true)
             }
 
             Section {
-                Button("Refresh Status") {}
+                Button(labels.refreshStatus) {}
                     .keyboardShortcut("r", modifiers: .command)
                     .disabled(true)
             }
@@ -78,6 +82,8 @@ struct WorktreeMenuItems: View {
     private struct WorktreeBoundMenuItems: View {
         @ObservedObject var root: KmpRoot
         let worktree: AppStore.WorktreeItem
+
+        private var labels: KanbanLabels { root.store.kanbanLabels }
 
         private var configuredEditors: [AppStore.EditorItem] {
             root.state.editors.filter { $0.isEnabled && $0.isInstalled }
@@ -89,7 +95,7 @@ struct WorktreeMenuItems: View {
 
         var body: some View {
             Section {
-                Button("Open in Editor") {
+                Button(labels.openInEditor) {
                     root.store.onOpenInEditor(
                         worktreePath: worktree.path,
                         editorId: root.state.preferredEditorId,
@@ -98,9 +104,9 @@ struct WorktreeMenuItems: View {
                 .keyboardShortcut("o", modifiers: .command)
                 .disabled(configuredEditors.isEmpty)
 
-                Menu("Open in...") {
+                Menu(labels.openIn) {
                     if configuredEditors.isEmpty {
-                        Text("No configured editors")
+                        Text(labels.noConfiguredEditors)
                             .foregroundStyle(.secondary)
                     } else {
                         Picker(
@@ -126,14 +132,14 @@ struct WorktreeMenuItems: View {
 
                     Divider()
 
-                    Button(root.state.rememberEditorChoice ? "Forget Editor Choice" : "Remember Editor Choice") {
+                    Button(root.state.rememberEditorChoice ? labels.forgetEditorChoice : labels.rememberEditorChoice) {
                         root.store.onSetRememberEditorChoice(value: !root.state.rememberEditorChoice)
                         if root.state.rememberEditorChoice {
                             root.store.onSetPreferredEditor(editorId: nil)
                         }
                     }
 
-                    Button("Configure Editors...") {
+                    Button(labels.configureEditors) {
                         root.presentSheet(.configureEditors)
                     }
                 }
@@ -141,17 +147,17 @@ struct WorktreeMenuItems: View {
             }
 
             Section {
-                Button("Show in Finder") {
+                Button(labels.showInFinder) {
                     root.store.onOpenInFinder(worktreePath: worktree.path)
                 }
                 .keyboardShortcut("f", modifiers: [.command, .shift])
 
-                Button("Open in Terminal") {
+                Button(labels.openInTerminal) {
                     root.store.onOpenInTerminal(worktreePath: worktree.path)
                 }
                 .keyboardShortcut("t", modifiers: [.command, .shift])
 
-                Button("Copy Path") {
+                Button(labels.copyPath) {
                     NSPasteboard.general.clearContents()
                     NSPasteboard.general.setString(worktree.path, forType: .string)
                 }
@@ -160,12 +166,12 @@ struct WorktreeMenuItems: View {
 
             if !worktree.isMain {
                 Section {
-                    Button("Push") {
+                    Button(labels.push) {
                         root.store.onPush(worktreePath: worktree.path)
                     }
                     .keyboardShortcut("p", modifiers: [.command, .shift])
 
-                    Button("Pull") {
+                    Button(labels.pull) {
                         root.store.onPull(worktreePath: worktree.path)
                     }
                     .keyboardShortcut("p", modifiers: [.command, .option])
@@ -173,11 +179,11 @@ struct WorktreeMenuItems: View {
 
                 Section {
                     if worktree.status?.prStatus != nil {
-                        Button("View Pull Request") {
+                        Button(labels.viewPullRequest) {
                             root.store.onOpenPullRequest(worktreePath: worktree.path)
                         }
                     } else {
-                        Button("Create Pull Request...") {
+                        Button(labels.createPullRequest) {
                             root.presentSheet(.createPR(worktreePath: worktree.path))
                         }
                     }
@@ -185,22 +191,22 @@ struct WorktreeMenuItems: View {
 
                 Section {
                     if worktree.isLocked {
-                        Button("Unlock") {
+                        Button(labels.unlock) {
                             root.store.onUnlockWorktree(worktreePath: worktree.path)
                         }
                     } else {
-                        Button("Lock") {
+                        Button(labels.lock) {
                             root.store.onLockWorktree(worktreePath: worktree.path)
                         }
                     }
                 }
 
                 Section {
-                    Button("Finish Worktree...") {
+                    Button(labels.finishWorktree) {
                         root.presentSheet(.completeWorktree(worktreePath: worktree.path))
                     }
 
-                    Button("Remove Worktree", role: .destructive) {
+                    Button(labels.removeWorktree, role: .destructive) {
                         root.store.onRemoveWorktree(
                             worktreePath: worktree.path,
                             force: true,
@@ -211,7 +217,7 @@ struct WorktreeMenuItems: View {
             }
 
             Section {
-                Button("Refresh Status") {
+                Button(labels.refreshStatus) {
                     root.store.onRefreshWorktreeStatus(worktreePath: worktree.path)
                 }
                 .keyboardShortcut("r", modifiers: .command)

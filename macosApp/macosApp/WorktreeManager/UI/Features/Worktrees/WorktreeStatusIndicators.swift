@@ -2,7 +2,10 @@ import Shared
 import SwiftUI
 
 struct WorktreeStatusIndicators: View {
+    @EnvironmentObject var root: KmpRoot
     let status: WorktreeStatus
+
+    private var labels: KanbanLabels { root.store.kanbanLabels }
 
     var body: some View {
         HStack(spacing: DS.Spacing.xxs) {
@@ -10,7 +13,7 @@ struct WorktreeStatusIndicators: View {
                 Circle()
                     .fill(Color.orange)
                     .frame(width: 6, height: 6)
-                    .help("Uncommitted changes")
+                    .help(labels.uncommittedChanges)
             }
 
             if status.ahead > 0 {
@@ -21,7 +24,7 @@ struct WorktreeStatusIndicators: View {
                         .font(.system(size: 9))
                 }
                 .foregroundStyle(.blue)
-                .help("\(status.ahead) commits to push")
+                .help(root.store.resolveStatusToPush(commits: "\(status.ahead)"))
             }
 
             if status.behind > 0 {
@@ -32,14 +35,14 @@ struct WorktreeStatusIndicators: View {
                         .font(.system(size: 9))
                 }
                 .foregroundStyle(.purple)
-                .help("\(status.behind) commits behind")
+                .help(root.store.resolveStatusBehind(commits: "\(status.behind)"))
             }
 
             if let pr = status.prStatus {
                 Image(systemName: pr.state === PRState.merged ? "checkmark.circle.fill" : "arrow.triangle.pull")
                     .font(.system(size: 9))
                     .foregroundStyle(pr.state === PRState.merged ? .purple : .green)
-                    .help(pr.state === PRState.merged ? "PR merged" : "PR #\(pr.number)")
+                    .help(pr.state === PRState.merged ? labels.prMerged : "\(labels.prShort) #\(pr.number)")
             }
         }
     }

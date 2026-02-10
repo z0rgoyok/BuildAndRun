@@ -12,6 +12,108 @@ internal fun AppStoreCore.onAddTask(
     description: String?,
     column: KanbanColumnType,
 ) {
+    val normalizedTitle = normalizedTaskTitleOrPublishError(title = title) ?: return
+    val scope = currentKanbanScope() ?: return
+    val maxOrder = scope.existingTasks.filter { it.columnId == column }.maxOfOrNull { it.order } ?: 0
+    val updatedTasks = scope.existingTasks.toMutableList()
+    updatedTasks +=
+        KanbanTask.create(
+            title = normalizedTitle,
+            description = description?.trim()?.ifBlank { null },
+            columnId = column,
+            worktreePath = null,
+            createdAt = currentEpochMillis(),
+            order = maxOrder + 1,
+        )
+    persistKanbanTasks(
+        scope = scope,
+        tasks = updatedTasks,
+    )
+    clearMessages()
+    publishState()
+}
+
+internal fun AppStoreCore.onMoveTask(
+    taskId: String,
+    column: KanbanColumnType,
+) {
+    val scope = currentKanbanScope() ?: return
+    val index = scope.existingTasks.indexOfFirst { it.id.value == taskId }
+    if (index == -1) {
+        return
+    }
+    val maxOrder = scope.existingTasks.filter { it.columnId == column }.maxOfOrNull { it.order } ?: 0
+    val updatedTasks = scope.existingTasks.toMutableList()
+    updatedTasks[index] = updatedTasks[index].moveTo(column).withOrder(maxOrder + 1)
+    persistKanbanTasks(
+        scope = scope,
+        tasks = updatedTasks,
+    )
+    clearMessages()
+    publishState()
+}
+
+internal fun AppStoreCore.onUpdateTask(
+    taskId: String,
+    title: String,
+    description: String?,
+) {
+    val normalizedTitle = normalizedTaskTitleOrPublishError(title = title) ?: return
+    val scope = currentKanbanScope() ?: return
+    val index = scope.existingTasks.indexOfFirst { it.id.value == taskId }
+    if (index == -1) {
+        return
+    }
+    val updatedTasks = scope.existingTasks.toMutableList()
+    updatedTasks[index] =
+        updatedTasks[index].copy(
+            title = normalizedTitle,
+            description = description?.trim()?.ifBlank { null },
+        )
+    persistKanbanTasks(
+        scope = scope,
+        tasks = updatedTasks,
+    )
+    clearMessages()
+    publishState()
+}
+
+internal fun AppStoreCore.onDeleteTask(taskId: String) {
+    val scope = currentKanbanScope() ?: return
+    val updatedTasks = scope.existingTasks.filterNot { it.id.value == taskId }
+    if (updatedTasks.size == scope.existingTasks.size) {
+        return
+    }
+    persistKanbanTasks(
+        scope = scope,
+        tasks = updatedTasks,
+    )
+    clearMessages()
+    publishState()
+}
+
+private fun AppStoreCore.currentKanbanScope(): KanbanScope? {
+    val repositoryId = currentRepositoryId() ?: return null
+    val scopeKey = selectedScopeKey() ?: return null
+    return KanbanScope(
+        repositoryId = repositoryId,
+        scopeKey = scopeKey,
+        existingTasks = tasksByScope[scopeKey].orEmpty(),
+    )
+}
+
+private fun AppStoreCore.persistKanbanTasks(
+    scope: KanbanScope,
+    tasks: List<KanbanTask>,
+) {
+    tasksByScope[scope.scopeKey] = tasks.toMutableList()
+    persistKanbanTasksForRepository(
+        repositoryId = scope.repositoryId,
+        tasks = tasks,
+    )
+}
+
+private fun AppStoreCore.normalizedTaskTitleOrPublishError(title: String): String? {
     val normalizedTitle = title.trim()
     if (normalizedTitle.isBlank()) {
         error =
@@ -22,45 +124,13 @@ internal fun AppStoreCore.onAddTask(
                 isRetryable = false,
             )
         publishState()
-        return
+        return null
     }
-    val scopeKey = selectedScopeKey() ?: return
-    val existingTasks = tasksByScope.getOrPut(scopeKey) { createDefaultTasks(currentWorktreePath()) }
-    val maxOrder = existingTasks.filter { it.columnId == column }.maxOfOrNull { it.order } ?: 0
-    existingTasks +=
-        KanbanTask.create(
-            title = normalizedTitle,
-            description = description?.trim()?.ifBlank { null },
-            columnId = column,
-            worktreePath = currentWorktreePath(),
-            createdAt = currentEpochMillis(),
-            order = maxOrder + 1,
-        )
-    clearMessages()
-    publishState()
+    return normalizedTitle
 }
 
-internal fun AppStoreCore.onMoveTask(
-    taskId: String,
-    column: KanbanColumnType,
-) {
-    val scopeKey = selectedScopeKey() ?: return
-    val existingTasks = tasksByScope.getOrPut(scopeKey) { createDefaultTasks(currentWorktreePath()) }
-    val index = existingTasks.indexOfFirst { it.id.value == taskId }
-    if (index == -1) {
-        return
-    }
-    val maxOrder = existingTasks.filter { it.columnId == column }.maxOfOrNull { it.order } ?: 0
-    existingTasks[index] = existingTasks[index].moveTo(column).withOrder(maxOrder + 1)
-    clearMessages()
-    publishState()
-}
-
-internal fun AppStoreCore.onDeleteTask(taskId: String) {
-    val scopeKey = selectedScopeKey() ?: return
-    val existingTasks = tasksByScope.getOrPut(scopeKey) { createDefaultTasks(currentWorktreePath()) }
-    if (existingTasks.removeAll { it.id.value == taskId }) {
-        clearMessages()
-        publishState()
-    }
-}
+private class KanbanScope(
+    val repositoryId: String,
+    val scopeKey: String,
+    val existingTasks: List<KanbanTask>,
+)

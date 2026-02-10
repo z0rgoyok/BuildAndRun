@@ -2,13 +2,17 @@ import Shared
 import SwiftUI
 
 struct KanbanCard: View {
+    @EnvironmentObject var root: KmpRoot
     let task: AppStore.KanbanTaskItem
     let isDragging: Bool
     let onMoveTask: (String, KanbanColumnType) -> Void
+    let onEdit: () -> Void
     let onDelete: () -> Void
 
     @State private var isHovered = false
     @State private var showActions = false
+
+    private var labels: KanbanLabels { root.store.kanbanLabels }
 
     var body: some View {
         VStack(alignment: .leading, spacing: DS.Spacing.sm) {
@@ -23,7 +27,11 @@ struct KanbanCard: View {
 
                 if isHovered || showActions {
                     Menu {
-                        Button("Delete", role: .destructive) {
+                        Button(labels.editTaskAction) {
+                            onEdit()
+                        }
+                        Divider()
+                        Button(labels.deleteAction, role: .destructive) {
                             onDelete()
                         }
                     } label: {
@@ -43,11 +51,19 @@ struct KanbanCard: View {
             }
 
             if let description = task.description_, !description.isEmpty {
-                Text(description)
-                    .font(DS.Typography.cardSubtitle)
-                    .foregroundStyle(DS.Colors.textSecondary)
-                    .lineLimit(3)
-                    .multilineTextAlignment(.leading)
+                if let rendered = try? AttributedString(markdown: description) {
+                    Text(rendered)
+                        .font(DS.Typography.cardSubtitle)
+                        .foregroundStyle(DS.Colors.textSecondary)
+                        .lineLimit(3)
+                        .multilineTextAlignment(.leading)
+                } else {
+                    Text(description)
+                        .font(DS.Typography.cardSubtitle)
+                        .foregroundStyle(DS.Colors.textSecondary)
+                        .lineLimit(3)
+                        .multilineTextAlignment(.leading)
+                }
             }
         }
         .padding(DS.Spacing.md)
@@ -62,10 +78,17 @@ struct KanbanCard: View {
                 isHovered = hovering
             }
         }
+        .onTapGesture(count: 2) {
+            onEdit()
+        }
         .contextMenu {
             moveToMenu
             Divider()
-            Button("Delete", role: .destructive) {
+            Button(labels.editTaskAction) {
+                onEdit()
+            }
+            Divider()
+            Button(labels.deleteAction, role: .destructive) {
                 onDelete()
             }
         }
@@ -73,7 +96,7 @@ struct KanbanCard: View {
 
     @ViewBuilder
     private var moveToMenu: some View {
-        Menu("Move to") {
+        Menu(labels.moveTo) {
             ForEach(otherColumns, id: \.id) { column in
                 Button(column.title) {
                     onMoveTask(task.id, column.id)

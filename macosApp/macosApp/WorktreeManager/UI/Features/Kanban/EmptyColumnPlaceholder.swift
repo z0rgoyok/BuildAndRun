@@ -1,7 +1,11 @@
+import Shared
 import SwiftUI
 
 struct EmptyColumnPlaceholder: View {
+    @EnvironmentObject var root: KmpRoot
     let onAdd: () -> Void
+
+    private var labels: KanbanLabels { root.store.kanbanLabels }
 
     var body: some View {
         VStack(spacing: DS.Spacing.md) {
@@ -9,14 +13,14 @@ struct EmptyColumnPlaceholder: View {
                 .font(.system(size: 24))
                 .foregroundStyle(DS.Colors.textQuaternary)
 
-            Text("No tasks")
+            Text(labels.noTasks)
                 .font(.subheadline)
                 .foregroundStyle(DS.Colors.textTertiary)
 
             Button {
                 onAdd()
             } label: {
-                Label("Add task", systemImage: "plus")
+                Label(labels.addTask, systemImage: "plus")
                     .font(.system(size: 12, weight: .medium))
             }
             .buttonStyle(.bordered)
@@ -26,4 +30,3 @@ struct EmptyColumnPlaceholder: View {
         .padding(.vertical, DS.Spacing.xxl)
     }
 }
-

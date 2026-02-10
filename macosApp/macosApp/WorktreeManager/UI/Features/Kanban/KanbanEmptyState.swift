@@ -1,6 +1,11 @@
+import Shared
 import SwiftUI
 
 struct KanbanEmptyState: View {
+    @EnvironmentObject var root: KmpRoot
+
+    private var labels: KanbanLabels { root.store.kanbanLabels }
+
     var body: some View {
         VStack(spacing: DS.Spacing.lg) {
             Image(systemName: "square.3.layers.3d")
@@ -8,11 +13,11 @@ struct KanbanEmptyState: View {
                 .foregroundStyle(DS.Colors.textQuaternary)
 
             VStack(spacing: DS.Spacing.sm) {
-                Text("Select a Project or Worktree")
+                Text(labels.selectProjectOrWorktree)
                     .font(.title3)
                     .fontWeight(.medium)
 
-                Text("Choose an item from the sidebar to view and manage its tasks")
+                Text(labels.chooseItemFromSidebar)
                     .font(.subheadline)
                     .foregroundStyle(DS.Colors.textSecondary)
                     .multilineTextAlignment(.center)
@@ -22,4 +27,3 @@ struct KanbanEmptyState: View {
         .background(DS.Colors.surfaceTertiary)
     }
 }
-

@@ -5,6 +5,8 @@ struct RepositoryDetailHeader: View {
     @EnvironmentObject var root: KmpRoot
     let repository: AppStore.RepositoryItem
 
+    private var labels: KanbanLabels { root.store.kanbanLabels }
+
     var body: some View {
         VStack(spacing: 0) {
             HStack(alignment: .top) {
@@ -26,7 +28,7 @@ struct RepositoryDetailHeader: View {
                             .lineLimit(1)
                             .truncationMode(.middle)
 
-                        Text("\(repository.worktrees.count) worktree\(repository.worktrees.count == 1 ? "" : "s")")
+                        Text("\(labels.worktrees): \(repository.worktrees.count)")
                             .font(.caption)
                             .foregroundStyle(DS.Colors.textTertiary)
                     }

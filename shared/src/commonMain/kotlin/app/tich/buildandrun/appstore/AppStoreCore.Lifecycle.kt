@@ -18,6 +18,12 @@ internal fun AppStoreCore.loadInitial() {
                             graph.preferencesStore.lastSelectedRepositoryId
                                 ?.takeIf { selectedId -> repositories.any { it.id.value == selectedId } }
                                 ?: preferredSelectedRepositoryId()
+                        repositories.forEach { repository ->
+                            val persistedTasks = graph.preferencesStore.loadKanbanTasks(forRepositoryId = repository.id)
+                            if (persistedTasks.isNotEmpty()) {
+                                tasksByScope[repositoryScopeKey(repositoryId = repository.id.value)] = persistedTasks.toMutableList()
+                            }
+                        }
                         selectedWorktreePath = graph.preferencesStore.lastSelectedWorktreePath
                         worktreeBasePath = graph.preferencesStore.worktreeBasePath
                         defaultCopyPatterns = graph.preferencesStore.defaultCopyPatterns

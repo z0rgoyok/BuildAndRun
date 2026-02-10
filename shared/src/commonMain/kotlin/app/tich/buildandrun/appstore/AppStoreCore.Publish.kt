@@ -76,8 +76,9 @@ internal fun AppStoreCore.buildRepositoryItems(): List<AppStore.RepositoryItem> 
     }
 
 internal fun AppStoreCore.currentKanbanTasks(): List<AppStore.KanbanTaskItem> {
+    selectedRepository() ?: return emptyList()
     val scopeKey = selectedScopeKey() ?: return emptyList()
-    val tasks = tasksByScope.getOrPut(scopeKey) { createDefaultTasks(currentWorktreePath()) }
+    val tasks = tasksByScope[scopeKey].orEmpty()
     return tasks
         .sortedWith(compareBy<KanbanTask> { it.columnId.ordinal }.thenBy { it.order })
         .map {
@@ -135,7 +136,5 @@ internal fun AppStoreCore.preferredSelectedRepositoryId(): String? = preferredSe
 
 internal fun AppStoreCore.selectedScopeKey(): String? {
     val repository = selectedRepository() ?: return null
-    return selectedWorktreePath?.let { "worktree:$it" } ?: "repo:${repository.id.value}"
+    return repositoryScopeKey(repositoryId = repository.id.value)
 }
-
-internal fun AppStoreCore.currentWorktreePath(): String? = selectedWorktreePath
