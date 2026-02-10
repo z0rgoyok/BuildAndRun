@@ -24,9 +24,9 @@ struct ContentView: View {
                     message: Text(alert.message),
                     dismissButton: .default(Text(labels.ok)) {
                         if alert.isError {
-                            root.store.onDismissError()
+                            root.store.messages.onDismissError()
                         } else {
-                            root.store.onDismissSuccess()
+                            root.store.messages.onDismissSuccess()
                         }
                     }
                 )
@@ -82,14 +82,14 @@ struct ContentView: View {
                     OpenEditorMenu(root: root, worktreePath: selectedWorktreePath)
 
                     Button {
-                        root.store.onOpenInFinder(worktreePath: selectedWorktreePath)
+                        root.store.editors.onOpenInFinder(worktreePath: selectedWorktreePath)
                     } label: {
                         Label(labels.finder, systemImage: "folder")
                     }
                     .help(root.store.kanbanLabels.toolbarFinder)
 
                     Button {
-                        root.store.onOpenInTerminal(worktreePath: selectedWorktreePath)
+                        root.store.editors.onOpenInTerminal(worktreePath: selectedWorktreePath)
                     } label: {
                         Label(labels.terminal, systemImage: "terminal")
                     }
@@ -97,7 +97,7 @@ struct ContentView: View {
                 }
 
                 Button {
-                    root.store.onRefreshSelectedRepository()
+                    root.store.worktrees.onRefreshSelectedRepository()
                 } label: {
                     Label(labels.refresh, systemImage: "arrow.clockwise")
                 }
@@ -162,16 +162,16 @@ struct ContentView: View {
 
     private func applySelection(_ selection: SidebarSelection?) {
         guard let selection else {
-            root.store.onSelectWorktree(worktreePath: nil)
+            root.store.worktrees.onSelectWorktree(worktreePath: nil)
             return
         }
 
         switch selection {
         case .repository(let repositoryId):
-            root.store.onSelectRepository(repositoryId: repositoryId)
+            root.store.repositories.onSelectRepository(repositoryId: repositoryId)
         case .worktree(let worktreePath, let repositoryId):
-            root.store.onSelectRepository(repositoryId: repositoryId)
-            root.store.onSelectWorktree(worktreePath: worktreePath)
+            root.store.repositories.onSelectRepository(repositoryId: repositoryId)
+            root.store.worktrees.onSelectWorktree(worktreePath: worktreePath)
         }
     }
 

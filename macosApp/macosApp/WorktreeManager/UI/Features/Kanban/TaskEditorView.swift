@@ -97,13 +97,13 @@ struct TaskEditorView: View {
 
         switch mode {
         case .creating:
-            root.store.onAddTask(title: trimmedTitle, description: desc, column: columnId)
+            root.store.kanban.onAddTask(title: trimmedTitle, description: desc, column: columnId)
         case let .editing(taskId):
-            root.store.onUpdateTask(taskId: taskId, title: trimmedTitle, description: desc)
+            root.store.kanban.onUpdateTask(taskId: taskId, title: trimmedTitle, description: desc)
             if let task = root.state.kanbanTasks.first(where: { $0.id == taskId }),
                task.columnId !== columnId
             {
-                root.store.onMoveTask(taskId: taskId, column: columnId)
+                root.store.kanban.onMoveTask(taskId: taskId, column: columnId)
             }
         }
         onClose()
@@ -111,7 +111,7 @@ struct TaskEditorView: View {
 
     private func deleteTask() {
         if case let .editing(taskId) = mode {
-            root.store.onDeleteTask(taskId: taskId)
+            root.store.kanban.onDeleteTask(taskId: taskId)
             onClose()
         }
     }

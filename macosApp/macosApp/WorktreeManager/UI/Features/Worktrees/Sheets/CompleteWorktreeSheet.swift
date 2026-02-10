@@ -43,7 +43,7 @@ struct CompleteWorktreeSheet: View {
 
     private var targetBranch: String {
         worktree?.baseBranch?.takeIfNotBlank
-            ?? root.store.preferredBaseBranch()?.takeIfNotBlank
+            ?? root.store.settings.preferredBaseBranch()?.takeIfNotBlank
             ?? "main"
     }
 
@@ -174,7 +174,7 @@ struct CompleteWorktreeSheet: View {
     private func complete() {
         guard let worktree else { return }
         isSubmitting = true
-        root.store.onCompleteWorktree(
+        root.store.gitActions.onCompleteWorktree(
             worktreePath: worktree.path,
             targetBranch: targetBranch,
             mergeIntoTarget: selectedAction == .mergeLocally,
@@ -196,7 +196,7 @@ struct CompleteWorktreeSheet: View {
             selectedAction = .prMerged
         }
 
-        root.store.onLoadHasRemoteBranch(worktreePath: worktreePath)
+        root.store.gitActions.onLoadHasRemoteBranch(worktreePath: worktreePath)
         hasRemoteBranch =
             root.state.remoteBranches
                 .first(where: { $0.worktreePath == worktreePath })?

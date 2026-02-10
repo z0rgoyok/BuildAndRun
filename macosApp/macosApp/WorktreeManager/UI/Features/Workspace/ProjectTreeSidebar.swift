@@ -109,7 +109,7 @@ struct ProjectTreeSidebar: View {
                     activeDropTargetGroupId = nil
                 },
                 onRename: { id in presentRenameGroupAlert(groupId: id, currentName: groupName) },
-                onDelete: { root.store.onDeleteRepositoryGroup(groupId: groupId) }
+                onDelete: { root.store.groups.onDeleteRepositoryGroup(groupId: groupId) }
             )
             .onDrop(
                 of: [.text],
@@ -244,7 +244,7 @@ struct ProjectTreeSidebar: View {
 
         insertionIndex = min(max(insertionIndex, 0), orderedGroupIds.count)
         orderedGroupIds.insert(draggedId, at: insertionIndex)
-        root.store.onReorderRepositoryGroups(orderedGroupIds: orderedGroupIds)
+        root.store.groups.onReorderRepositoryGroups(orderedGroupIds: orderedGroupIds)
     }
 
     private func expansionBinding(for repo: AppStore.RepositoryItem) -> Binding<Bool> {
@@ -271,9 +271,9 @@ struct ProjectTreeSidebar: View {
         let name = newGroupName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !name.isEmpty else { return }
         if let repositoryId = newGroupRepositoryId {
-            root.store.onCreateGroupAndAssignRepository(name: name, repositoryId: repositoryId)
+            root.store.groups.onCreateGroupAndAssignRepository(name: name, repositoryId: repositoryId)
         } else {
-            root.store.onCreateRepositoryGroup(name: name)
+            root.store.groups.onCreateRepositoryGroup(name: name)
         }
         resetNewGroupState()
     }
@@ -292,7 +292,7 @@ struct ProjectTreeSidebar: View {
     private func submitRenameGroup() {
         let name = renameGroupName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !name.isEmpty, let groupId = renameGroupId else { return }
-        root.store.onRenameRepositoryGroup(groupId: groupId, newName: name)
+        root.store.groups.onRenameRepositoryGroup(groupId: groupId, newName: name)
         resetRenameGroupState()
     }
 }

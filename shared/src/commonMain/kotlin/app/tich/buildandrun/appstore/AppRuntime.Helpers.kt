@@ -31,7 +31,7 @@ internal fun normalizePath(path: String): String = path.trim().trimEnd('/')
 
 internal fun currentEpochMillis(): Long = kotlin.time.Clock.System.now().toEpochMilliseconds()
 
-internal fun AppStoreCore.cleanupRepositoryData(repository: Repository) {
+internal fun AppRuntime.cleanupRepositoryData(repository: Repository) {
     val removedWorktreePaths = worktreesByRepositoryPath.remove(repository.path).orEmpty().map { it.path }
     tasksByScope.remove(repositoryScopeKey(repositoryId = repository.id.value))
     graph.preferencesStore.removeKanbanTasks(forRepositoryId = repository.id)
@@ -40,7 +40,7 @@ internal fun AppStoreCore.cleanupRepositoryData(repository: Repository) {
     worktreeStatusLoadingPaths.removeAll(removedWorktreePaths.toSet())
 }
 
-internal fun AppStoreCore.findWorktreeByPath(path: String): Pair<Repository, Worktree>? {
+internal fun AppRuntime.findWorktreeByPath(path: String): Pair<Repository, Worktree>? {
     val normalizedPath = normalizePath(path)
     if (normalizedPath.isBlank()) {
         return null
@@ -54,16 +54,16 @@ internal fun AppStoreCore.findWorktreeByPath(path: String): Pair<Repository, Wor
     return null
 }
 
-internal fun AppStoreCore.currentRepositoryId(): String? = selectedRepository()?.id?.value
+internal fun AppRuntime.currentRepositoryId(): String? = selectedRepository()?.id?.value
 
-internal fun AppStoreCore.persistSelection() {
+internal fun AppRuntime.persistSelection() {
     graph.preferencesStore.lastSelectedRepositoryId = selectedRepositoryId
     graph.preferencesStore.lastSelectedWorktreePath = selectedWorktreePath
 }
 
 internal fun repositoryScopeKey(repositoryId: String): String = "repo:$repositoryId"
 
-internal fun AppStoreCore.persistKanbanTasksForRepository(
+internal fun AppRuntime.persistKanbanTasksForRepository(
     repositoryId: String,
     tasks: List<KanbanTask>,
 ) {
@@ -75,7 +75,7 @@ internal fun AppStoreCore.persistKanbanTasksForRepository(
 
 internal fun resolveText(text: UiText): String = UiTextLocalizer.resolve(text = text)
 
-internal suspend fun <T> AppStoreCore.withGlobalLoading(
+internal suspend fun <T> AppRuntime.withGlobalLoading(
     resource: StringResource,
     block: suspend () -> T,
 ): T {
@@ -90,7 +90,7 @@ internal suspend fun <T> AppStoreCore.withGlobalLoading(
     }
 }
 
-internal suspend fun <T> AppStoreCore.withWorktreeLoading(
+internal suspend fun <T> AppRuntime.withWorktreeLoading(
     worktreePath: String,
     resource: StringResource,
     block: suspend () -> T,

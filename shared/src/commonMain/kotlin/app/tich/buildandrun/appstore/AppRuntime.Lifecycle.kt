@@ -7,7 +7,7 @@ import app.tich.buildandrun.resources.loading_initial
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
-internal fun AppStoreCore.loadInitial() {
+internal fun AppRuntime.loadInitial() {
     scope.launch {
         runCatching {
             withGlobalLoading(Res.string.loading_initial) {
@@ -59,7 +59,7 @@ internal fun AppStoreCore.loadInitial() {
     }
 }
 
-internal fun AppStoreCore.refreshInstalledEditors() {
+internal fun AppRuntime.refreshInstalledEditors() {
     installedEditorIds.clear()
     allEditors.forEach { editor ->
         if (graph.editorOpening.isInstalled(editor = editor)) {
@@ -68,6 +68,6 @@ internal fun AppStoreCore.refreshInstalledEditors() {
     }
 }
 
-internal fun AppStoreCore.destroy() {
+internal fun AppRuntime.destroy() {
     scope.cancel()
 }

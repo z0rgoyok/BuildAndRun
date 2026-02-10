@@ -21,18 +21,18 @@ class AppStoreKanbanTaskUpdateTest {
             val repository = Repository.create(path = "/tmp/repo-one")
             val preferences = FakePreferencesStore(initialRepositories = listOf(repository))
             val graph = TestGraph(preferencesStore = preferences)
-            val store = AppStore(graph = graph)
+            val store = createAppRootComponent(graph = graph)
 
             waitForRepositories(store = store, expectedCount = 1)
-            store.onSelectRepository(repositoryId = repository.id.value)
-            store.onAddTask(
+            store.repositories.onSelectRepository(repositoryId = repository.id.value)
+            store.kanban.onAddTask(
                 title = "Initial title",
                 description = "Initial description",
                 column = KanbanColumnType.TODO,
             )
             val taskBefore = assertNotNull(store.state.value.kanbanTasks.firstOrNull())
 
-            store.onUpdateTask(
+            store.kanban.onUpdateTask(
                 taskId = taskBefore.id,
                 title = "Updated title",
                 description = "Updated **markdown** text",
@@ -52,18 +52,18 @@ class AppStoreKanbanTaskUpdateTest {
             val repository = Repository.create(path = "/tmp/repo-two")
             val preferences = FakePreferencesStore(initialRepositories = listOf(repository))
             val graph = TestGraph(preferencesStore = preferences)
-            val store = AppStore(graph = graph)
+            val store = createAppRootComponent(graph = graph)
 
             waitForRepositories(store = store, expectedCount = 1)
-            store.onSelectRepository(repositoryId = repository.id.value)
-            store.onAddTask(
+            store.repositories.onSelectRepository(repositoryId = repository.id.value)
+            store.kanban.onAddTask(
                 title = "Task title",
                 description = "Task description",
                 column = KanbanColumnType.TODO,
             )
             val originalTask = assertNotNull(store.state.value.kanbanTasks.firstOrNull())
 
-            store.onUpdateTask(
+            store.kanban.onUpdateTask(
                 taskId = originalTask.id,
                 title = "  ",
                 description = "Should not apply",
@@ -79,7 +79,7 @@ class AppStoreKanbanTaskUpdateTest {
         }
 
     private suspend fun waitForRepositories(
-        store: AppStore,
+        store: AppRootComponent,
         expectedCount: Int,
     ) {
         repeat(200) {

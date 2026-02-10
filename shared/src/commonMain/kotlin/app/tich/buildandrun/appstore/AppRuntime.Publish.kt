@@ -5,7 +5,7 @@ import app.tich.buildandrun.domain.entities.KanbanTask
 import app.tich.buildandrun.domain.entities.Repository
 import app.tich.buildandrun.domain.entities.Worktree
 
-internal fun AppStoreCore.publishState() {
+internal fun AppRuntime.publishState() {
     val preferredSelection = preferredSelectedRepository()
     val selectedRepository =
         repositories.firstOrNull { it.id.value == selectedRepositoryId }
@@ -44,14 +44,12 @@ internal fun AppStoreCore.publishState() {
             remoteBranches = buildRemoteBranchItems(),
             createWorktree = createWorktreeState,
             kanbanTasks = currentKanbanTasks(),
-            activeChild = activeChild,
-            activeSheet = activeSheet,
             error = error,
             success = success,
         )
 }
 
-internal fun AppStoreCore.buildRepositoryItems(): List<AppStore.RepositoryItem> =
+internal fun AppRuntime.buildRepositoryItems(): List<AppStore.RepositoryItem> =
     repositories.map { repository ->
         AppStore.RepositoryItem(
             id = repository.id.value,
@@ -81,7 +79,7 @@ internal fun AppStoreCore.buildRepositoryItems(): List<AppStore.RepositoryItem> 
         )
     }
 
-internal fun AppStoreCore.currentKanbanTasks(): List<AppStore.KanbanTaskItem> {
+internal fun AppRuntime.currentKanbanTasks(): List<AppStore.KanbanTaskItem> {
     selectedRepository() ?: return emptyList()
     val scopeKey = selectedScopeKey() ?: return emptyList()
     val tasks = tasksByScope[scopeKey].orEmpty()
@@ -98,7 +96,7 @@ internal fun AppStoreCore.currentKanbanTasks(): List<AppStore.KanbanTaskItem> {
         }
 }
 
-internal fun AppStoreCore.buildEditorItems(): List<AppStore.EditorItem> =
+internal fun AppRuntime.buildEditorItems(): List<AppStore.EditorItem> =
     allEditors.map { editor ->
         AppStore.EditorItem(
             id = editor.id,
@@ -109,7 +107,7 @@ internal fun AppStoreCore.buildEditorItems(): List<AppStore.EditorItem> =
         )
     }
 
-internal fun AppStoreCore.buildRemoteBranchItems(): List<AppStore.RemoteBranchItem> =
+internal fun AppRuntime.buildRemoteBranchItems(): List<AppStore.RemoteBranchItem> =
     hasRemoteBranchByWorktreePath.map { (worktreePath, hasRemote) ->
         AppStore.RemoteBranchItem(
             worktreePath = worktreePath,
@@ -117,37 +115,35 @@ internal fun AppStoreCore.buildRemoteBranchItems(): List<AppStore.RemoteBranchIt
         )
     }
 
-internal fun AppStoreCore.preferredEditorIdForSelectedRepository(): String? {
+internal fun AppRuntime.preferredEditorIdForSelectedRepository(): String? {
     val repository = selectedRepository() ?: return null
     return graph.preferencesStore.preferredEditorId(forRepositoryId = repository.id)
 }
 
-internal fun AppStoreCore.selectedRepositoryCustomCopyPatterns(): List<String>? {
+internal fun AppRuntime.selectedRepositoryCustomCopyPatterns(): List<String>? {
     val repository = selectedRepository() ?: return null
     val customPatterns = graph.preferencesStore.copyPatterns(forRepositoryId = repository.id) ?: return null
     return customPatterns.map(CopyPattern::pattern)
 }
 
-internal fun AppStoreCore.selectedRepositoryEffectiveCopyPatterns(): List<String> {
+internal fun AppRuntime.selectedRepositoryEffectiveCopyPatterns(): List<String> {
     val repository = selectedRepository() ?: return defaultCopyPatterns.map(CopyPattern::pattern)
     return graph.preferencesStore.effectiveCopyPatterns(forRepositoryId = repository.id).map(CopyPattern::pattern)
 }
 
-internal fun AppStoreCore.selectedRepository(): Repository? = repositories.firstOrNull { it.id.value == selectedRepositoryId }
+internal fun AppRuntime.selectedRepository(): Repository? = repositories.firstOrNull { it.id.value == selectedRepositoryId }
 
-internal fun AppStoreCore.preferredSelectedRepository(): Repository? =
+internal fun AppRuntime.preferredSelectedRepository(): Repository? =
     repositories.firstOrNull { !it.isArchived } ?: repositories.firstOrNull()
 
-internal fun AppStoreCore.preferredSelectedRepositoryId(): String? = preferredSelectedRepository()?.id?.value
+internal fun AppRuntime.preferredSelectedRepositoryId(): String? = preferredSelectedRepository()?.id?.value
 
-internal fun AppStoreCore.selectedScopeKey(): String? {
+internal fun AppRuntime.selectedScopeKey(): String? {
     val repository = selectedRepository() ?: return null
     return repositoryScopeKey(repositoryId = repository.id.value)
 }
 
-internal fun AppStoreCore.buildSidebarSections(
-    repositoryItems: List<AppStore.RepositoryItem>,
-): List<AppStore.SidebarSection> {
+internal fun AppRuntime.buildSidebarSections(repositoryItems: List<AppStore.RepositoryItem>): List<AppStore.SidebarSection> {
     val activeRepos = repositoryItems.filter { !it.isArchived }
     val ungrouped = activeRepos.filter { it.groupId == null }
     val groupedByGroupId = activeRepos.filter { it.groupId != null }.groupBy { it.groupId }
@@ -155,24 +151,26 @@ internal fun AppStoreCore.buildSidebarSections(
 
     val sections = mutableListOf<AppStore.SidebarSection>()
     if (ungrouped.isNotEmpty()) {
-        sections += AppStore.SidebarSection(
-            groupId = null,
-            groupName = null,
-            repositories = ungrouped,
-        )
+        sections +=
+            AppStore.SidebarSection(
+                groupId = null,
+                groupName = null,
+                repositories = ungrouped,
+            )
     }
     for (group in sortedGroups) {
         val repos = groupedByGroupId[group.id.value].orEmpty()
-        sections += AppStore.SidebarSection(
-            groupId = group.id.value,
-            groupName = group.name,
-            repositories = repos,
-        )
+        sections +=
+            AppStore.SidebarSection(
+                groupId = group.id.value,
+                groupName = group.name,
+                repositories = repos,
+            )
     }
     return sections
 }
 
-internal fun AppStoreCore.buildRepositoryGroupItems(): List<AppStore.RepositoryGroupItem> =
+internal fun AppRuntime.buildRepositoryGroupItems(): List<AppStore.RepositoryGroupItem> =
     repositoryGroups
         .sortedBy { it.sortOrder }
         .map { group ->

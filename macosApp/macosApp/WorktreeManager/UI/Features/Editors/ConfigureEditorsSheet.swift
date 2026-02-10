@@ -34,7 +34,7 @@ struct ConfigureEditorsSheet: View {
                     EditorRow(
                         editor: editor,
                         onToggle: { enabled in
-                            root.store.onSetEditorEnabled(
+                            root.store.editors.onSetEditorEnabled(
                                 editorId: editor.id,
                                 enabled: enabled,
                             )

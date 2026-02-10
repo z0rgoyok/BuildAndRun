@@ -3,7 +3,7 @@ package app.tich.buildandrun.appstore
 import app.tich.buildandrun.domain.entities.CopyPattern
 import app.tich.buildandrun.domain.entities.RepositoryId
 
-internal suspend fun AppStoreCore.copyConfiguredFiles(
+internal suspend fun AppRuntime.copyConfiguredFiles(
     repositoryPath: String,
     createdWorktreePath: String,
     repositoryId: String,
@@ -29,7 +29,7 @@ internal suspend fun AppStoreCore.copyConfiguredFiles(
     }
 }
 
-private suspend fun AppStoreCore.copyPatternIfExists(
+private suspend fun AppRuntime.copyPatternIfExists(
     pattern: CopyPattern,
     sourceRoot: String,
     destinationRoot: String,

@@ -9,14 +9,14 @@ import app.tich.buildandrun.resources.loading_refreshing
 import app.tich.buildandrun.resources.screen_create_worktree_success
 import kotlinx.coroutines.launch
 
-internal fun AppStoreCore.onSelectWorktree(worktreePath: String?) {
+internal fun AppRuntime.onSelectWorktree(worktreePath: String?) {
     selectedWorktreePath = worktreePath
     persistSelection()
     clearMessages()
     publishState()
 }
 
-internal fun AppStoreCore.onRefreshSelectedRepository() {
+internal fun AppRuntime.onRefreshSelectedRepository() {
     val repositoryPath = selectedRepository()?.path ?: return
     clearMessages()
     scope.launch { refreshInstalledEditors() }
@@ -24,7 +24,7 @@ internal fun AppStoreCore.onRefreshSelectedRepository() {
     onLoadBranches()
 }
 
-internal fun AppStoreCore.onCreateWorktreeBranchChanged(value: String) {
+internal fun AppRuntime.onCreateWorktreeBranchChanged(value: String) {
     val selectedRepositoryPath = selectedRepository()?.path.orEmpty()
     val normalizedBranch = value.trim()
     val currentWorktreePath = createWorktreeState.worktreePathInput
@@ -44,7 +44,7 @@ internal fun AppStoreCore.onCreateWorktreeBranchChanged(value: String) {
     publishState()
 }
 
-internal fun AppStoreCore.onCreateWorktreePathChanged(value: String) {
+internal fun AppRuntime.onCreateWorktreePathChanged(value: String) {
     createWorktreeState =
         createWorktreeState.copy(
             worktreePathInput = value,
@@ -54,19 +54,19 @@ internal fun AppStoreCore.onCreateWorktreePathChanged(value: String) {
     publishState()
 }
 
-internal fun AppStoreCore.onCreateWorktreeBaseBranchChanged(value: String) {
+internal fun AppRuntime.onCreateWorktreeBaseBranchChanged(value: String) {
     createWorktreeState = createWorktreeState.copy(baseBranchInput = value)
     clearMessages()
     publishState()
 }
 
-internal fun AppStoreCore.onCreateWorktreeCreateBranchChanged(value: Boolean) {
+internal fun AppRuntime.onCreateWorktreeCreateBranchChanged(value: Boolean) {
     createWorktreeState = createWorktreeState.copy(createBranch = value)
     clearMessages()
     publishState()
 }
 
-internal fun AppStoreCore.onCreateWorktree() {
+internal fun AppRuntime.onCreateWorktree() {
     if (createWorktreeState.isSubmitting || activityCenter.isGlobalActive) {
         return
     }
@@ -146,7 +146,7 @@ internal fun AppStoreCore.onCreateWorktree() {
     }
 }
 
-internal fun AppStoreCore.loadWorktreesForRepository(path: String) {
+internal fun AppRuntime.loadWorktreesForRepository(path: String) {
     scope.launch {
         withGlobalLoading(Res.string.loading_refreshing) {
             loadWorktreesForRepositoryInternal(path = path)
@@ -154,7 +154,7 @@ internal fun AppStoreCore.loadWorktreesForRepository(path: String) {
     }
 }
 
-internal suspend fun AppStoreCore.loadWorktreesForRepositoryInternal(path: String) {
+internal suspend fun AppRuntime.loadWorktreesForRepositoryInternal(path: String) {
     val normalizedPath = normalizePath(path)
     if (normalizedPath.isBlank()) {
         return

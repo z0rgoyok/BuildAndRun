@@ -1,6 +1,6 @@
 package app.tich.buildandrun.appstore
 
-internal fun AppStoreCore.onSetSidebarRepositoryExpanded(
+internal fun AppRuntime.onSetSidebarRepositoryExpanded(
     repositoryId: String,
     expanded: Boolean,
 ) {
@@ -18,7 +18,7 @@ internal fun AppStoreCore.onSetSidebarRepositoryExpanded(
     publishState()
 }
 
-internal fun AppStoreCore.onSetSidebarGroupCollapsed(
+internal fun AppRuntime.onSetSidebarGroupCollapsed(
     groupId: String,
     collapsed: Boolean,
 ) {
@@ -36,7 +36,7 @@ internal fun AppStoreCore.onSetSidebarGroupCollapsed(
     publishState()
 }
 
-internal fun AppStoreCore.onToggleSidebarRepositoriesExpansion(
+internal fun AppRuntime.onToggleSidebarRepositoriesExpansion(
     repositoryIds: Set<String>,
     preferredRepositoryId: String?,
 ) {
@@ -64,7 +64,7 @@ internal fun AppStoreCore.onToggleSidebarRepositoriesExpansion(
     publishState()
 }
 
-internal fun AppStoreCore.onToggleVisibleSidebarRepositoriesExpansion(
+internal fun AppRuntime.onToggleVisibleSidebarRepositoriesExpansion(
     includeArchivedRepositories: Boolean,
     preferredRepositoryId: String?,
 ) {
@@ -74,7 +74,7 @@ internal fun AppStoreCore.onToggleVisibleSidebarRepositoriesExpansion(
     )
 }
 
-internal fun AppStoreCore.onSyncSidebarSelectionExpansion(repositoryId: String?) {
+internal fun AppRuntime.onSyncSidebarSelectionExpansion(repositoryId: String?) {
     val selectedRepositoryId = repositoryId?.takeIf { it.isNotBlank() } ?: return
     if (expandedRepositoryIds.contains(selectedRepositoryId)) {
         return
@@ -84,18 +84,18 @@ internal fun AppStoreCore.onSyncSidebarSelectionExpansion(repositoryId: String?)
     publishState()
 }
 
-internal fun AppStoreCore.areSidebarRepositoriesExpanded(repositoryIds: Set<String>): Boolean =
+internal fun AppRuntime.areSidebarRepositoriesExpanded(repositoryIds: Set<String>): Boolean =
     repositoryIds.isNotEmpty() && repositoryIds.all(expandedRepositoryIds::contains)
 
-internal fun AppStoreCore.areVisibleSidebarRepositoriesExpanded(includeArchivedRepositories: Boolean): Boolean =
+internal fun AppRuntime.areVisibleSidebarRepositoriesExpanded(includeArchivedRepositories: Boolean): Boolean =
     areSidebarRepositoriesExpanded(
         repositoryIds = visibleSidebarRepositoryIds(includeArchivedRepositories = includeArchivedRepositories),
     )
 
-internal fun AppStoreCore.hasVisibleSidebarRepositories(includeArchivedRepositories: Boolean): Boolean =
+internal fun AppRuntime.hasVisibleSidebarRepositories(includeArchivedRepositories: Boolean): Boolean =
     visibleSidebarRepositoryIds(includeArchivedRepositories = includeArchivedRepositories).isNotEmpty()
 
-internal fun AppStoreCore.visibleSidebarRepositoryIds(includeArchivedRepositories: Boolean): Set<String> =
+internal fun AppRuntime.visibleSidebarRepositoryIds(includeArchivedRepositories: Boolean): Set<String> =
     repositories
         .asSequence()
         .filter { repository ->
@@ -108,10 +108,10 @@ internal fun AppStoreCore.visibleSidebarRepositoryIds(includeArchivedRepositorie
         }.map { repository -> repository.id.value }
         .toSet()
 
-internal fun AppStoreCore.persistExpandedRepositoryIds() {
+internal fun AppRuntime.persistExpandedRepositoryIds() {
     graph.preferencesStore.expandedRepositoryIds = expandedRepositoryIds
 }
 
-internal fun AppStoreCore.persistCollapsedGroupIds() {
+internal fun AppRuntime.persistCollapsedGroupIds() {
     graph.preferencesStore.collapsedGroupIds = collapsedGroupIds
 }

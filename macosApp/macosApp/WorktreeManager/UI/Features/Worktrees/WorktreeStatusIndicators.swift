@@ -24,7 +24,7 @@ struct WorktreeStatusIndicators: View {
                         .font(.system(size: 9))
                 }
                 .foregroundStyle(.blue)
-                .help(root.store.resolveStatusToPush(commits: "\(status.ahead)"))
+                .help(root.store.texts.resolveStatusToPush(commits: "\(status.ahead)"))
             }
 
             if status.behind > 0 {
@@ -35,7 +35,7 @@ struct WorktreeStatusIndicators: View {
                         .font(.system(size: 9))
                 }
                 .foregroundStyle(.purple)
-                .help(root.store.resolveStatusBehind(commits: "\(status.behind)"))
+                .help(root.store.texts.resolveStatusBehind(commits: "\(status.behind)"))
             }
 
             if let pr = status.prStatus {

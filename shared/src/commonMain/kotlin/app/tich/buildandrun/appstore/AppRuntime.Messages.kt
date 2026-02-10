@@ -1,16 +1,16 @@
 package app.tich.buildandrun.appstore
 
-internal fun AppStoreCore.clearMessages() {
+internal fun AppRuntime.clearMessages() {
     error = null
     success = null
 }
 
-internal fun AppStoreCore.onDismissError() {
+internal fun AppRuntime.onDismissError() {
     error = null
     publishState()
 }
 
-internal fun AppStoreCore.onDismissSuccess() {
+internal fun AppRuntime.onDismissSuccess() {
     success = null
     publishState()
 }

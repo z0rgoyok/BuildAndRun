@@ -40,7 +40,7 @@ struct KanbanBoard: View {
                                             }
                                         },
                                         onMoveTask: { taskId, newColumnId in
-                                            root.store.onMoveTask(taskId: taskId, column: newColumnId)
+                                            root.store.kanban.onMoveTask(taskId: taskId, column: newColumnId)
                                         },
                                         onEditTask: { task in
                                             withAnimation(DS.Animation.standard) {
@@ -48,7 +48,7 @@ struct KanbanBoard: View {
                                             }
                                         },
                                         onDeleteTask: { taskId in
-                                            root.store.onDeleteTask(taskId: taskId)
+                                            root.store.kanban.onDeleteTask(taskId: taskId)
                                         }
                                     )
                                 }

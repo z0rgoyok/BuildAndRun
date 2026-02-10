@@ -1,0 +1,14 @@
+package app.tich.buildandrun.appstore
+
+internal class AppTextsService : AppTextsFeature {
+    override fun resolveBranchConflictMessage(branch: String): String = resolveBranchConflictMessageText(branch = branch)
+
+    override fun resolveBranchConflictUseExistingDetail(branch: String): String =
+        resolveBranchConflictUseExistingDetailText(branch = branch)
+
+    override fun resolveStatusToPush(commits: String): String = resolveStatusToPushText(commits = commits)
+
+    override fun resolveStatusBehind(commits: String): String = resolveStatusBehindText(commits = commits)
+
+    override fun resolveNewTaskIn(column: String): String = resolveNewTaskInText(column = column)
+}

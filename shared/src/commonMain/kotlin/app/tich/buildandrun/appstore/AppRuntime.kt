@@ -10,7 +10,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 
-internal class AppStoreCore(
+internal class AppRuntime(
     internal val graph: AppStoreGraph,
 ) {
     internal val failureToUiErrorMapper = DomainFailureToUiErrorMapper()
@@ -44,8 +44,6 @@ internal class AppStoreCore(
     internal var selectedWorktreePath: String? = null
     internal var expandedRepositoryIds: Set<String> = graph.preferencesStore.expandedRepositoryIds
     internal var collapsedGroupIds: Set<String> = graph.preferencesStore.collapsedGroupIds
-    internal var activeChild: AppChild = AppChild.WORKSPACE
-    internal var activeSheet: AppSheetState? = null
     internal var error: AppStore.ErrorState? = null
     internal var success: AppStore.SuccessState? = null
 

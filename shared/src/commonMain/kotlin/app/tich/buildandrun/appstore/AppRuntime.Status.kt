@@ -3,7 +3,7 @@ package app.tich.buildandrun.appstore
 import app.tich.buildandrun.domain.failures.DomainFailureMapper
 import kotlinx.coroutines.launch
 
-internal fun AppStoreCore.onRefreshWorktreeStatus(worktreePath: String) {
+internal fun AppRuntime.onRefreshWorktreeStatus(worktreePath: String) {
     val normalizedPath = normalizePath(worktreePath)
     if (normalizedPath.isBlank()) {
         return

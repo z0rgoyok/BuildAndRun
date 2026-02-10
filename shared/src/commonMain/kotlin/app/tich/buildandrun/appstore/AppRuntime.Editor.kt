@@ -5,7 +5,7 @@ import app.tich.buildandrun.domain.errors.AppError
 import app.tich.buildandrun.domain.failures.DomainFailureMapper
 import kotlinx.coroutines.launch
 
-internal fun AppStoreCore.onSetRememberEditorChoice(value: Boolean) {
+internal fun AppRuntime.onSetRememberEditorChoice(value: Boolean) {
     rememberEditorChoice = value
     graph.preferencesStore.rememberEditorChoice = value
     if (!value) {
@@ -18,7 +18,7 @@ internal fun AppStoreCore.onSetRememberEditorChoice(value: Boolean) {
     publishState()
 }
 
-internal fun AppStoreCore.onSetEditorEnabled(
+internal fun AppRuntime.onSetEditorEnabled(
     editorId: String,
     enabled: Boolean,
 ) {
@@ -35,7 +35,7 @@ internal fun AppStoreCore.onSetEditorEnabled(
     publishState()
 }
 
-internal fun AppStoreCore.onSetPreferredEditor(editorId: String?) {
+internal fun AppRuntime.onSetPreferredEditor(editorId: String?) {
     val repository = selectedRepository() ?: return
     val normalizedEditorId = editorId?.trim().orEmpty()
     if (normalizedEditorId.isBlank()) {
@@ -50,7 +50,7 @@ internal fun AppStoreCore.onSetPreferredEditor(editorId: String?) {
     publishState()
 }
 
-internal fun AppStoreCore.onOpenInEditor(
+internal fun AppRuntime.onOpenInEditor(
     worktreePath: String,
     editorId: String?,
 ) {
@@ -86,7 +86,7 @@ internal fun AppStoreCore.onOpenInEditor(
     }
 }
 
-internal fun AppStoreCore.onOpenInFinder(worktreePath: String) {
+internal fun AppRuntime.onOpenInFinder(worktreePath: String) {
     val normalizedWorktreePath = normalizePath(worktreePath)
     if (normalizedWorktreePath.isBlank()) {
         return
@@ -94,7 +94,7 @@ internal fun AppStoreCore.onOpenInFinder(worktreePath: String) {
     graph.systemOpening.revealInFinder(path = normalizedWorktreePath)
 }
 
-internal fun AppStoreCore.onOpenInTerminal(worktreePath: String) {
+internal fun AppRuntime.onOpenInTerminal(worktreePath: String) {
     val normalizedWorktreePath = normalizePath(worktreePath)
     if (normalizedWorktreePath.isBlank()) {
         return
@@ -102,7 +102,7 @@ internal fun AppStoreCore.onOpenInTerminal(worktreePath: String) {
     graph.systemOpening.openTerminal(atPath = normalizedWorktreePath)
 }
 
-private fun AppStoreCore.resolveEditor(
+private fun AppRuntime.resolveEditor(
     editorId: String?,
     repositoryId: String?,
 ): Editor? {

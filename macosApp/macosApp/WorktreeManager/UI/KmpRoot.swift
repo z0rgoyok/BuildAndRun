@@ -35,11 +35,10 @@ final class KmpRoot: ObservableObject {
     @Published var isSidebarArchivedSectionExpanded: Bool = false
     @Published var sidebarCopySettingsTarget: SidebarCopySettingsTarget?
 
-    let store: AppStore
-
+    let store: AppRootComponent
     private var cancellation: DecomposeCancellation?
 
-    init(store: AppStore = AppStoreFactory.shared.create()) {
+    init(store: AppRootComponent = AppStoreFactory.shared.create()) {
         self.store = store
         self.state = store.state.value
 
@@ -59,32 +58,32 @@ final class KmpRoot: ObservableObject {
     func presentSheet(_ sheet: Sheet) {
         switch sheet {
         case .addRepository:
-            store.onPresentSheet(kind: .addRepository, worktreePath: nil)
+            store.navigation.onPresentSheet(kind: .addRepository, worktreePath: nil)
         case .addWorktree:
-            store.onPresentSheet(kind: .addWorktree, worktreePath: nil)
+            store.navigation.onPresentSheet(kind: .addWorktree, worktreePath: nil)
         case .createPR(let worktreePath):
-            store.onPresentSheet(kind: .createPr, worktreePath: worktreePath)
+            store.navigation.onPresentSheet(kind: .createPr, worktreePath: worktreePath)
         case .completeWorktree(let worktreePath):
-            store.onPresentSheet(kind: .completeWorktree, worktreePath: worktreePath)
+            store.navigation.onPresentSheet(kind: .completeWorktree, worktreePath: worktreePath)
         case .configureEditors:
-            store.onPresentSheet(kind: .configureEditors, worktreePath: nil)
+            store.navigation.onPresentSheet(kind: .configureEditors, worktreePath: nil)
         case .help:
-            store.onPresentSheet(kind: .help, worktreePath: nil)
+            store.navigation.onPresentSheet(kind: .help, worktreePath: nil)
         }
     }
 
     func dismissSheet() {
-        store.onDismissSheet()
+        store.navigation.onDismissSheet()
     }
 
     func selectChild(_ child: Child) {
         switch child {
         case .workspace:
-            store.onSelectChild(child: .workspace)
+            store.navigation.onSelectChild(child: .workspace)
         case .settings:
-            store.onSelectChild(child: .settings)
+            store.navigation.onSelectChild(child: .settings)
         case .help:
-            store.onSelectChild(child: .help)
+            store.navigation.onSelectChild(child: .help)
         }
     }
 
@@ -149,23 +148,23 @@ final class KmpRoot: ObservableObject {
     }
 
     func setSidebarRepositoryExpanded(repositoryId: String, expanded: Bool) {
-        store.onSetSidebarRepositoryExpanded(repositoryId: repositoryId, expanded: expanded)
+        store.sidebar.onSetSidebarRepositoryExpanded(repositoryId: repositoryId, expanded: expanded)
     }
 
     func toggleVisibleSidebarRepositoriesExpansion(selection: SidebarSelection?) {
         let preferredRepositoryId = selection?.repositoryId ?? state.selectedRepositoryId
-        store.onToggleVisibleSidebarRepositoriesExpansion(
+        store.sidebar.onToggleVisibleSidebarRepositoriesExpansion(
             includeArchivedRepositories: isSidebarArchivedSectionExpanded,
             preferredRepositoryId: preferredRepositoryId
         )
     }
 
     func areVisibleSidebarRepositoriesExpanded() -> Bool {
-        store.areVisibleSidebarRepositoriesExpanded(includeArchivedRepositories: isSidebarArchivedSectionExpanded)
+        store.sidebar.areVisibleSidebarRepositoriesExpanded(includeArchivedRepositories: isSidebarArchivedSectionExpanded)
     }
 
     func hasVisibleSidebarRepositories() -> Bool {
-        store.hasVisibleSidebarRepositories(includeArchivedRepositories: isSidebarArchivedSectionExpanded)
+        store.sidebar.hasVisibleSidebarRepositories(includeArchivedRepositories: isSidebarArchivedSectionExpanded)
     }
 
     func syncSidebarSelectionExpansion(selection: SidebarSelection?) {
@@ -173,7 +172,7 @@ final class KmpRoot: ObservableObject {
         let selectedRepositoryId = currentSelection.repositoryId
         guard !selectedRepositoryId.isEmpty else { return }
 
-        store.onSyncSidebarSelectionExpansion(repositoryId: selectedRepositoryId)
+        store.sidebar.onSyncSidebarSelectionExpansion(repositoryId: selectedRepositoryId)
 
         let selectedRepository = state.repositories.first { $0.id == selectedRepositoryId }
         if selectedRepository?.isArchived == true {
@@ -182,7 +181,7 @@ final class KmpRoot: ObservableObject {
     }
 
     func setSidebarGroupCollapsed(groupId: String, collapsed: Bool) {
-        store.onSetSidebarGroupCollapsed(groupId: groupId, collapsed: collapsed)
+        store.sidebar.onSetSidebarGroupCollapsed(groupId: groupId, collapsed: collapsed)
     }
 
     func presentSidebarCopySettings(for repository: AppStore.RepositoryItem) {
@@ -192,9 +191,4 @@ final class KmpRoot: ObservableObject {
                 name: repository.name
             )
     }
-}
-
-struct SidebarCopySettingsTarget: Identifiable {
-    let id: String
-    let name: String
 }

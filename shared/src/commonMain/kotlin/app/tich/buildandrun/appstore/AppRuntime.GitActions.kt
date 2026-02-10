@@ -6,7 +6,7 @@ import app.tich.buildandrun.domain.failures.DomainFailureMapper
 import app.tich.buildandrun.resources.*
 import kotlinx.coroutines.launch
 
-internal fun AppStoreCore.onPush(worktreePath: String) {
+internal fun AppRuntime.onPush(worktreePath: String) {
     val pair = findWorktreeByPath(path = worktreePath) ?: return
     scope.launch {
         withWorktreeLoading(pair.second.path, Res.string.loading_pushing) {
@@ -27,7 +27,7 @@ internal fun AppStoreCore.onPush(worktreePath: String) {
     }
 }
 
-internal fun AppStoreCore.onPull(worktreePath: String) {
+internal fun AppRuntime.onPull(worktreePath: String) {
     val pair = findWorktreeByPath(path = worktreePath) ?: return
     scope.launch {
         withWorktreeLoading(pair.second.path, Res.string.loading_pulling) {
@@ -44,7 +44,7 @@ internal fun AppStoreCore.onPull(worktreePath: String) {
     }
 }
 
-internal fun AppStoreCore.onCreatePullRequest(
+internal fun AppRuntime.onCreatePullRequest(
     worktreePath: String,
     title: String,
     body: String,
@@ -81,7 +81,7 @@ internal fun AppStoreCore.onCreatePullRequest(
     }
 }
 
-internal fun AppStoreCore.onOpenPullRequest(worktreePath: String) {
+internal fun AppRuntime.onOpenPullRequest(worktreePath: String) {
     val pair = findWorktreeByPath(path = worktreePath) ?: return
     scope.launch {
         runCatching {
@@ -99,7 +99,7 @@ internal fun AppStoreCore.onOpenPullRequest(worktreePath: String) {
     }
 }
 
-internal fun AppStoreCore.onLockWorktree(worktreePath: String) {
+internal fun AppRuntime.onLockWorktree(worktreePath: String) {
     val pair = findWorktreeByPath(path = worktreePath) ?: return
     scope.launch {
         withWorktreeLoading(pair.second.path, Res.string.loading_locking) {
@@ -119,7 +119,7 @@ internal fun AppStoreCore.onLockWorktree(worktreePath: String) {
     }
 }
 
-internal fun AppStoreCore.onUnlockWorktree(worktreePath: String) {
+internal fun AppRuntime.onUnlockWorktree(worktreePath: String) {
     val pair = findWorktreeByPath(path = worktreePath) ?: return
     scope.launch {
         withWorktreeLoading(pair.second.path, Res.string.loading_unlocking) {
@@ -138,7 +138,7 @@ internal fun AppStoreCore.onUnlockWorktree(worktreePath: String) {
     }
 }
 
-internal fun AppStoreCore.onRemoveWorktree(
+internal fun AppRuntime.onRemoveWorktree(
     worktreePath: String,
     force: Boolean,
     deleteBranch: Boolean,
@@ -178,7 +178,7 @@ internal fun AppStoreCore.onRemoveWorktree(
     }
 }
 
-internal fun AppStoreCore.onCompleteWorktree(
+internal fun AppRuntime.onCompleteWorktree(
     worktreePath: String,
     targetBranch: String,
     mergeIntoTarget: Boolean,
@@ -251,7 +251,7 @@ internal fun AppStoreCore.onCompleteWorktree(
     }
 }
 
-internal fun AppStoreCore.onLoadHasRemoteBranch(worktreePath: String) {
+internal fun AppRuntime.onLoadHasRemoteBranch(worktreePath: String) {
     val pair = findWorktreeByPath(path = worktreePath) ?: return
     scope.launch {
         runCatching {
@@ -269,7 +269,7 @@ internal fun AppStoreCore.onLoadHasRemoteBranch(worktreePath: String) {
     }
 }
 
-internal fun AppStoreCore.onPruneWorktrees() {
+internal fun AppRuntime.onPruneWorktrees() {
     val repositoryPath = selectedRepository()?.path ?: return
     scope.launch {
         withGlobalLoading(Res.string.loading_pruning) {

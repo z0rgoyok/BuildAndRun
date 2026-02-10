@@ -33,7 +33,7 @@ struct OpenEditorMenu: View {
         } label: {
             Label(labels.open, systemImage: "arrow.up.forward.app")
         } primaryAction: {
-            root.store.onOpenInEditor(
+            root.store.editors.onOpenInEditor(
                 worktreePath: worktreePath,
                 editorId: root.state.preferredEditorId,
             )
@@ -61,8 +61,8 @@ struct OpenEditorMenu: View {
                 selection: Binding(
                     get: { selectedEditorId },
                     set: { newId in
-                        root.store.onSetPreferredEditor(editorId: newId)
-                        root.store.onOpenInEditor(
+                        root.store.editors.onSetPreferredEditor(editorId: newId)
+                        root.store.editors.onOpenInEditor(
                             worktreePath: worktreePath,
                             editorId: newId,
                         )
@@ -80,9 +80,9 @@ struct OpenEditorMenu: View {
         Divider()
 
         Button(root.state.rememberEditorChoice ? labels.forgetEditorChoice : labels.rememberEditorChoice) {
-            root.store.onSetRememberEditorChoice(value: !root.state.rememberEditorChoice)
+            root.store.editors.onSetRememberEditorChoice(value: !root.state.rememberEditorChoice)
             if root.state.rememberEditorChoice {
-                root.store.onSetPreferredEditor(editorId: nil)
+                root.store.editors.onSetPreferredEditor(editorId: nil)
             }
         }
 

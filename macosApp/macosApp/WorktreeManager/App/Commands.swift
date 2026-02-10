@@ -28,11 +28,11 @@ struct WorktreeCommands: Commands {
                 if let repo = root.selectedRepository {
                     if repo.isArchived {
                         Button("Restore Project") {
-                            root.store.onRestoreRepository(repositoryId: repo.id)
+                            root.store.repositories.onRestoreRepository(repositoryId: repo.id)
                         }
                     } else {
                         Button("Archive Project") {
-                            root.store.onArchiveRepository(repositoryId: repo.id)
+                            root.store.repositories.onArchiveRepository(repositoryId: repo.id)
                         }
                     }
                 } else {
@@ -43,7 +43,7 @@ struct WorktreeCommands: Commands {
 
             Section {
                 Button("Refresh All") {
-                    root.store.onRefreshSelectedRepository()
+                    root.store.worktrees.onRefreshSelectedRepository()
                 }
                 .keyboardShortcut("r", modifiers: [.command, .shift])
                 .disabled(root.selectedRepository == nil)

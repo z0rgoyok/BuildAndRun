@@ -2,8 +2,9 @@
 
 package app.tich.buildandrun.macos
 
-import app.tich.buildandrun.appstore.AppStore
+import app.tich.buildandrun.appstore.AppRootComponent
+import app.tich.buildandrun.appstore.createAppRootComponent
 
 object AppStoreFactory {
-    fun create(): AppStore = AppStore(graph = MacOSAppGraph())
+    fun create(): AppRootComponent = createAppRootComponent(graph = MacOSAppGraph())
 }

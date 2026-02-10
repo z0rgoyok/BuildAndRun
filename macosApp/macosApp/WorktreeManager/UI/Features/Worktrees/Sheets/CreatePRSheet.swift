@@ -60,7 +60,7 @@ struct CreatePRSheet: View {
                 .keyboardShortcut(.cancelAction)
 
                 Button("Create PR") {
-                    root.store.onCreatePullRequest(
+                    root.store.gitActions.onCreatePullRequest(
                         worktreePath: worktreePath,
                         title: title,
                         body: prDescription,
@@ -93,7 +93,7 @@ struct CreatePRSheet: View {
         defer { isPreparing = false }
 
         if root.state.branches.isEmpty {
-            root.store.onLoadBranches()
+            root.store.settings.onLoadBranches()
         }
 
         let branchName =

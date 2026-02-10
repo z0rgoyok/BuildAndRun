@@ -135,13 +135,13 @@ struct ProjectTreeNode: View {
 
             if repository.isArchived {
                 Button {
-                    root.store.onRestoreRepository(repositoryId: repository.id)
+                    root.store.repositories.onRestoreRepository(repositoryId: repository.id)
                 } label: {
                     Label(root.store.sidebarLabels.restoreProject, systemImage: "arrow.uturn.left")
                 }
             } else {
                 Button {
-                    root.store.onArchiveRepository(repositoryId: repository.id)
+                    root.store.repositories.onArchiveRepository(repositoryId: repository.id)
                 } label: {
                     Label(root.store.sidebarLabels.archiveProject, systemImage: "archivebox")
                 }
@@ -150,7 +150,7 @@ struct ProjectTreeNode: View {
             Divider()
 
             Button(root.store.sidebarLabels.removeFromList, role: .destructive) {
-                root.store.onRemoveRepository(repositoryId: repository.id)
+                root.store.repositories.onRemoveRepository(repositoryId: repository.id)
             }
         }
     }
@@ -160,7 +160,7 @@ struct ProjectTreeNode: View {
         Menu(root.store.sidebarLabels.moveToGroup) {
             ForEach(root.state.repositoryGroups, id: \.id) { group in
                 Button(group.name) {
-                    root.store.onSetRepositoryGroup(repositoryId: repository.id, groupId: group.id)
+                    root.store.groups.onSetRepositoryGroup(repositoryId: repository.id, groupId: group.id)
                 }
                 .disabled(repository.groupId == group.id)
             }
@@ -177,7 +177,7 @@ struct ProjectTreeNode: View {
                 Divider()
 
                 Button(root.store.sidebarLabels.removeFromGroup) {
-                    root.store.onSetRepositoryGroup(repositoryId: repository.id, groupId: nil)
+                    root.store.groups.onSetRepositoryGroup(repositoryId: repository.id, groupId: nil)
                 }
             }
         }

@@ -28,20 +28,21 @@ class AppStoreSidebarExpansionTest {
             val archivedRepository = Repository.create(path = "/tmp/repo-archived", isArchived = true, groupId = groupVisible.id)
             val preferences =
                 FakePreferencesStore(
-                    initialRepositories = listOf(
-                        ungroupedRepository,
-                        visibleRepository,
-                        collapsedRepository,
-                        archivedRepository,
-                    ),
+                    initialRepositories =
+                        listOf(
+                            ungroupedRepository,
+                            visibleRepository,
+                            collapsedRepository,
+                            archivedRepository,
+                        ),
                 )
             preferences.saveRepositoryGroups(listOf(groupVisible, groupCollapsed))
             preferences.collapsedGroupIds = setOf(groupCollapsed.id.value)
-            val store = AppStore(graph = TestGraph(preferencesStore = preferences))
+            val store = createAppRootComponent(graph = TestGraph(preferencesStore = preferences))
 
             waitForRepositories(store = store, expectedCount = 4)
 
-            store.onToggleVisibleSidebarRepositoriesExpansion(
+            store.sidebar.onToggleVisibleSidebarRepositoriesExpansion(
                 includeArchivedRepositories = false,
                 preferredRepositoryId = null,
             )
@@ -52,7 +53,7 @@ class AppStoreSidebarExpansionTest {
             )
             assertEquals(store.state.value.expandedRepositoryIds, preferences.expandedRepositoryIds)
 
-            store.onToggleVisibleSidebarRepositoriesExpansion(
+            store.sidebar.onToggleVisibleSidebarRepositoriesExpansion(
                 includeArchivedRepositories = false,
                 preferredRepositoryId = visibleRepository.id.value,
             )
@@ -74,19 +75,19 @@ class AppStoreSidebarExpansionTest {
                 )
             val preferences = FakePreferencesStore(initialRepositories = listOf(repository))
             preferences.saveRepositoryGroups(listOf(group))
-            val store = AppStore(graph = TestGraph(preferencesStore = preferences))
+            val store = createAppRootComponent(graph = TestGraph(preferencesStore = preferences))
 
             waitForRepositories(store = store, expectedCount = 1)
 
-            store.onSetSidebarRepositoryExpanded(repositoryId = repository.id.value, expanded = true)
-            store.onSetSidebarGroupCollapsed(groupId = group.id.value, collapsed = true)
+            store.sidebar.onSetSidebarRepositoryExpanded(repositoryId = repository.id.value, expanded = true)
+            store.sidebar.onSetSidebarGroupCollapsed(groupId = group.id.value, collapsed = true)
 
             assertEquals(setOf(repository.id.value), store.state.value.expandedRepositoryIds)
             assertEquals(setOf(group.id.value), store.state.value.collapsedGroupIds)
             assertEquals(store.state.value.expandedRepositoryIds, preferences.expandedRepositoryIds)
             assertEquals(store.state.value.collapsedGroupIds, preferences.collapsedGroupIds)
 
-            store.onSyncSidebarSelectionExpansion(repositoryId = repository.id.value)
+            store.sidebar.onSyncSidebarSelectionExpansion(repositoryId = repository.id.value)
             assertTrue(store.state.value.expandedRepositoryIds.contains(repository.id.value))
             assertEquals(store.state.value.expandedRepositoryIds, preferences.expandedRepositoryIds)
 
@@ -94,7 +95,7 @@ class AppStoreSidebarExpansionTest {
         }
 
     private suspend fun waitForRepositories(
-        store: AppStore,
+        store: AppRootComponent,
         expectedCount: Int,
     ) {
         repeat(200) {

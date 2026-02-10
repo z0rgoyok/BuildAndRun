@@ -4,7 +4,7 @@ import app.tich.buildandrun.application.usecases.LoadBranchesUseCase
 import app.tich.buildandrun.application.usecases.UseCaseResult
 import kotlinx.coroutines.launch
 
-internal fun AppStoreCore.onLoadBranches() {
+internal fun AppRuntime.onLoadBranches() {
     val repositoryPath = selectedRepository()?.path ?: return
     scope.launch {
         when (
@@ -28,7 +28,7 @@ internal fun AppStoreCore.onLoadBranches() {
     }
 }
 
-internal fun AppStoreCore.branchExists(branch: String): Boolean {
+internal fun AppRuntime.branchExists(branch: String): Boolean {
     selectedRepository()?.path ?: return false
     val normalizedBranch = branch.trim()
     if (normalizedBranch.isBlank()) {
@@ -37,19 +37,19 @@ internal fun AppStoreCore.branchExists(branch: String): Boolean {
     return branches.any { it == normalizedBranch }
 }
 
-internal fun AppStoreCore.onSetWorktreeBasePath(path: String) {
+internal fun AppRuntime.onSetWorktreeBasePath(path: String) {
     val normalizedPath = path.trim()
     worktreeBasePath = normalizedPath
     graph.preferencesStore.worktreeBasePath = normalizedPath
     publishState()
 }
 
-internal fun AppStoreCore.preferredBaseBranch(): String? {
+internal fun AppRuntime.preferredBaseBranch(): String? {
     val repository = selectedRepository() ?: return null
     return graph.preferencesStore.preferredBaseBranch(forRepositoryId = repository.id)
 }
 
-internal fun AppStoreCore.onSetPreferredBaseBranch(branch: String) {
+internal fun AppRuntime.onSetPreferredBaseBranch(branch: String) {
     val repository = selectedRepository() ?: return
     val normalizedBranch = branch.trim()
     if (normalizedBranch.isBlank()) {
@@ -63,7 +63,7 @@ internal fun AppStoreCore.onSetPreferredBaseBranch(branch: String) {
     publishState()
 }
 
-internal fun AppStoreCore.onSetDefaultCopyPatterns(patterns: List<String>) {
+internal fun AppRuntime.onSetDefaultCopyPatterns(patterns: List<String>) {
     val normalizedPatterns =
         patterns
             .map(String::trim)
@@ -75,7 +75,7 @@ internal fun AppStoreCore.onSetDefaultCopyPatterns(patterns: List<String>) {
     publishState()
 }
 
-internal fun AppStoreCore.onSetRepositoryCopyPatterns(patterns: List<String>?) {
+internal fun AppRuntime.onSetRepositoryCopyPatterns(patterns: List<String>?) {
     val repository = selectedRepository() ?: return
     if (patterns == null) {
         graph.preferencesStore.removeCopyPatterns(forRepositoryId = repository.id)

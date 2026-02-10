@@ -87,7 +87,7 @@ struct RepositoryCopyPatternsSheet: View {
 
     private func load() {
         if root.state.selectedRepositoryId != repositoryId {
-            root.store.onSelectRepository(repositoryId: repositoryId)
+            root.store.repositories.onSelectRepository(repositoryId: repositoryId)
             return
         }
         patterns = root.state.selectedRepositoryEffectiveCopyPatterns
@@ -96,13 +96,13 @@ struct RepositoryCopyPatternsSheet: View {
 
     private func save() -> Bool {
         guard root.state.selectedRepositoryId == repositoryId else {
-            root.store.onSelectRepository(repositoryId: repositoryId)
+            root.store.repositories.onSelectRepository(repositoryId: repositoryId)
             return false
         }
         if useCustomPatterns {
-            root.store.onSetRepositoryCopyPatterns(patterns: patterns)
+            root.store.settings.onSetRepositoryCopyPatterns(patterns: patterns)
         } else {
-            root.store.onSetRepositoryCopyPatterns(patterns: nil)
+            root.store.settings.onSetRepositoryCopyPatterns(patterns: nil)
         }
         return true
     }

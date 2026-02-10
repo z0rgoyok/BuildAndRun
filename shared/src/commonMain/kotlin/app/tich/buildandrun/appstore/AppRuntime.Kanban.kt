@@ -7,7 +7,7 @@ import app.tich.buildandrun.presentation.i18n.UiText
 import app.tich.buildandrun.resources.Res
 import app.tich.buildandrun.resources.app_validation_task_title_blank
 
-internal fun AppStoreCore.onAddTask(
+internal fun AppRuntime.onAddTask(
     title: String,
     description: String?,
     column: KanbanColumnType,
@@ -33,7 +33,7 @@ internal fun AppStoreCore.onAddTask(
     publishState()
 }
 
-internal fun AppStoreCore.onMoveTask(
+internal fun AppRuntime.onMoveTask(
     taskId: String,
     column: KanbanColumnType,
 ) {
@@ -53,7 +53,7 @@ internal fun AppStoreCore.onMoveTask(
     publishState()
 }
 
-internal fun AppStoreCore.onUpdateTask(
+internal fun AppRuntime.onUpdateTask(
     taskId: String,
     title: String,
     description: String?,
@@ -78,7 +78,7 @@ internal fun AppStoreCore.onUpdateTask(
     publishState()
 }
 
-internal fun AppStoreCore.onDeleteTask(taskId: String) {
+internal fun AppRuntime.onDeleteTask(taskId: String) {
     val scope = currentKanbanScope() ?: return
     val updatedTasks = scope.existingTasks.filterNot { it.id.value == taskId }
     if (updatedTasks.size == scope.existingTasks.size) {
@@ -92,7 +92,7 @@ internal fun AppStoreCore.onDeleteTask(taskId: String) {
     publishState()
 }
 
-private fun AppStoreCore.currentKanbanScope(): KanbanScope? {
+private fun AppRuntime.currentKanbanScope(): KanbanScope? {
     val repositoryId = currentRepositoryId() ?: return null
     val scopeKey = selectedScopeKey() ?: return null
     return KanbanScope(
@@ -102,7 +102,7 @@ private fun AppStoreCore.currentKanbanScope(): KanbanScope? {
     )
 }
 
-private fun AppStoreCore.persistKanbanTasks(
+private fun AppRuntime.persistKanbanTasks(
     scope: KanbanScope,
     tasks: List<KanbanTask>,
 ) {
@@ -113,7 +113,7 @@ private fun AppStoreCore.persistKanbanTasks(
     )
 }
 
-private fun AppStoreCore.normalizedTaskTitleOrPublishError(title: String): String? {
+private fun AppRuntime.normalizedTaskTitleOrPublishError(title: String): String? {
     val normalizedTitle = title.trim()
     if (normalizedTitle.isBlank()) {
         error =

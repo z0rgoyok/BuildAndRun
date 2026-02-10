@@ -8,13 +8,13 @@ import app.tich.buildandrun.presentation.i18n.UiText
 import app.tich.buildandrun.resources.*
 import kotlinx.coroutines.launch
 
-internal fun AppStoreCore.onAddRepositoryPathChanged(value: String) {
+internal fun AppRuntime.onAddRepositoryPathChanged(value: String) {
     addRepositoryPathInput = value
     clearMessages()
     publishState()
 }
 
-internal fun AppStoreCore.onAddRepository() {
+internal fun AppRuntime.onAddRepository() {
     if (activityCenter.isGlobalActive) {
         return
     }
@@ -63,7 +63,7 @@ internal fun AppStoreCore.onAddRepository() {
     }
 }
 
-internal fun AppStoreCore.onSelectRepository(repositoryId: String) {
+internal fun AppRuntime.onSelectRepository(repositoryId: String) {
     if (selectedRepositoryId == repositoryId && selectedWorktreePath == null) {
         return
     }
@@ -79,21 +79,21 @@ internal fun AppStoreCore.onSelectRepository(repositoryId: String) {
     }
 }
 
-internal fun AppStoreCore.onArchiveRepository(repositoryId: String) {
+internal fun AppRuntime.onArchiveRepository(repositoryId: String) {
     onSetRepositoryArchivedState(
         repositoryId = repositoryId,
         isArchived = true,
     )
 }
 
-internal fun AppStoreCore.onRestoreRepository(repositoryId: String) {
+internal fun AppRuntime.onRestoreRepository(repositoryId: String) {
     onSetRepositoryArchivedState(
         repositoryId = repositoryId,
         isArchived = false,
     )
 }
 
-internal fun AppStoreCore.onRemoveRepository(repositoryId: String) {
+internal fun AppRuntime.onRemoveRepository(repositoryId: String) {
     if (activityCenter.isGlobalActive) {
         return
     }
@@ -123,7 +123,7 @@ internal fun AppStoreCore.onRemoveRepository(repositoryId: String) {
     }
 }
 
-internal fun AppStoreCore.onSetRepositoryArchivedState(
+internal fun AppRuntime.onSetRepositoryArchivedState(
     repositoryId: String,
     isArchived: Boolean,
 ) {
