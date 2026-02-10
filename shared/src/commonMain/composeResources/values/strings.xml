@@ -85,6 +85,8 @@
     <string name="detail_task_title">Task title</string>
     <string name="detail_description_optional">Description (optional)</string>
     <string name="detail_markdown_supported">Markdown supported</string>
+    <string name="detail_back_to_board">Back to board</string>
+    <string name="detail_create_task">Create Task</string>
     <string name="detail_tasks">Tasks</string>
     <string name="detail_app_title">Worktree Manager</string>
     <string name="detail_worktrees">Worktrees</string>

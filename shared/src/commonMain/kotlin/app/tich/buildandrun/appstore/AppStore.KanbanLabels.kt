@@ -73,6 +73,8 @@ data class KanbanLabels(
     val toolbarFinder: String,
     val toolbarTerminal: String,
     val toolbarRefresh: String,
+    val backToBoard: String,
+    val createTask: String,
 )
 
 internal fun buildKanbanLabels(): KanbanLabels =
@@ -146,6 +148,8 @@ internal fun buildKanbanLabels(): KanbanLabels =
         toolbarFinder = resolveText(text = UiText(resource = Res.string.toolbar_finder)),
         toolbarTerminal = resolveText(text = UiText(resource = Res.string.toolbar_terminal)),
         toolbarRefresh = resolveText(text = UiText(resource = Res.string.toolbar_refresh)),
+        backToBoard = resolveText(text = UiText(resource = Res.string.detail_back_to_board)),
+        createTask = resolveText(text = UiText(resource = Res.string.detail_create_task)),
     )
 
 internal fun resolveBranchConflictMessageText(branch: String): String =

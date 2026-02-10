@@ -85,6 +85,8 @@
     <string name="detail_task_title">Назва задачі</string>
     <string name="detail_description_optional">Опис (необовʼязково)</string>
     <string name="detail_markdown_supported">Підтримується Markdown</string>
+    <string name="detail_back_to_board">До дошки</string>
+    <string name="detail_create_task">Створити завдання</string>
     <string name="detail_tasks">Задачі</string>
     <string name="detail_app_title">Worktree Manager</string>
     <string name="detail_worktrees">Worktree</string>

@@ -5,19 +5,24 @@ struct KanbanBoard: View {
     @EnvironmentObject var root: KmpRoot
     let selection: SidebarSelection?
     @State private var draggedTaskId: String?
-    @State private var showAddTask = false
-    @State private var addTaskColumnId: KanbanColumnType = KanbanColumnType.todo
-    @State private var editingTaskId: String?
+    @State private var editorMode: TaskEditorMode?
 
     var body: some View {
         VStack(spacing: 0) {
             if selection != nil {
                 detailHeader
 
-                if selection?.worktreePath == nil {
+                if let mode = editorMode {
+                    TaskEditorView(mode: mode) {
+                        withAnimation(DS.Animation.standard) {
+                            editorMode = nil
+                        }
+                    }
+                } else if selection?.worktreePath == nil {
                     KanbanSectionHeader {
-                        addTaskColumnId = KanbanColumnType.todo
-                        showAddTask = true
+                        withAnimation(DS.Animation.standard) {
+                            editorMode = .creating(columnId: KanbanColumnType.todo)
+                        }
                     }
 
                     GeometryReader { geometry in
@@ -30,14 +35,17 @@ struct KanbanBoard: View {
                                         tasks: tasks(for: column.id),
                                         draggedTaskId: $draggedTaskId,
                                         onAddTask: {
-                                            addTaskColumnId = column.id
-                                            showAddTask = true
+                                            withAnimation(DS.Animation.standard) {
+                                                editorMode = .creating(columnId: column.id)
+                                            }
                                         },
                                         onMoveTask: { taskId, newColumnId in
                                             root.store.onMoveTask(taskId: taskId, column: newColumnId)
                                         },
                                         onEditTask: { task in
-                                            editingTaskId = task.id
+                                            withAnimation(DS.Animation.standard) {
+                                                editorMode = .editing(taskId: task.id)
+                                            }
                                         },
                                         onDeleteTask: { taskId in
                                             root.store.onDeleteTask(taskId: taskId)
@@ -53,33 +61,6 @@ struct KanbanBoard: View {
                 }
             } else {
                 KanbanEmptyState()
-            }
-        }
-        .sheet(isPresented: $showAddTask) {
-            AddTaskSheet(columnId: addTaskColumnId) { title, description in
-                root.store.onAddTask(title: title, description: description, column: addTaskColumnId)
-            }
-            .environmentObject(root)
-        }
-        .sheet(
-            isPresented: Binding(
-                get: { editingTask != nil },
-                set: { newValue in
-                    if !newValue {
-                        editingTaskId = nil
-                    }
-                }
-            )
-        ) {
-            if let task = editingTask {
-                EditTaskSheet(task: task) { taskId, title, description in
-                    root.store.onUpdateTask(
-                        taskId: taskId,
-                        title: title,
-                        description: description
-                    )
-                }
-                .environmentObject(root)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -109,13 +90,6 @@ struct KanbanBoard: View {
         root.state.kanbanTasks
             .filter { $0.columnId === columnId }
             .sorted { $0.order < $1.order }
-    }
-
-    private var editingTask: AppStore.KanbanTaskItem? {
-        guard let editingTaskId else {
-            return nil
-        }
-        return root.state.kanbanTasks.first { $0.id == editingTaskId }
     }
 }
 

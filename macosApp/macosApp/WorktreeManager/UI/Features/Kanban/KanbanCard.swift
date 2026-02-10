@@ -78,7 +78,7 @@ struct KanbanCard: View {
                 isHovered = hovering
             }
         }
-        .onTapGesture(count: 2) {
+        .onTapGesture {
             onEdit()
         }
         .contextMenu {
