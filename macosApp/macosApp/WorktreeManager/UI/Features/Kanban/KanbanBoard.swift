@@ -64,6 +64,14 @@ struct KanbanBoard: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .onChange(of: selection) { _ in
+            editorMode = nil
+        }
+        .onChange(of: root.state.kanbanTasks.map(\.id)) { taskIds in
+            guard case let .editing(taskId) = editorMode,
+                  !taskIds.contains(taskId) else { return }
+            editorMode = nil
+        }
     }
 
     @ViewBuilder
