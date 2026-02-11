@@ -3,6 +3,14 @@
     <string name="error_details">Детали: %1$s</string>
     <string name="screen_create_worktree_success">Создано: %1$s</string>
     <string name="screen_repositories_repository_added">Репозиторий добавлен: %1$s</string>
+    <string name="screen_git_push_success">Отправка завершена</string>
+    <string name="screen_git_pull_success">Получение завершено</string>
+    <string name="screen_git_pr_created_success">Pull Request создан</string>
+    <string name="screen_git_worktree_locked_success">Worktree заблокирован</string>
+    <string name="screen_git_worktree_unlocked_success">Worktree разблокирован</string>
+    <string name="screen_git_worktree_removed_success">Worktree удален</string>
+    <string name="screen_git_worktree_completed_success">Worktree завершен</string>
+    <string name="screen_git_worktrees_pruned_success">Worktree очищены</string>
 
     <string name="app_cannot_remove_main_worktree">Нельзя удалить основной worktree.</string>
     <string name="app_group_name_blank">Укажите название группы.</string>

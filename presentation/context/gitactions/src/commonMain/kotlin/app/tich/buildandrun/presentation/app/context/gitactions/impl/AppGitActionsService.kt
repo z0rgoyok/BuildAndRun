@@ -1,22 +1,18 @@
 package app.tich.buildandrun.presentation.app.context.gitactions.impl
 
-import app.tich.buildandrun.application.context.repositories.port.PreferencesStore
+import app.tich.buildandrun.application.context.repositories.usecase.AppSessionPersistenceUseCase
 import app.tich.buildandrun.application.context.shared.port.SystemOpening
-import app.tich.buildandrun.application.context.worktrees.port.GitClient
+import app.tich.buildandrun.application.context.shared.usecase.UseCaseResult
+import app.tich.buildandrun.application.context.worktrees.usecase.*
 import app.tich.buildandrun.domain.context.worktrees.model.CompleteWorktreeOptions
-import app.tich.buildandrun.domain.shared.error.AppError
-import app.tich.buildandrun.domain.shared.failure.DomainFailureMapper
 import app.tich.buildandrun.presentation.app.AppGitActionsFeature
 import app.tich.buildandrun.presentation.app.SuccessState
 import app.tich.buildandrun.presentation.app.context.state.MessagesContextState
 import app.tich.buildandrun.presentation.app.context.state.RepositoriesContextState
 import app.tich.buildandrun.presentation.app.context.state.SettingsContextState
 import app.tich.buildandrun.presentation.app.context.state.WorktreesContextState
-import app.tich.buildandrun.presentation.app.context.worktrees.impl.WorktreesOperations
-import app.tich.buildandrun.presentation.app.core.AppErrorStateMapper
-import app.tich.buildandrun.presentation.app.core.AppExecutionScope
-import app.tich.buildandrun.presentation.app.core.AppLoadingRunner
-import app.tich.buildandrun.presentation.app.core.AppStateRefresher
+import app.tich.buildandrun.presentation.app.core.*
+import app.tich.buildandrun.presentation.i18n.UiText
 import app.tich.buildandrun.resources.*
 import kotlinx.coroutines.launch
 
@@ -29,27 +25,37 @@ class AppGitActionsService(
     private val worktreesState: WorktreesContextState,
     private val settingsState: SettingsContextState,
     private val messagesState: MessagesContextState,
-    private val gitClient: GitClient,
-    private val preferencesStore: PreferencesStore,
     private val systemOpening: SystemOpening,
-    private val worktreesOperations: WorktreesOperations,
+    private val appSessionPersistenceUseCase: AppSessionPersistenceUseCase,
+    private val pushWorktreeUseCase: PushWorktreeUseCase,
+    private val pullWorktreeUseCase: PullWorktreeUseCase,
+    private val createPullRequestUseCase: CreatePullRequestUseCase,
+    private val loadPullRequestUrlUseCase: LoadPullRequestUrlUseCase,
+    private val lockWorktreeUseCase: LockWorktreeUseCase,
+    private val unlockWorktreeUseCase: UnlockWorktreeUseCase,
+    private val removeWorktreeUseCase: RemoveWorktreeUseCase,
+    private val completeWorktreeUseCase: CompleteWorktreeUseCase,
+    private val loadHasRemoteBranchUseCase: LoadHasRemoteBranchUseCase,
+    private val pruneWorktreesUseCase: PruneWorktreesUseCase,
 ) : AppGitActionsFeature {
     override fun onPush(worktreePath: String) {
         val pair = worktreesState.findWorktreeByPath(path = worktreePath, repositoriesState = repositoriesState) ?: return
         executionScope.scope.launch {
             loadingRunner.withWorktreeLoading(pair.second.path, Res.string.loading_pushing) {
-                runCatching {
-                    val status = gitClient.getWorktreeStatus(atWorktreePath = pair.second.path)
-                    gitClient.push(
-                        atWorktreePath = pair.second.path,
-                        setUpstream = !status.hasRemote,
-                    )
-                    gitClient.getWorktreeStatus(atWorktreePath = pair.second.path)
-                }.onSuccess { status ->
-                    worktreesState.worktreeStatusByPath[pair.second.path] = status
-                    messagesState.success = SuccessState(message = "Push completed")
-                }.onFailure { throwable ->
-                    messagesState.error = errorMapper.mapFailureToErrorState(DomainFailureMapper.fromThrowable(throwable))
+                when (
+                    val result =
+                        pushWorktreeUseCase.execute(
+                            input = PushWorktreeUseCase.Input(worktreePath = pair.second.path),
+                        )
+                ) {
+                    is UseCaseResult.Success -> {
+                        worktreesState.worktreeStatusByPath[pair.second.path] = result.value.status
+                        messagesState.success = success(Res.string.screen_git_push_success)
+                    }
+
+                    is UseCaseResult.Failure -> {
+                        messagesState.error = errorMapper.mapFailureToErrorState(result.value)
+                    }
                 }
             }
         }
@@ -59,14 +65,20 @@ class AppGitActionsService(
         val pair = worktreesState.findWorktreeByPath(path = worktreePath, repositoriesState = repositoriesState) ?: return
         executionScope.scope.launch {
             loadingRunner.withWorktreeLoading(pair.second.path, Res.string.loading_pulling) {
-                runCatching {
-                    gitClient.pull(atWorktreePath = pair.second.path)
-                    gitClient.getWorktreeStatus(atWorktreePath = pair.second.path)
-                }.onSuccess { status ->
-                    worktreesState.worktreeStatusByPath[pair.second.path] = status
-                    messagesState.success = SuccessState(message = "Pull completed")
-                }.onFailure { throwable ->
-                    messagesState.error = errorMapper.mapFailureToErrorState(DomainFailureMapper.fromThrowable(throwable))
+                when (
+                    val result =
+                        pullWorktreeUseCase.execute(
+                            input = PullWorktreeUseCase.Input(worktreePath = pair.second.path),
+                        )
+                ) {
+                    is UseCaseResult.Success -> {
+                        worktreesState.worktreeStatusByPath[pair.second.path] = result.value.status
+                        messagesState.success = success(Res.string.screen_git_pull_success)
+                    }
+
+                    is UseCaseResult.Failure -> {
+                        messagesState.error = errorMapper.mapFailureToErrorState(result.value)
+                    }
                 }
             }
         }
@@ -81,29 +93,27 @@ class AppGitActionsService(
         val pair = worktreesState.findWorktreeByPath(path = worktreePath, repositoriesState = repositoriesState) ?: return
         executionScope.scope.launch {
             loadingRunner.withWorktreeLoading(pair.second.path, Res.string.loading_creating_pr) {
-                runCatching {
-                    val status = gitClient.getWorktreeStatus(atWorktreePath = pair.second.path)
-                    if (status.hasUnpushedCommits || !status.hasRemote) {
-                        gitClient.push(
-                            atWorktreePath = pair.second.path,
-                            setUpstream = !status.hasRemote,
+                when (
+                    val result =
+                        createPullRequestUseCase.execute(
+                            input =
+                                CreatePullRequestUseCase.Input(
+                                    worktree = pair.second,
+                                    title = title,
+                                    body = body,
+                                    baseBranch = baseBranch,
+                                ),
                         )
+                ) {
+                    is UseCaseResult.Success -> {
+                        worktreesState.worktreeStatusByPath[pair.second.path] = result.value.status
+                        systemOpening.openURL(url = result.value.pullRequestUrl)
+                        messagesState.success = success(Res.string.screen_git_pr_created_success)
                     }
-                    val prUrl =
-                        gitClient.createPR(
-                            atWorktreePath = pair.second.path,
-                            title = title.ifBlank { pair.second.branch },
-                            body = body,
-                            baseBranch = baseBranch,
-                        )
-                    val updatedStatus = gitClient.getWorktreeStatus(atWorktreePath = pair.second.path)
-                    Pair(prUrl, updatedStatus)
-                }.onSuccess { result ->
-                    worktreesState.worktreeStatusByPath[pair.second.path] = result.second
-                    systemOpening.openURL(url = result.first)
-                    messagesState.success = SuccessState(message = "Pull request created")
-                }.onFailure { throwable ->
-                    messagesState.error = errorMapper.mapFailureToErrorState(DomainFailureMapper.fromThrowable(throwable))
+
+                    is UseCaseResult.Failure -> {
+                        messagesState.error = errorMapper.mapFailureToErrorState(result.value)
+                    }
                 }
             }
         }
@@ -112,17 +122,24 @@ class AppGitActionsService(
     override fun onOpenPullRequest(worktreePath: String) {
         val pair = worktreesState.findWorktreeByPath(path = worktreePath, repositoriesState = repositoriesState) ?: return
         executionScope.scope.launch {
-            runCatching {
-                val status = gitClient.getWorktreeStatus(atWorktreePath = pair.second.path)
-                worktreesState.worktreeStatusByPath[pair.second.path] = status
-                status.prStatus?.url
-            }.onSuccess { url ->
-                if (url != null) {
-                    systemOpening.openURL(url = url)
+            when (
+                val result =
+                    loadPullRequestUrlUseCase.execute(
+                        input = LoadPullRequestUrlUseCase.Input(worktreePath = pair.second.path),
+                    )
+            ) {
+                is UseCaseResult.Success -> {
+                    worktreesState.worktreeStatusByPath[pair.second.path] = result.value.status
+                    val url = result.value.pullRequestUrl
+                    if (url != null) {
+                        systemOpening.openURL(url = url)
+                    }
                 }
-            }.onFailure { throwable ->
-                messagesState.error = errorMapper.mapFailureToErrorState(DomainFailureMapper.fromThrowable(throwable))
-                stateRefresher.publishAll()
+
+                is UseCaseResult.Failure -> {
+                    messagesState.error = errorMapper.mapFailureToErrorState(result.value)
+                    stateRefresher.publishAll()
+                }
             }
         }
     }
@@ -131,17 +148,24 @@ class AppGitActionsService(
         val pair = worktreesState.findWorktreeByPath(path = worktreePath, repositoriesState = repositoriesState) ?: return
         executionScope.scope.launch {
             loadingRunner.withWorktreeLoading(pair.second.path, Res.string.loading_locking) {
-                runCatching {
-                    gitClient.lockWorktree(
-                        atRepoPath = pair.first.path,
-                        worktreePath = pair.second.path,
-                        reason = null,
-                    )
-                    worktreesOperations.loadWorktreesForRepositoryInternal(path = pair.first.path)
-                }.onSuccess {
-                    messagesState.success = SuccessState(message = "Worktree locked")
-                }.onFailure { throwable ->
-                    messagesState.error = errorMapper.mapFailureToErrorState(DomainFailureMapper.fromThrowable(throwable))
+                when (
+                    val result =
+                        lockWorktreeUseCase.execute(
+                            input =
+                                LockWorktreeUseCase.Input(
+                                    repositoryPath = pair.first.path,
+                                    worktreePath = pair.second.path,
+                                ),
+                        )
+                ) {
+                    is UseCaseResult.Success -> {
+                        worktreesState.worktreesByRepositoryPath[pair.first.path] = result.value.worktrees
+                        messagesState.success = success(Res.string.screen_git_worktree_locked_success)
+                    }
+
+                    is UseCaseResult.Failure -> {
+                        messagesState.error = errorMapper.mapFailureToErrorState(result.value)
+                    }
                 }
             }
         }
@@ -151,16 +175,24 @@ class AppGitActionsService(
         val pair = worktreesState.findWorktreeByPath(path = worktreePath, repositoriesState = repositoriesState) ?: return
         executionScope.scope.launch {
             loadingRunner.withWorktreeLoading(pair.second.path, Res.string.loading_unlocking) {
-                runCatching {
-                    gitClient.unlockWorktree(
-                        atRepoPath = pair.first.path,
-                        worktreePath = pair.second.path,
-                    )
-                    worktreesOperations.loadWorktreesForRepositoryInternal(path = pair.first.path)
-                }.onSuccess {
-                    messagesState.success = SuccessState(message = "Worktree unlocked")
-                }.onFailure { throwable ->
-                    messagesState.error = errorMapper.mapFailureToErrorState(DomainFailureMapper.fromThrowable(throwable))
+                when (
+                    val result =
+                        unlockWorktreeUseCase.execute(
+                            input =
+                                UnlockWorktreeUseCase.Input(
+                                    repositoryPath = pair.first.path,
+                                    worktreePath = pair.second.path,
+                                ),
+                        )
+                ) {
+                    is UseCaseResult.Success -> {
+                        worktreesState.worktreesByRepositoryPath[pair.first.path] = result.value.worktrees
+                        messagesState.success = success(Res.string.screen_git_worktree_unlocked_success)
+                    }
+
+                    is UseCaseResult.Failure -> {
+                        messagesState.error = errorMapper.mapFailureToErrorState(result.value)
+                    }
                 }
             }
         }
@@ -174,33 +206,31 @@ class AppGitActionsService(
         val pair = worktreesState.findWorktreeByPath(path = worktreePath, repositoriesState = repositoriesState) ?: return
         executionScope.scope.launch {
             loadingRunner.withWorktreeLoading(pair.second.path, Res.string.loading_removing_worktree) {
-                runCatching {
-                    if (pair.second.isMain) {
-                        throw AppError.CannotRemoveMainWorktree()
-                    }
-                    gitClient.removeWorktree(
-                        atRepoPath = pair.first.path,
-                        worktreePath = pair.second.path,
-                        force = force,
-                    )
-                    preferencesStore.removeWorktreeBaseBranch(forWorktreePath = pair.second.path)
-                    if (deleteBranch && pair.second.branch.isNotBlank() && pair.second.branch != "detached HEAD") {
-                        gitClient.deleteBranch(
-                            atRepoPath = pair.first.path,
-                            branch = pair.second.branch,
-                            force = force,
+                when (
+                    val result =
+                        removeWorktreeUseCase.execute(
+                            input =
+                                RemoveWorktreeUseCase.Input(
+                                    repositoryPath = pair.first.path,
+                                    worktree = pair.second,
+                                    force = force,
+                                    deleteBranch = deleteBranch,
+                                ),
                         )
+                ) {
+                    is UseCaseResult.Success -> {
+                        worktreesState.worktreesByRepositoryPath[pair.first.path] = result.value.worktrees
+                        settingsState.branches = result.value.branches
+                        if (worktreesState.selectedWorktreePath == pair.second.path) {
+                            worktreesState.selectedWorktreePath = null
+                            persistSelection()
+                        }
+                        messagesState.success = success(Res.string.screen_git_worktree_removed_success)
                     }
-                    if (worktreesState.selectedWorktreePath == pair.second.path) {
-                        worktreesState.selectedWorktreePath = null
-                        stateRefresher.persistSelection()
+
+                    is UseCaseResult.Failure -> {
+                        messagesState.error = errorMapper.mapFailureToErrorState(result.value)
                     }
-                    worktreesOperations.loadWorktreesForRepositoryInternal(path = pair.first.path)
-                    settingsState.branches = gitClient.listBranches(atRepoPath = pair.first.path)
-                }.onSuccess {
-                    messagesState.success = SuccessState(message = "Worktree removed")
-                }.onFailure { throwable ->
-                    messagesState.error = errorMapper.mapFailureToErrorState(DomainFailureMapper.fromThrowable(throwable))
                 }
             }
         }
@@ -227,53 +257,30 @@ class AppGitActionsService(
             )
         executionScope.scope.launch {
             loadingRunner.withWorktreeLoading(pair.second.path, Res.string.loading_completing) {
-                runCatching {
-                    if (pair.second.isMain) {
-                        throw AppError.CannotRemoveMainWorktree()
-                    }
-                    if (options.mergeIntoTarget) {
-                        gitClient.mergeBranch(
-                            atRepoPath = pair.first.path,
-                            source = pair.second.branch,
-                            intoTarget = options.targetBranch,
+                when (
+                    val result =
+                        completeWorktreeUseCase.execute(
+                            input =
+                                CompleteWorktreeUseCase.Input(
+                                    repositoryPath = pair.first.path,
+                                    worktree = pair.second,
+                                    options = options,
+                                ),
                         )
-                    }
-                    if (options.pullTargetFirst) {
-                        val repoWorktrees = gitClient.listWorktrees(atRepoPath = pair.first.path)
-                        val targetWorktree = repoWorktrees.firstOrNull { it.branch == options.targetBranch }
-                        if (targetWorktree != null) {
-                            gitClient.pull(atWorktreePath = targetWorktree.path)
+                ) {
+                    is UseCaseResult.Success -> {
+                        worktreesState.worktreesByRepositoryPath[pair.first.path] = result.value.worktrees
+                        settingsState.branches = result.value.branches
+                        if (worktreesState.selectedWorktreePath == pair.second.path) {
+                            worktreesState.selectedWorktreePath = null
+                            persistSelection()
                         }
+                        messagesState.success = success(Res.string.screen_git_worktree_completed_success)
                     }
-                    gitClient.removeWorktree(
-                        atRepoPath = pair.first.path,
-                        worktreePath = pair.second.path,
-                        force = options.force,
-                    )
-                    preferencesStore.removeWorktreeBaseBranch(forWorktreePath = pair.second.path)
-                    if (options.deleteLocalBranch && pair.second.branch.isNotBlank() && pair.second.branch != "detached HEAD") {
-                        gitClient.deleteBranch(
-                            atRepoPath = pair.first.path,
-                            branch = pair.second.branch,
-                            force = options.force,
-                        )
+
+                    is UseCaseResult.Failure -> {
+                        messagesState.error = errorMapper.mapFailureToErrorState(result.value)
                     }
-                    if (options.deleteRemoteBranch && pair.second.branch.isNotBlank()) {
-                        gitClient.deleteRemoteBranch(
-                            atRepoPath = pair.first.path,
-                            branch = pair.second.branch,
-                        )
-                    }
-                    if (worktreesState.selectedWorktreePath == pair.second.path) {
-                        worktreesState.selectedWorktreePath = null
-                        stateRefresher.persistSelection()
-                    }
-                    worktreesOperations.loadWorktreesForRepositoryInternal(path = pair.first.path)
-                    settingsState.branches = gitClient.listBranches(atRepoPath = pair.first.path)
-                }.onSuccess {
-                    messagesState.success = SuccessState(message = "Worktree completed")
-                }.onFailure { throwable ->
-                    messagesState.error = errorMapper.mapFailureToErrorState(DomainFailureMapper.fromThrowable(throwable))
                 }
             }
         }
@@ -282,17 +289,25 @@ class AppGitActionsService(
     override fun onLoadHasRemoteBranch(worktreePath: String) {
         val pair = worktreesState.findWorktreeByPath(path = worktreePath, repositoriesState = repositoriesState) ?: return
         executionScope.scope.launch {
-            runCatching {
-                gitClient.hasRemoteBranch(
-                    atRepoPath = pair.first.path,
-                    branch = pair.second.branch,
-                )
-            }.onSuccess { hasRemote ->
-                worktreesState.hasRemoteBranchByWorktreePath[pair.second.path] = hasRemote
-                stateRefresher.publishAll()
-            }.onFailure { throwable ->
-                messagesState.error = errorMapper.mapFailureToErrorState(DomainFailureMapper.fromThrowable(throwable))
-                stateRefresher.publishAll()
+            when (
+                val result =
+                    loadHasRemoteBranchUseCase.execute(
+                        input =
+                            LoadHasRemoteBranchUseCase.Input(
+                                repositoryPath = pair.first.path,
+                                branch = pair.second.branch,
+                            ),
+                    )
+            ) {
+                is UseCaseResult.Success -> {
+                    worktreesState.hasRemoteBranchByWorktreePath[pair.second.path] = result.value.hasRemoteBranch
+                    stateRefresher.publishAll()
+                }
+
+                is UseCaseResult.Failure -> {
+                    messagesState.error = errorMapper.mapFailureToErrorState(result.value)
+                    stateRefresher.publishAll()
+                }
             }
         }
     }
@@ -301,15 +316,46 @@ class AppGitActionsService(
         val repositoryPath = repositoriesState.selectedRepository()?.path ?: return
         executionScope.scope.launch {
             loadingRunner.withGlobalLoading(Res.string.loading_pruning) {
-                runCatching {
-                    gitClient.pruneWorktrees(atRepoPath = repositoryPath)
-                    worktreesOperations.loadWorktreesForRepositoryInternal(path = repositoryPath)
-                }.onSuccess {
-                    messagesState.success = SuccessState(message = "Worktrees pruned")
-                }.onFailure { throwable ->
-                    messagesState.error = errorMapper.mapFailureToErrorState(DomainFailureMapper.fromThrowable(throwable))
+                when (
+                    val result =
+                        pruneWorktreesUseCase.execute(
+                            input = PruneWorktreesUseCase.Input(repositoryPath = repositoryPath),
+                        )
+                ) {
+                    is UseCaseResult.Success -> {
+                        worktreesState.worktreesByRepositoryPath[repositoryPath] = result.value.worktrees
+                        messagesState.success = success(Res.string.screen_git_worktrees_pruned_success)
+                    }
+
+                    is UseCaseResult.Failure -> {
+                        messagesState.error = errorMapper.mapFailureToErrorState(result.value)
+                    }
                 }
             }
         }
+    }
+
+    private fun persistSelection() {
+        when (
+            val result =
+                appSessionPersistenceUseCase.execute(
+                    input =
+                        AppSessionPersistenceUseCase.Input(
+                            repositoryId = repositoriesState.selectedRepositoryId,
+                            worktreePath = worktreesState.selectedWorktreePath,
+                        ),
+                )
+        ) {
+            is UseCaseResult.Success -> {
+            }
+
+            is UseCaseResult.Failure -> {
+                messagesState.error = errorMapper.mapFailureToErrorState(result.value)
+            }
+        }
+    }
+
+    private fun success(resource: org.jetbrains.compose.resources.StringResource): SuccessState {
+        return SuccessState(message = resolveText(text = UiText(resource = resource)))
     }
 }

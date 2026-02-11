@@ -3,6 +3,14 @@
     <string name="error_details">Details: %1$s</string>
     <string name="screen_create_worktree_success">Created: %1$s</string>
     <string name="screen_repositories_repository_added">Repository added: %1$s</string>
+    <string name="screen_git_push_success">Push completed</string>
+    <string name="screen_git_pull_success">Pull completed</string>
+    <string name="screen_git_pr_created_success">Pull request created</string>
+    <string name="screen_git_worktree_locked_success">Worktree locked</string>
+    <string name="screen_git_worktree_unlocked_success">Worktree unlocked</string>
+    <string name="screen_git_worktree_removed_success">Worktree removed</string>
+    <string name="screen_git_worktree_completed_success">Worktree completed</string>
+    <string name="screen_git_worktrees_pruned_success">Worktrees pruned</string>
 
     <string name="app_cannot_remove_main_worktree">The main worktree cannot be removed.</string>
     <string name="app_group_name_blank">Group name is required.</string>

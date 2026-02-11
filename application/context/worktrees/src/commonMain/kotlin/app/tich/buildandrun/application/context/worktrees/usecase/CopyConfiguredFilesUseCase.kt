@@ -1,7 +1,9 @@
 package app.tich.buildandrun.application.context.worktrees.usecase
 
 import app.tich.buildandrun.application.context.repositories.port.PreferencesStore
+import app.tich.buildandrun.application.context.shared.path.normalizePath
 import app.tich.buildandrun.application.context.shared.port.FileSystemHandling
+import app.tich.buildandrun.application.context.shared.usecase.runCatchingCancellable
 import app.tich.buildandrun.domain.context.copy.model.CopyPattern
 import app.tich.buildandrun.domain.context.repositories.model.RepositoryId
 
@@ -41,15 +43,13 @@ class CopyConfiguredFilesUseCase(
         if (!fileSystemHandling.fileExists(atPath = sourcePath)) {
             return
         }
-        runCatching {
+        runCatchingCancellable {
             fileSystemHandling.copyItem(
                 atPath = sourcePath,
                 toPath = destinationPath,
             )
         }
     }
-
-    private fun normalizePath(path: String): String = path.trim().trimEnd('/')
 
     data class Input(
         val repositoryPath: String,

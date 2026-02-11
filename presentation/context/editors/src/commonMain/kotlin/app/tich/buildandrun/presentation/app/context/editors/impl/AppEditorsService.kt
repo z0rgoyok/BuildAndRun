@@ -1,12 +1,12 @@
 package app.tich.buildandrun.presentation.app.context.editors.impl
 
-import app.tich.buildandrun.application.context.repositories.port.PreferencesStore
-import app.tich.buildandrun.application.context.shared.port.EditorOpening
+import app.tich.buildandrun.application.context.repositories.usecase.OpenInEditorUseCase
+import app.tich.buildandrun.application.context.repositories.usecase.SetEditorEnabledUseCase
+import app.tich.buildandrun.application.context.repositories.usecase.SetPreferredEditorUseCase
+import app.tich.buildandrun.application.context.repositories.usecase.SetRememberEditorChoiceUseCase
 import app.tich.buildandrun.application.context.shared.port.SystemOpening
+import app.tich.buildandrun.application.context.shared.usecase.UseCaseResult
 import app.tich.buildandrun.domain.context.editors.model.Editor
-import app.tich.buildandrun.domain.context.repositories.model.RepositoryId
-import app.tich.buildandrun.domain.shared.error.AppError
-import app.tich.buildandrun.domain.shared.failure.DomainFailureMapper
 import app.tich.buildandrun.presentation.app.AppEditorsFeature
 import app.tich.buildandrun.presentation.app.context.state.EditorsContextState
 import app.tich.buildandrun.presentation.app.context.state.MessagesContextState
@@ -24,18 +24,26 @@ class AppEditorsService(
     private val repositoriesState: RepositoriesContextState,
     private val editorsState: EditorsContextState,
     private val messagesState: MessagesContextState,
-    private val preferencesStore: PreferencesStore,
-    private val editorOpening: EditorOpening,
+    private val setRememberEditorChoiceUseCase: SetRememberEditorChoiceUseCase,
+    private val setEditorEnabledUseCase: SetEditorEnabledUseCase,
+    private val setPreferredEditorUseCase: SetPreferredEditorUseCase,
+    private val openInEditorUseCase: OpenInEditorUseCase,
     private val systemOpening: SystemOpening,
 ) : AppEditorsFeature {
     override fun onSetRememberEditorChoice(value: Boolean) {
-        editorsState.rememberEditorChoice = value
-        preferencesStore.rememberEditorChoice = value
-        if (!value) {
-            stateRefresher.currentRepositoryId()?.let { repositoryId ->
-                preferencesStore.removePreferredEditorId(
-                    forRepositoryId = RepositoryId(repositoryId),
+        val repositoryId = repositoriesState.selectedRepository()?.id?.value
+        when (
+            val result =
+                setRememberEditorChoiceUseCase.execute(
+                    input = SetRememberEditorChoiceUseCase.Input(value = value, repositoryId = repositoryId),
                 )
+        ) {
+            is UseCaseResult.Success -> {
+                editorsState.rememberEditorChoice = result.value.rememberEditorChoice
+            }
+
+            is UseCaseResult.Failure -> {
+                messagesState.error = errorMapper.mapFailureToErrorState(result.value)
             }
         }
         stateRefresher.publishAll()
@@ -45,31 +53,44 @@ class AppEditorsService(
         editorId: String,
         enabled: Boolean,
     ) {
-        val normalizedEditorId = editorId.trim()
-        if (normalizedEditorId.isBlank()) {
-            return
+        when (
+            val result =
+                setEditorEnabledUseCase.execute(
+                    input =
+                        SetEditorEnabledUseCase.Input(
+                            editorId = editorId,
+                            enabled = enabled,
+                            allEditorIds = editorsState.allEditors.map(Editor::id),
+                            currentEnabledEditorIds = editorsState.enabledEditorIds,
+                        ),
+                )
+        ) {
+            is UseCaseResult.Success -> {
+                editorsState.enabledEditorIds = result.value.enabledEditorIds
+            }
+
+            is UseCaseResult.Failure -> {
+                messagesState.error = errorMapper.mapFailureToErrorState(result.value)
+            }
         }
-        preferencesStore.setEditorEnabled(
-            editorId = normalizedEditorId,
-            enabled = enabled,
-            allEditorIds = editorsState.allEditors.map(Editor::id),
-        )
-        editorsState.enabledEditorIds = preferencesStore.enabledEditorIds
         stateRefresher.publishAll()
     }
 
     override fun onSetPreferredEditor(editorId: String?) {
         val repository = repositoriesState.selectedRepository() ?: return
-        val normalizedEditorId = editorId?.trim().orEmpty()
-        if (normalizedEditorId.isBlank()) {
-            preferencesStore.removePreferredEditorId(forRepositoryId = repository.id)
-            stateRefresher.publishAll()
-            return
+        when (
+            val result =
+                setPreferredEditorUseCase.execute(
+                    input = SetPreferredEditorUseCase.Input(repositoryId = repository.id.value, editorId = editorId),
+                )
+        ) {
+            is UseCaseResult.Success -> {
+            }
+
+            is UseCaseResult.Failure -> {
+                messagesState.error = errorMapper.mapFailureToErrorState(result.value)
+            }
         }
-        preferencesStore.setPreferredEditorId(
-            editorId = normalizedEditorId,
-            forRepositoryId = repository.id,
-        )
         stateRefresher.publishAll()
     }
 
@@ -81,29 +102,34 @@ class AppEditorsService(
         if (normalizedWorktreePath.isBlank()) {
             return
         }
-        val repository = repositoriesState.selectedRepository()
+        val repositoryId = repositoriesState.selectedRepository()?.id?.value
         executionScope.scope.launch {
-            val editor = resolveEditor(editorId = editorId, repositoryId = repository?.id?.value)
-            if (editor == null) {
-                messagesState.error = errorMapper.mapFailureToErrorState(DomainFailureMapper.fromThrowable(AppError.NoEditorConfigured()))
-                stateRefresher.publishAll()
-                return@launch
-            }
-            runCatching {
-                editorOpening.open(
-                    path = normalizedWorktreePath,
-                    withEditor = editor,
-                )
-            }.onSuccess {
-                if (editorsState.rememberEditorChoice && repository != null) {
-                    preferencesStore.setPreferredEditorId(
-                        editorId = editor.id,
-                        forRepositoryId = repository.id,
+            when (
+                val result =
+                    openInEditorUseCase.execute(
+                        input =
+                            OpenInEditorUseCase.Input(
+                                worktreePath = normalizedWorktreePath,
+                                editorId = editorId,
+                                repositoryId = repositoryId,
+                                rememberEditorChoice = editorsState.rememberEditorChoice,
+                                enabledInstalledEditorIds =
+                                    editorsState.editorItems
+                                        .asSequence()
+                                        .filter { it.isEnabled && it.isInstalled }
+                                        .map { it.id }
+                                        .toList(),
+                                availableEditors = editorsState.allEditors,
+                            ),
                     )
+            ) {
+                is UseCaseResult.Success -> {
+                    messagesState.clear()
                 }
-                messagesState.clear()
-            }.onFailure { throwable ->
-                messagesState.error = errorMapper.mapFailureToErrorState(DomainFailureMapper.fromThrowable(throwable))
+
+                is UseCaseResult.Failure -> {
+                    messagesState.error = errorMapper.mapFailureToErrorState(result.value)
+                }
             }
             stateRefresher.publishAll()
         }
@@ -123,27 +149,5 @@ class AppEditorsService(
             return
         }
         systemOpening.openTerminal(atPath = normalizedWorktreePath)
-    }
-
-    private fun resolveEditor(
-        editorId: String?,
-        repositoryId: String?,
-    ): Editor? {
-        val configuredEditors = editorsState.editorItems.filter { it.isEnabled && it.isInstalled }
-        val configuredIds = configuredEditors.map { it.id }.toSet()
-        val explicitEditorId = editorId?.trim().orEmpty()
-        if (explicitEditorId.isNotBlank() && configuredIds.contains(explicitEditorId)) {
-            return editorsState.allEditors.firstOrNull { it.id == explicitEditorId }
-        }
-        if (editorsState.rememberEditorChoice && repositoryId != null) {
-            val preferredEditorId =
-                preferencesStore.preferredEditorId(
-                    forRepositoryId = RepositoryId(repositoryId),
-                )
-            if (preferredEditorId != null && configuredIds.contains(preferredEditorId)) {
-                return editorsState.allEditors.firstOrNull { it.id == preferredEditorId }
-            }
-        }
-        return configuredEditors.firstOrNull()?.let { first -> editorsState.allEditors.firstOrNull { it.id == first.id } }
     }
 }

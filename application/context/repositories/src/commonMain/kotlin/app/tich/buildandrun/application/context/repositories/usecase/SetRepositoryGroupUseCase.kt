@@ -2,11 +2,12 @@ package app.tich.buildandrun.application.context.repositories.usecase
 
 import app.tich.buildandrun.application.context.repositories.port.PreferencesStore
 import app.tich.buildandrun.application.context.shared.usecase.UseCaseResult
+import app.tich.buildandrun.application.context.shared.usecase.runCatchingCancellable
+import app.tich.buildandrun.application.context.shared.usecase.toUseCaseFailure
 import app.tich.buildandrun.domain.context.repositories.model.Repository
 import app.tich.buildandrun.domain.context.repositories.model.RepositoryGroupId
 import app.tich.buildandrun.domain.shared.failure.DomainFailure
 import app.tich.buildandrun.domain.shared.failure.DomainFailureCode
-import app.tich.buildandrun.domain.shared.failure.DomainFailureMapper
 
 class SetRepositoryGroupUseCase(
     private val preferencesStore: PreferencesStore,
@@ -22,7 +23,7 @@ class SetRepositoryGroupUseCase(
             )
         }
 
-        return runCatching {
+        return runCatchingCancellable {
             val repositories = preferencesStore.loadRepositories()
             val repositoryIndex = repositories.indexOfFirst { it.id.value == repositoryId }
             if (repositoryIndex == -1) {
@@ -43,7 +44,7 @@ class SetRepositoryGroupUseCase(
         }.fold(
             onSuccess = { it },
             onFailure = { throwable ->
-                UseCaseResult.Failure(value = DomainFailureMapper.fromThrowable(throwable))
+                throwable.toUseCaseFailure()
             },
         )
     }

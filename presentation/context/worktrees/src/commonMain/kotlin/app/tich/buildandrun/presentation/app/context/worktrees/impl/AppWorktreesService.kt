@@ -1,13 +1,10 @@
 package app.tich.buildandrun.presentation.app.context.worktrees.impl
 
-import app.tich.buildandrun.application.context.repositories.port.PreferencesStore
+import app.tich.buildandrun.application.context.repositories.usecase.AppSessionPersistenceUseCase
+import app.tich.buildandrun.application.context.repositories.usecase.PersistCreatedWorktreePreferencesUseCase
 import app.tich.buildandrun.application.context.shared.port.EditorOpening
 import app.tich.buildandrun.application.context.shared.usecase.UseCaseResult
-import app.tich.buildandrun.application.context.worktrees.port.GitClient
-import app.tich.buildandrun.application.context.worktrees.usecase.CopyConfiguredFilesUseCase
-import app.tich.buildandrun.application.context.worktrees.usecase.CreateWorktreeUseCase
-import app.tich.buildandrun.application.context.worktrees.usecase.LoadBranchesUseCase
-import app.tich.buildandrun.domain.shared.failure.DomainFailureMapper
+import app.tich.buildandrun.application.context.worktrees.usecase.*
 import app.tich.buildandrun.presentation.app.AppWorktreesFeature
 import app.tich.buildandrun.presentation.app.SuccessState
 import app.tich.buildandrun.presentation.app.context.state.MessagesContextState
@@ -28,16 +25,18 @@ class AppWorktreesService(
     private val repositoriesState: RepositoriesContextState,
     private val worktreesState: WorktreesContextState,
     private val messagesState: MessagesContextState,
-    private val gitClient: GitClient,
-    private val preferencesStore: PreferencesStore,
     private val editorOpening: EditorOpening,
     private val createWorktreeUseCase: CreateWorktreeUseCase,
     private val loadBranchesUseCase: LoadBranchesUseCase,
     private val copyConfiguredFilesUseCase: CopyConfiguredFilesUseCase,
+    private val loadRepositoryWorktreesUseCase: LoadRepositoryWorktreesUseCase,
+    private val loadWorktreeStatusUseCase: LoadWorktreeStatusUseCase,
+    private val appSessionPersistenceUseCase: AppSessionPersistenceUseCase,
+    private val persistCreatedWorktreePreferencesUseCase: PersistCreatedWorktreePreferencesUseCase,
 ) : AppWorktreesFeature, WorktreesOperations {
     override fun onSelectWorktree(worktreePath: String?) {
         worktreesState.selectedWorktreePath = worktreePath
-        stateRefresher.persistSelection()
+        persistSelection()
         messagesState.clear()
         stateRefresher.publishAll()
     }
@@ -61,13 +60,19 @@ class AppWorktreesService(
         executionScope.scope.launch {
             worktreesState.worktreeStatusLoadingPaths += normalizedPath
             stateRefresher.publishAll()
-            runCatching {
-                gitClient.getWorktreeStatus(atWorktreePath = normalizedPath)
-            }.onSuccess { status ->
-                worktreesState.worktreeStatusByPath[normalizedPath] = status
-            }.onFailure { throwable ->
-                val domainFailure = DomainFailureMapper.fromThrowable(throwable)
-                messagesState.error = errorMapper.mapFailureToErrorState(domainFailure)
+            when (
+                val result =
+                    loadWorktreeStatusUseCase.execute(
+                        input = LoadWorktreeStatusUseCase.Input(worktreePath = normalizedPath),
+                    )
+            ) {
+                is UseCaseResult.Success -> {
+                    worktreesState.worktreeStatusByPath[normalizedPath] = result.value.status
+                }
+
+                is UseCaseResult.Failure -> {
+                    messagesState.error = errorMapper.mapFailureToErrorState(result.value)
+                }
             }
             worktreesState.worktreeStatusLoadingPaths -= normalizedPath
             stateRefresher.publishAll()
@@ -148,16 +153,23 @@ class AppWorktreesService(
                     )
             ) {
                 is UseCaseResult.Success -> {
-                    val preferredBaseBranch = worktreesState.createWorktreeState.baseBranchInput.trim().ifBlank { null }
-                    preferredBaseBranch?.let { baseBranch ->
-                        preferencesStore.setPreferredBaseBranch(
-                            branch = baseBranch,
-                            forRepositoryId = repository.id,
-                        )
-                        preferencesStore.setWorktreeBaseBranch(
-                            branch = baseBranch,
-                            forWorktreePath = result.value.createdWorktree.path,
-                        )
+                    when (
+                        val persistenceResult =
+                            persistCreatedWorktreePreferencesUseCase.execute(
+                                input =
+                                    PersistCreatedWorktreePreferencesUseCase.Input(
+                                        repositoryId = repository.id.value,
+                                        worktreePath = result.value.createdWorktree.path,
+                                        baseBranch = worktreesState.createWorktreeState.baseBranchInput,
+                                    ),
+                            )
+                    ) {
+                        is UseCaseResult.Success -> {
+                        }
+
+                        is UseCaseResult.Failure -> {
+                            messagesState.error = errorMapper.mapFailureToErrorState(persistenceResult.value)
+                        }
                     }
                     copyConfiguredFilesUseCase.execute(
                         input =
@@ -167,10 +179,22 @@ class AppWorktreesService(
                                 repositoryId = repository.id.value,
                             ),
                     )
-                    val worktrees = gitClient.listWorktrees(atRepoPath = repositoryPath)
-                    worktreesState.worktreesByRepositoryPath[repositoryPath] = worktrees
+                    when (
+                        val loadResult =
+                            loadRepositoryWorktreesUseCase.execute(
+                                input = LoadRepositoryWorktreesUseCase.Input(repositoryPath = repositoryPath),
+                            )
+                    ) {
+                        is UseCaseResult.Success -> {
+                            worktreesState.worktreesByRepositoryPath[repositoryPath] = loadResult.value.worktrees
+                        }
+
+                        is UseCaseResult.Failure -> {
+                            messagesState.error = errorMapper.mapFailureToErrorState(loadResult.value)
+                        }
+                    }
                     worktreesState.selectedWorktreePath = result.value.createdWorktree.path
-                    stateRefresher.persistSelection()
+                    persistSelection()
                     worktreesState.createWorktreeState =
                         worktreesState.createWorktreeState.copy(
                             isSubmitting = false,
@@ -212,35 +236,34 @@ class AppWorktreesService(
         if (normalizedPath.isBlank()) {
             return
         }
-        runCatching {
-            gitClient.listWorktrees(atRepoPath = normalizedPath)
-        }.onSuccess { worktrees ->
-            worktreesState.worktreesByRepositoryPath[normalizedPath] =
-                worktrees.map { worktree ->
-                    val baseBranch =
-                        preferencesStore.worktreeBaseBranch(
-                            forWorktreePath = worktree.path,
-                        )
-                    worktree.withBaseBranch(baseBranch = baseBranch)
+        when (
+            val result =
+                loadRepositoryWorktreesUseCase.execute(
+                    input = LoadRepositoryWorktreesUseCase.Input(repositoryPath = normalizedPath),
+                )
+        ) {
+            is UseCaseResult.Success -> {
+                worktreesState.worktreesByRepositoryPath[normalizedPath] = result.value.worktrees
+                if (repositoriesState.selectedRepository()?.path == normalizedPath && worktreesState.selectedWorktreePath != null) {
+                    val stillExists =
+                        worktreesState.worktreesByRepositoryPath[normalizedPath]
+                            .orEmpty()
+                            .any { it.path == worktreesState.selectedWorktreePath }
+                    if (!stillExists) {
+                        worktreesState.selectedWorktreePath = null
+                        persistSelection()
+                    }
                 }
-            if (repositoriesState.selectedRepository()?.path == normalizedPath && worktreesState.selectedWorktreePath != null) {
-                val stillExists =
-                    worktreesState.worktreesByRepositoryPath[normalizedPath]
-                        .orEmpty()
-                        .any { it.path == worktreesState.selectedWorktreePath }
-                if (!stillExists) {
-                    worktreesState.selectedWorktreePath = null
-                    stateRefresher.persistSelection()
-                }
-            }
-            worktreesState.worktreesByRepositoryPath[normalizedPath].orEmpty().forEach { worktree ->
-                if (!worktreesState.worktreeStatusByPath.containsKey(worktree.path)) {
-                    onRefreshWorktreeStatus(worktreePath = worktree.path)
+                worktreesState.worktreesByRepositoryPath[normalizedPath].orEmpty().forEach { worktree ->
+                    if (!worktreesState.worktreeStatusByPath.containsKey(worktree.path)) {
+                        onRefreshWorktreeStatus(worktreePath = worktree.path)
+                    }
                 }
             }
-        }.onFailure { throwable ->
-            val domainFailure = DomainFailureMapper.fromThrowable(throwable)
-            messagesState.error = errorMapper.mapFailureToErrorState(domainFailure)
+
+            is UseCaseResult.Failure -> {
+                messagesState.error = errorMapper.mapFailureToErrorState(result.value)
+            }
         }
     }
 
@@ -265,6 +288,26 @@ class AppWorktreesService(
                 }
             }
             stateRefresher.publishAll()
+        }
+    }
+
+    private fun persistSelection() {
+        when (
+            val result =
+                appSessionPersistenceUseCase.execute(
+                    input =
+                        AppSessionPersistenceUseCase.Input(
+                            repositoryId = repositoriesState.selectedRepositoryId,
+                            worktreePath = worktreesState.selectedWorktreePath,
+                        ),
+                )
+        ) {
+            is UseCaseResult.Success -> {
+            }
+
+            is UseCaseResult.Failure -> {
+                messagesState.error = errorMapper.mapFailureToErrorState(result.value)
+            }
         }
     }
 }

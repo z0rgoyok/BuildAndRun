@@ -1,9 +1,8 @@
 package app.tich.buildandrun.presentation.app.context.settings.impl
 
-import app.tich.buildandrun.application.context.repositories.port.PreferencesStore
+import app.tich.buildandrun.application.context.repositories.usecase.*
 import app.tich.buildandrun.application.context.shared.usecase.UseCaseResult
 import app.tich.buildandrun.application.context.worktrees.usecase.LoadBranchesUseCase
-import app.tich.buildandrun.domain.context.copy.model.CopyPattern
 import app.tich.buildandrun.presentation.app.AppSettingsFeature
 import app.tich.buildandrun.presentation.app.context.state.MessagesContextState
 import app.tich.buildandrun.presentation.app.context.state.RepositoriesContextState
@@ -22,7 +21,11 @@ class AppSettingsService(
     private val settingsState: SettingsContextState,
     private val worktreesState: WorktreesContextState,
     private val messagesState: MessagesContextState,
-    private val preferencesStore: PreferencesStore,
+    private val setWorktreeBasePathUseCase: SetWorktreeBasePathUseCase,
+    private val loadPreferredBaseBranchUseCase: LoadPreferredBaseBranchUseCase,
+    private val setPreferredBaseBranchUseCase: SetPreferredBaseBranchUseCase,
+    private val setDefaultCopyPatternsUseCase: SetDefaultCopyPatternsUseCase,
+    private val setRepositoryCopyPatternsUseCase: SetRepositoryCopyPatternsUseCase,
     private val loadBranchesUseCase: LoadBranchesUseCase,
 ) : AppSettingsFeature {
     override fun onLoadBranches() {
@@ -59,58 +62,94 @@ class AppSettingsService(
     }
 
     override fun onSetWorktreeBasePath(path: String) {
-        val normalizedPath = path.trim()
-        settingsState.worktreeBasePath = normalizedPath
-        preferencesStore.worktreeBasePath = normalizedPath
+        when (val result = setWorktreeBasePathUseCase.execute(SetWorktreeBasePathUseCase.Input(path = path))) {
+            is UseCaseResult.Success -> {
+                settingsState.worktreeBasePath = result.value.path
+            }
+
+            is UseCaseResult.Failure -> {
+                messagesState.error = errorMapper.mapFailureToErrorState(result.value)
+            }
+        }
         stateRefresher.publishAll()
     }
 
     override fun preferredBaseBranch(): String? {
         val repository = repositoriesState.selectedRepository() ?: return null
-        return preferencesStore.preferredBaseBranch(forRepositoryId = repository.id)
+        return when (
+            val result =
+                loadPreferredBaseBranchUseCase.execute(
+                    input = LoadPreferredBaseBranchUseCase.Input(repositoryId = repository.id.value),
+                )
+        ) {
+            is UseCaseResult.Success -> result.value.branch
+            is UseCaseResult.Failure -> {
+                messagesState.error = errorMapper.mapFailureToErrorState(result.value)
+                null
+            }
+        }
     }
 
     override fun onSetPreferredBaseBranch(branch: String) {
         val repository = repositoriesState.selectedRepository() ?: return
-        val normalizedBranch = branch.trim()
-        if (normalizedBranch.isBlank()) {
-            return
+        when (
+            val result =
+                setPreferredBaseBranchUseCase.execute(
+                    input =
+                        SetPreferredBaseBranchUseCase.Input(
+                            repositoryId = repository.id.value,
+                            branch = branch,
+                        ),
+                )
+        ) {
+            is UseCaseResult.Success -> {
+                worktreesState.createWorktreeState =
+                    worktreesState.createWorktreeState.copy(baseBranchInput = result.value.branch)
+            }
+
+            is UseCaseResult.Failure -> {
+                messagesState.error = errorMapper.mapFailureToErrorState(result.value)
+            }
         }
-        preferencesStore.setPreferredBaseBranch(
-            branch = normalizedBranch,
-            forRepositoryId = repository.id,
-        )
-        worktreesState.createWorktreeState = worktreesState.createWorktreeState.copy(baseBranchInput = normalizedBranch)
         stateRefresher.publishAll()
     }
 
     override fun onSetDefaultCopyPatterns(patterns: List<String>) {
-        val normalizedPatterns =
-            patterns
-                .map(String::trim)
-                .filter(String::isNotBlank)
-                .distinct()
-                .map { pattern -> CopyPattern(pattern = pattern) }
-        settingsState.defaultCopyPatterns = normalizedPatterns
-        preferencesStore.defaultCopyPatterns = normalizedPatterns
+        when (
+            val result =
+                setDefaultCopyPatternsUseCase.execute(
+                    input = SetDefaultCopyPatternsUseCase.Input(patterns = patterns),
+                )
+        ) {
+            is UseCaseResult.Success -> {
+                settingsState.defaultCopyPatterns = result.value.patterns
+            }
+
+            is UseCaseResult.Failure -> {
+                messagesState.error = errorMapper.mapFailureToErrorState(result.value)
+            }
+        }
         stateRefresher.publishAll()
     }
 
     override fun onSetRepositoryCopyPatterns(patterns: List<String>?) {
         val repository = repositoriesState.selectedRepository() ?: return
-        if (patterns == null) {
-            preferencesStore.removeCopyPatterns(forRepositoryId = repository.id)
-        } else {
-            val normalizedPatterns =
-                patterns
-                    .map(String::trim)
-                    .filter(String::isNotBlank)
-                    .distinct()
-                    .map { pattern -> CopyPattern(pattern = pattern) }
-            preferencesStore.setCopyPatterns(
-                patterns = normalizedPatterns,
-                forRepositoryId = repository.id,
-            )
+        when (
+            val result =
+                setRepositoryCopyPatternsUseCase.execute(
+                    input =
+                        SetRepositoryCopyPatternsUseCase.Input(
+                            repositoryId = repository.id.value,
+                            patterns = patterns,
+                        ),
+                )
+        ) {
+            is UseCaseResult.Success -> {
+            }
+
+            is UseCaseResult.Failure -> {
+                messagesState.error = errorMapper.mapFailureToErrorState(result.value)
+            }
         }
         stateRefresher.publishAll()
     }

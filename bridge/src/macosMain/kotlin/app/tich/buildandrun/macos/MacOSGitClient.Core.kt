@@ -94,6 +94,7 @@ internal fun macOsGitParseWorktrees(
         var head: String? = null
         var isLocked = false
         var isPrunable = false
+        var isDetachedHead = false
 
         block.forEach { line ->
             when {
@@ -106,7 +107,7 @@ internal fun macOsGitParseWorktrees(
                 line.startsWith("HEAD ") -> head = line.removePrefix("HEAD ").trim()
                 line.startsWith("locked") -> isLocked = true
                 line.startsWith("prunable") -> isPrunable = true
-                line == "detached" -> branch = "detached"
+                line == "detached" -> isDetachedHead = true
             }
         }
 
@@ -119,6 +120,7 @@ internal fun macOsGitParseWorktrees(
             isLocked = isLocked,
             isPrunable = isPrunable,
             baseBranch = null,
+            isDetachedHead = isDetachedHead,
         )
     }
 }

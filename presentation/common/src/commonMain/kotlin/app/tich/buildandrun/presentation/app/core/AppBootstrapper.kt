@@ -4,6 +4,7 @@ import app.tich.buildandrun.application.context.repositories.port.PreferencesSto
 import app.tich.buildandrun.application.context.repositories.usecase.LoadRepositoriesUseCase
 import app.tich.buildandrun.application.context.shared.port.EditorOpening
 import app.tich.buildandrun.application.context.shared.usecase.UseCaseResult
+import app.tich.buildandrun.application.context.shared.usecase.runCatchingCancellable
 import app.tich.buildandrun.domain.shared.failure.DomainFailureMapper
 import app.tich.buildandrun.presentation.app.context.state.*
 import app.tich.buildandrun.resources.Res
@@ -28,7 +29,7 @@ class AppBootstrapper(
 ) {
     fun start() {
         executionScope.scope.launch {
-            runCatching {
+            runCatchingCancellable {
                 loadingRunner.withGlobalLoading(Res.string.loading_initial) {
                     when (val result = loadRepositoriesUseCase.execute()) {
                         is UseCaseResult.Success -> {

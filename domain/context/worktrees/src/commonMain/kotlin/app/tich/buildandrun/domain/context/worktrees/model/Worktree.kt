@@ -8,6 +8,7 @@ data class Worktree(
     val isLocked: Boolean,
     val isPrunable: Boolean,
     val baseBranch: String?,
+    val isDetachedHead: Boolean = false,
 ) {
     val id: String get() = path
     val name: String get() = path.substringAfterLast('/')
@@ -16,6 +17,8 @@ data class Worktree(
 
     init {
         require(path.isNotBlank()) { "Worktree path cannot be blank" }
-        require(branch.isNotBlank()) { "Worktree branch cannot be blank" }
+        if (!isDetachedHead) {
+            require(branch.isNotBlank()) { "Worktree branch cannot be blank" }
+        }
     }
 }

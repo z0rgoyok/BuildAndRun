@@ -1,6 +1,9 @@
 package app.tich.buildandrun.presentation.app.context.sidebar.impl
 
-import app.tich.buildandrun.application.context.repositories.port.PreferencesStore
+import app.tich.buildandrun.application.context.repositories.usecase.SetSidebarMembershipStateUseCase
+import app.tich.buildandrun.application.context.repositories.usecase.SyncSidebarSelectionExpansionUseCase
+import app.tich.buildandrun.application.context.repositories.usecase.ToggleSidebarRepositoriesExpansionUseCase
+import app.tich.buildandrun.application.context.shared.usecase.UseCaseResult
 import app.tich.buildandrun.presentation.app.AppSidebarFeature
 import app.tich.buildandrun.presentation.app.context.state.RepositoriesContextState
 import app.tich.buildandrun.presentation.app.core.AppStateRefresher
@@ -8,19 +11,35 @@ import app.tich.buildandrun.presentation.app.core.AppStateRefresher
 class AppSidebarService(
     private val stateRefresher: AppStateRefresher,
     private val repositoriesState: RepositoriesContextState,
-    private val preferencesStore: PreferencesStore,
+    private val setSidebarMembershipStateUseCase: SetSidebarMembershipStateUseCase,
+    private val toggleSidebarRepositoriesExpansionUseCase: ToggleSidebarRepositoriesExpansionUseCase,
+    private val syncSidebarSelectionExpansionUseCase: SyncSidebarSelectionExpansionUseCase,
 ) : AppSidebarFeature {
     override fun onSetSidebarRepositoryExpanded(
         repositoryId: String,
         expanded: Boolean,
     ) {
-        updateSet(
-            current = repositoriesState.expandedRepositoryIds,
-            value = repositoryId,
-            enabled = expanded,
-        ) { nextExpandedRepositoryIds ->
-            repositoriesState.expandedRepositoryIds = nextExpandedRepositoryIds
-            preferencesStore.expandedRepositoryIds = nextExpandedRepositoryIds
+        when (
+            val result =
+                setSidebarMembershipStateUseCase.execute(
+                    input =
+                        SetSidebarMembershipStateUseCase.Input(
+                            target = SetSidebarMembershipStateUseCase.Target.EXPANDED_REPOSITORIES,
+                            id = repositoryId,
+                            enabled = expanded,
+                            currentIds = repositoriesState.expandedRepositoryIds,
+                        ),
+                )
+        ) {
+            is UseCaseResult.Success -> {
+                if (repositoriesState.expandedRepositoryIds != result.value.ids) {
+                    repositoriesState.expandedRepositoryIds = result.value.ids
+                    stateRefresher.publishAll()
+                }
+            }
+
+            is UseCaseResult.Failure -> {
+            }
         }
     }
 
@@ -28,13 +47,27 @@ class AppSidebarService(
         groupId: String,
         collapsed: Boolean,
     ) {
-        updateSet(
-            current = repositoriesState.collapsedGroupIds,
-            value = groupId,
-            enabled = collapsed,
-        ) { nextCollapsedGroupIds ->
-            repositoriesState.collapsedGroupIds = nextCollapsedGroupIds
-            preferencesStore.collapsedGroupIds = nextCollapsedGroupIds
+        when (
+            val result =
+                setSidebarMembershipStateUseCase.execute(
+                    input =
+                        SetSidebarMembershipStateUseCase.Input(
+                            target = SetSidebarMembershipStateUseCase.Target.COLLAPSED_GROUPS,
+                            id = groupId,
+                            enabled = collapsed,
+                            currentIds = repositoriesState.collapsedGroupIds,
+                        ),
+                )
+        ) {
+            is UseCaseResult.Success -> {
+                if (repositoriesState.collapsedGroupIds != result.value.ids) {
+                    repositoriesState.collapsedGroupIds = result.value.ids
+                    stateRefresher.publishAll()
+                }
+            }
+
+            is UseCaseResult.Failure -> {
+            }
         }
     }
 
@@ -49,13 +82,26 @@ class AppSidebarService(
     }
 
     override fun onSyncSidebarSelectionExpansion(repositoryId: String?) {
-        val selectedRepositoryId = repositoryId?.takeIf { it.isNotBlank() } ?: return
-        if (repositoriesState.expandedRepositoryIds.contains(selectedRepositoryId)) {
-            return
+        when (
+            val result =
+                syncSidebarSelectionExpansionUseCase.execute(
+                    input =
+                        SyncSidebarSelectionExpansionUseCase.Input(
+                            repositoryId = repositoryId,
+                            currentExpandedRepositoryIds = repositoriesState.expandedRepositoryIds,
+                        ),
+                )
+        ) {
+            is UseCaseResult.Success -> {
+                if (result.value.changed) {
+                    repositoriesState.expandedRepositoryIds = result.value.expandedRepositoryIds
+                    stateRefresher.publishAll()
+                }
+            }
+
+            is UseCaseResult.Failure -> {
+            }
         }
-        repositoriesState.expandedRepositoryIds += selectedRepositoryId
-        preferencesStore.expandedRepositoryIds = repositoriesState.expandedRepositoryIds
-        stateRefresher.publishAll()
     }
 
     override fun areVisibleSidebarRepositoriesExpanded(includeArchivedRepositories: Boolean): Boolean =
@@ -70,51 +116,31 @@ class AppSidebarService(
         repositoryIds: Set<String>,
         preferredRepositoryId: String?,
     ) {
-        if (repositoryIds.isEmpty()) {
-            return
-        }
-
-        val nextExpandedRepositoryIds =
-            if (areSidebarRepositoriesExpanded(repositoryIds = repositoryIds)) {
-                val updated = (repositoriesState.expandedRepositoryIds - repositoryIds).toMutableSet()
-                val preferredId = preferredRepositoryId?.takeIf { it.isNotBlank() && repositoryIds.contains(it) }
-                if (preferredId != null) {
-                    updated.add(preferredId)
+        when (
+            val result =
+                toggleSidebarRepositoriesExpansionUseCase.execute(
+                    input =
+                        ToggleSidebarRepositoriesExpansionUseCase.Input(
+                            repositoryIds = repositoryIds,
+                            preferredRepositoryId = preferredRepositoryId?.takeIf { it.isNotBlank() },
+                            currentExpandedRepositoryIds = repositoriesState.expandedRepositoryIds,
+                        ),
+                )
+        ) {
+            is UseCaseResult.Success -> {
+                if (repositoriesState.expandedRepositoryIds != result.value.expandedRepositoryIds) {
+                    repositoriesState.expandedRepositoryIds = result.value.expandedRepositoryIds
+                    stateRefresher.publishAll()
                 }
-                updated.toSet()
-            } else {
-                repositoriesState.expandedRepositoryIds + repositoryIds
             }
 
-        if (nextExpandedRepositoryIds == repositoriesState.expandedRepositoryIds) {
-            return
+            is UseCaseResult.Failure -> {
+            }
         }
-        repositoriesState.expandedRepositoryIds = nextExpandedRepositoryIds
-        preferencesStore.expandedRepositoryIds = repositoriesState.expandedRepositoryIds
-        stateRefresher.publishAll()
     }
 
     private fun areSidebarRepositoriesExpanded(repositoryIds: Set<String>): Boolean =
         repositoryIds.isNotEmpty() && repositoryIds.all(repositoriesState.expandedRepositoryIds::contains)
-
-    private fun updateSet(
-        current: Set<String>,
-        value: String,
-        enabled: Boolean,
-        onUpdated: (Set<String>) -> Unit,
-    ) {
-        val next =
-            if (enabled) {
-                current + value
-            } else {
-                current - value
-            }
-        if (next == current) {
-            return
-        }
-        onUpdated(next)
-        stateRefresher.publishAll()
-    }
 
     private fun visibleSidebarRepositoryIds(includeArchivedRepositories: Boolean): Set<String> =
         repositoriesState.repositories

@@ -1,13 +1,15 @@
 package app.tich.buildandrun.application.context.repositories.usecase
 
 import app.tich.buildandrun.application.context.repositories.port.PreferencesStore
+import app.tich.buildandrun.application.context.shared.path.normalizePath
 import app.tich.buildandrun.application.context.shared.usecase.UseCaseResult
+import app.tich.buildandrun.application.context.shared.usecase.runCatchingCancellable
+import app.tich.buildandrun.application.context.shared.usecase.toUseCaseFailure
 import app.tich.buildandrun.application.context.worktrees.port.GitClient
 import app.tich.buildandrun.domain.context.repositories.model.Repository
 import app.tich.buildandrun.domain.context.worktrees.model.Worktree
 import app.tich.buildandrun.domain.shared.failure.DomainFailure
 import app.tich.buildandrun.domain.shared.failure.DomainFailureCode
-import app.tich.buildandrun.domain.shared.failure.DomainFailureMapper
 
 class AddRepositoryUseCase(
     private val gitClient: GitClient,
@@ -24,7 +26,7 @@ class AddRepositoryUseCase(
             )
         }
 
-        return runCatching {
+        return runCatchingCancellable {
             val repositoryRoot = normalizePath(gitClient.getRepositoryRoot(atPath = path))
             val existingRepositories = preferencesStore.loadRepositories()
             if (existingRepositories.any { normalizePath(it.path) == repositoryRoot }) {
@@ -51,7 +53,7 @@ class AddRepositoryUseCase(
         }.fold(
             onSuccess = { it },
             onFailure = { throwable ->
-                UseCaseResult.Failure(value = DomainFailureMapper.fromThrowable(throwable))
+                throwable.toUseCaseFailure()
             },
         )
     }
@@ -63,6 +65,4 @@ class AddRepositoryUseCase(
         val addedRepository: Repository,
         val worktrees: List<Worktree>,
     )
-
-    private fun normalizePath(path: String): String = path.trim().trimEnd('/')
 }

@@ -6,9 +6,7 @@ import app.tich.buildandrun.application.context.shared.port.EditorOpening
 import app.tich.buildandrun.application.context.shared.port.FileSystemHandling
 import app.tich.buildandrun.application.context.shared.port.SystemOpening
 import app.tich.buildandrun.application.context.worktrees.port.GitClient
-import app.tich.buildandrun.application.context.worktrees.usecase.CopyConfiguredFilesUseCase
-import app.tich.buildandrun.application.context.worktrees.usecase.CreateWorktreeUseCase
-import app.tich.buildandrun.application.context.worktrees.usecase.LoadBranchesUseCase
+import app.tich.buildandrun.application.context.worktrees.usecase.*
 import app.tich.buildandrun.domain.shared.failure.DomainFailureMapper
 import app.tich.buildandrun.presentation.app.context.editors.impl.AppEditorsService
 import app.tich.buildandrun.presentation.app.context.gitactions.impl.AppGitActionsService
@@ -38,6 +36,7 @@ internal fun appRootModule(
         single<FileSystemHandling> { graph.fileSystem }
         single<EditorOpening> { graph.editorOpening }
         single<SystemOpening> { graph.systemOpening }
+
         single<AddRepositoryUseCase> { graph.addRepositoryUseCase }
         single<LoadRepositoriesUseCase> { graph.loadRepositoriesUseCase }
         single<CreateWorktreeUseCase> { graph.createWorktreeUseCase }
@@ -45,6 +44,51 @@ internal fun appRootModule(
         single<SetRepositoryArchivedStateUseCase> { graph.setRepositoryArchivedStateUseCase }
         single<SetRepositoryGroupUseCase> { graph.setRepositoryGroupUseCase }
         single<LoadBranchesUseCase> { graph.loadBranchesUseCase }
+
+        single { RestoreAppSessionUseCase(preferencesStore = get(), loadRepositoriesUseCase = get()) }
+        single { AppSessionPersistenceUseCase(preferencesStore = get()) }
+        single { PersistKanbanTasksUseCase(preferencesStore = get()) }
+        single { ClearKanbanTasksUseCase(preferencesStore = get()) }
+        single { PersistCreatedWorktreePreferencesUseCase(preferencesStore = get()) }
+
+        single { ReorderRepositoryGroupsUseCase(preferencesStore = get()) }
+        single { CreateRepositoryGroupUseCase(preferencesStore = get()) }
+        single { RenameRepositoryGroupUseCase(preferencesStore = get()) }
+        single { DeleteRepositoryGroupUseCase(preferencesStore = get()) }
+
+        single { SetWorktreeBasePathUseCase(preferencesStore = get()) }
+        single { LoadPreferredBaseBranchUseCase(preferencesStore = get()) }
+        single { SetPreferredBaseBranchUseCase(preferencesStore = get()) }
+        single { SetDefaultCopyPatternsUseCase(preferencesStore = get()) }
+        single { SetRepositoryCopyPatternsUseCase(preferencesStore = get()) }
+
+        single { SetRememberEditorChoiceUseCase(preferencesStore = get()) }
+        single { SetEditorEnabledUseCase(preferencesStore = get()) }
+        single { SetPreferredEditorUseCase(preferencesStore = get()) }
+        single { OpenInEditorUseCase(preferencesStore = get(), editorOpening = get()) }
+
+        single { SetSidebarMembershipStateUseCase(preferencesStore = get()) }
+        single { ToggleSidebarRepositoriesExpansionUseCase(preferencesStore = get()) }
+        single { SyncSidebarSelectionExpansionUseCase(preferencesStore = get()) }
+
+        single { AddKanbanTaskUseCase() }
+        single { MoveKanbanTaskUseCase() }
+        single { DeleteKanbanTaskUseCase() }
+        single { UpdateKanbanTaskUseCase() }
+
+        single { CopyConfiguredFilesUseCase(preferencesStore = get(), fileSystemHandling = get()) }
+        single { LoadRepositoryWorktreesUseCase(gitClient = get(), preferencesStore = get()) }
+        single { LoadWorktreeStatusUseCase(gitClient = get()) }
+        single { PushWorktreeUseCase(gitClient = get()) }
+        single { PullWorktreeUseCase(gitClient = get()) }
+        single { CreatePullRequestUseCase(gitClient = get()) }
+        single { LoadPullRequestUrlUseCase(gitClient = get()) }
+        single { LockWorktreeUseCase(gitClient = get(), preferencesStore = get()) }
+        single { UnlockWorktreeUseCase(gitClient = get(), preferencesStore = get()) }
+        single { RemoveWorktreeUseCase(gitClient = get(), preferencesStore = get()) }
+        single { CompleteWorktreeUseCase(gitClient = get(), preferencesStore = get()) }
+        single { LoadHasRemoteBranchUseCase(gitClient = get()) }
+        single { PruneWorktreesUseCase(gitClient = get(), preferencesStore = get()) }
 
         single<ComponentContext> { componentContext }
         single { AppErrorStateMapper() }
@@ -80,8 +124,6 @@ internal fun appRootModule(
         }
         single { AppLoadingRunner(stateRefresher = get(), messagesState = get()) }
 
-        single { CopyConfiguredFilesUseCase(preferencesStore = get(), fileSystemHandling = get()) }
-
         single<AppNavigationFeature> { AppNavigationComponent(componentContext = get()) }
         single {
             AppWorktreesService(
@@ -92,12 +134,14 @@ internal fun appRootModule(
                 repositoriesState = get(),
                 worktreesState = get(),
                 messagesState = get(),
-                gitClient = get(),
-                preferencesStore = get(),
                 editorOpening = get(),
                 createWorktreeUseCase = get(),
                 loadBranchesUseCase = get(),
                 copyConfiguredFilesUseCase = get(),
+                loadRepositoryWorktreesUseCase = get(),
+                loadWorktreeStatusUseCase = get(),
+                appSessionPersistenceUseCase = get(),
+                persistCreatedWorktreePreferencesUseCase = get(),
             )
         }
         single<AppWorktreesFeature> { get<AppWorktreesService>() }
@@ -127,7 +171,11 @@ internal fun appRootModule(
                 settingsState = get(),
                 worktreesState = get(),
                 messagesState = get(),
-                preferencesStore = get(),
+                setWorktreeBasePathUseCase = get(),
+                loadPreferredBaseBranchUseCase = get(),
+                setPreferredBaseBranchUseCase = get(),
+                setDefaultCopyPatternsUseCase = get(),
+                setRepositoryCopyPatternsUseCase = get(),
                 loadBranchesUseCase = get(),
             )
         }
@@ -141,10 +189,18 @@ internal fun appRootModule(
                 worktreesState = get(),
                 settingsState = get(),
                 messagesState = get(),
-                gitClient = get(),
-                preferencesStore = get(),
                 systemOpening = get(),
-                worktreesOperations = get(),
+                appSessionPersistenceUseCase = get(),
+                pushWorktreeUseCase = get(),
+                pullWorktreeUseCase = get(),
+                createPullRequestUseCase = get(),
+                loadPullRequestUrlUseCase = get(),
+                lockWorktreeUseCase = get(),
+                unlockWorktreeUseCase = get(),
+                removeWorktreeUseCase = get(),
+                completeWorktreeUseCase = get(),
+                loadHasRemoteBranchUseCase = get(),
+                pruneWorktreesUseCase = get(),
             )
         }
         single<AppEditorsFeature> {
@@ -155,23 +211,33 @@ internal fun appRootModule(
                 repositoriesState = get(),
                 editorsState = get(),
                 messagesState = get(),
-                preferencesStore = get(),
-                editorOpening = get(),
+                setRememberEditorChoiceUseCase = get(),
+                setEditorEnabledUseCase = get(),
+                setPreferredEditorUseCase = get(),
+                openInEditorUseCase = get(),
                 systemOpening = get(),
             )
         }
         single<AppKanbanFeature> {
             AppKanbanService(
                 stateRefresher = get(),
+                errorMapper = get(),
                 kanbanState = get(),
                 messagesState = get(),
+                addKanbanTaskUseCase = get(),
+                moveKanbanTaskUseCase = get(),
+                deleteKanbanTaskUseCase = get(),
+                updateKanbanTaskUseCase = get(),
+                persistKanbanTasksUseCase = get(),
             )
         }
         single<AppSidebarFeature> {
             AppSidebarService(
                 stateRefresher = get(),
                 repositoriesState = get(),
-                preferencesStore = get(),
+                setSidebarMembershipStateUseCase = get(),
+                toggleSidebarRepositoriesExpansionUseCase = get(),
+                syncSidebarSelectionExpansionUseCase = get(),
             )
         }
         single<AppGroupsFeature> {
@@ -181,7 +247,10 @@ internal fun appRootModule(
                 errorMapper = get(),
                 repositoriesState = get(),
                 messagesState = get(),
-                preferencesStore = get(),
+                reorderRepositoryGroupsUseCase = get(),
+                createRepositoryGroupUseCase = get(),
+                renameRepositoryGroupUseCase = get(),
+                deleteRepositoryGroupUseCase = get(),
                 setRepositoryGroupUseCase = get(),
             )
         }

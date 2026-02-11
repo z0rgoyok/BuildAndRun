@@ -4,19 +4,27 @@ import app.tich.buildandrun.application.context.repositories.port.PreferencesSto
 import app.tich.buildandrun.application.context.shared.usecase.UseCaseResult
 import app.tich.buildandrun.application.context.shared.usecase.runCatchingCancellable
 import app.tich.buildandrun.application.context.shared.usecase.toUseCaseFailure
-import app.tich.buildandrun.domain.context.repositories.model.Repository
 
-class LoadRepositoriesUseCase(
+class AppSessionPersistenceUseCase(
     private val preferencesStore: PreferencesStore,
 ) {
-    suspend fun execute(): UseCaseResult<List<Repository>> =
-        runCatchingCancellable {
-            val repositories = preferencesStore.loadRepositories().sortedBy { it.name.lowercase() }
-            UseCaseResult.Success(value = repositories)
+    fun execute(input: Input): UseCaseResult<Output> {
+        return runCatchingCancellable {
+            preferencesStore.lastSelectedRepositoryId = input.repositoryId
+            preferencesStore.lastSelectedWorktreePath = input.worktreePath
+            UseCaseResult.Success(value = Output)
         }.fold(
             onSuccess = { it },
             onFailure = { throwable ->
                 throwable.toUseCaseFailure()
             },
         )
+    }
+
+    data class Input(
+        val repositoryId: String?,
+        val worktreePath: String?,
+    )
+
+    data object Output
 }

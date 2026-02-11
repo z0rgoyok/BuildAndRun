@@ -1,11 +1,13 @@
 package app.tich.buildandrun.application.context.worktrees.usecase
 
+import app.tich.buildandrun.application.context.shared.path.normalizePath
 import app.tich.buildandrun.application.context.shared.usecase.UseCaseResult
+import app.tich.buildandrun.application.context.shared.usecase.runCatchingCancellable
+import app.tich.buildandrun.application.context.shared.usecase.toUseCaseFailure
 import app.tich.buildandrun.application.context.worktrees.port.GitClient
 import app.tich.buildandrun.domain.context.worktrees.model.Worktree
 import app.tich.buildandrun.domain.shared.failure.DomainFailure
 import app.tich.buildandrun.domain.shared.failure.DomainFailureCode
-import app.tich.buildandrun.domain.shared.failure.DomainFailureMapper
 
 class CreateWorktreeUseCase(
     private val gitClient: GitClient,
@@ -42,7 +44,7 @@ class CreateWorktreeUseCase(
             )
         }
 
-        return runCatching {
+        return runCatchingCancellable {
             val normalizedBaseBranch = input.baseBranch?.trim()?.ifBlank { null }
             gitClient.createWorktree(
                 atRepoPath = repositoryPath,
@@ -74,7 +76,7 @@ class CreateWorktreeUseCase(
         }.fold(
             onSuccess = { it },
             onFailure = { throwable ->
-                UseCaseResult.Failure(value = DomainFailureMapper.fromThrowable(throwable))
+                throwable.toUseCaseFailure()
             },
         )
     }
@@ -91,6 +93,4 @@ class CreateWorktreeUseCase(
         val createdWorktree: Worktree,
         val allWorktrees: List<Worktree>,
     )
-
-    private fun normalizePath(path: String): String = path.trim().trimEnd('/')
 }
