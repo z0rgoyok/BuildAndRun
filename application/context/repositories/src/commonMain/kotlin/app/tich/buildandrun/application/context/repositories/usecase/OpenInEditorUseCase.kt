@@ -19,17 +19,18 @@ class OpenInEditorUseCase(
         if (worktreePath.isBlank()) {
             return UseCaseResult.Success(value = Output(preferredEditorId = null))
         }
+        val repositoryId = input.repositoryId?.trim()?.takeIf { it.isNotBlank() }
 
         val editor =
-            resolveEditor(input = input)
+            resolveEditor(input = input, repositoryId = repositoryId)
                 ?: return AppError.NoEditorConfigured().toUseCaseFailure()
 
         return runCatchingCancellable {
             editorOpening.open(path = worktreePath, withEditor = editor)
-            if (input.rememberEditorChoice && input.repositoryId != null) {
+            if (input.rememberEditorChoice && repositoryId != null) {
                 preferencesStore.setPreferredEditorId(
                     editorId = editor.id,
-                    forRepositoryId = RepositoryId(input.repositoryId),
+                    forRepositoryId = RepositoryId(repositoryId),
                 )
                 UseCaseResult.Success(value = Output(preferredEditorId = editor.id))
             } else {
@@ -41,15 +42,18 @@ class OpenInEditorUseCase(
         )
     }
 
-    private fun resolveEditor(input: Input): Editor? {
+    private fun resolveEditor(
+        input: Input,
+        repositoryId: String?,
+    ): Editor? {
         val availableById = input.availableEditors.associateBy { it.id }
         val configuredEditorIds = input.enabledInstalledEditorIds.toSet()
         val explicitEditorId = input.editorId?.trim().orEmpty()
         if (explicitEditorId.isNotBlank() && configuredEditorIds.contains(explicitEditorId)) {
             return availableById[explicitEditorId]
         }
-        if (input.rememberEditorChoice && input.repositoryId != null) {
-            val preferredEditorId = preferencesStore.preferredEditorId(forRepositoryId = RepositoryId(input.repositoryId))
+        if (input.rememberEditorChoice && repositoryId != null) {
+            val preferredEditorId = preferencesStore.preferredEditorId(forRepositoryId = RepositoryId(repositoryId))
             if (preferredEditorId != null && configuredEditorIds.contains(preferredEditorId)) {
                 return availableById[preferredEditorId]
             }

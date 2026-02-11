@@ -1,11 +1,5 @@
 package app.tich.buildandrun.presentation.app
 
-enum class AppChild {
-    WORKSPACE,
-    SETTINGS,
-    HELP,
-}
-
 enum class AppSheetKind {
     ADD_REPOSITORY,
     ADD_WORKTREE,
@@ -14,8 +8,3 @@ enum class AppSheetKind {
     CONFIGURE_EDITORS,
     HELP,
 }
-
-data class AppSheetState(
-    val kind: AppSheetKind,
-    val worktreePath: String? = null,
-)

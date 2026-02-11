@@ -21,6 +21,7 @@ class AppGroupsService(
     private val renameRepositoryGroupUseCase: RenameRepositoryGroupUseCase,
     private val deleteRepositoryGroupUseCase: DeleteRepositoryGroupUseCase,
     private val setRepositoryGroupUseCase: SetRepositoryGroupUseCase,
+    private val createGroupAndAssignRepositoryUseCase: CreateGroupAndAssignRepositoryUseCase,
 ) : AppGroupsFeature {
     override fun onReorderRepositoryGroups(orderedGroupIds: List<String>) {
         executionScope.scope.launch {
@@ -157,39 +158,28 @@ class AppGroupsService(
     ) {
         executionScope.scope.launch {
             when (
-                val createResult =
-                    createRepositoryGroupUseCase.execute(
+                val result =
+                    createGroupAndAssignRepositoryUseCase.execute(
                         input =
-                            CreateRepositoryGroupUseCase.Input(
+                            CreateGroupAndAssignRepositoryUseCase.Input(
                                 name = name,
+                                repositoryId = repositoryId,
                                 currentGroups = repositoriesState.repositoryGroups,
+                                currentRepositories = repositoriesState.repositories,
                             ),
                     )
             ) {
                 is UseCaseResult.Success -> {
-                    repositoriesState.repositoryGroups = createResult.value.groups
-                    when (
-                        val assignResult =
-                            setRepositoryGroupUseCase.execute(
-                                input =
-                                    SetRepositoryGroupUseCase.Input(
-                                        repositoryId = repositoryId,
-                                        groupId = createResult.value.createdGroup.id.value,
-                                    ),
-                            )
-                    ) {
-                        is UseCaseResult.Success -> {
-                            repositoriesState.repositories = assignResult.value.repositories
-                        }
-
-                        is UseCaseResult.Failure -> {
-                            messagesState.error = errorMapper.mapFailureToErrorState(assignResult.value)
-                        }
+                    repositoriesState.repositoryGroups = result.value.groups
+                    repositoriesState.repositories = result.value.repositories
+                    val assignmentFailure = result.value.assignmentFailure
+                    if (assignmentFailure != null) {
+                        messagesState.error = errorMapper.mapFailureToErrorState(assignmentFailure)
                     }
                 }
 
                 is UseCaseResult.Failure -> {
-                    messagesState.error = errorMapper.mapFailureToErrorState(createResult.value)
+                    messagesState.error = errorMapper.mapFailureToErrorState(result.value)
                 }
             }
             stateRefresher.publishAll()

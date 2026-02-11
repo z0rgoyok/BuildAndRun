@@ -19,6 +19,7 @@ fun presentationGroupsModule(): Module =
                 renameRepositoryGroupUseCase = get(),
                 deleteRepositoryGroupUseCase = get(),
                 setRepositoryGroupUseCase = get(),
+                createGroupAndAssignRepositoryUseCase = get(),
             )
         }
     }

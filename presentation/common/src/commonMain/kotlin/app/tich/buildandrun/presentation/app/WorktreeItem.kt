@@ -6,6 +6,7 @@ data class WorktreeItem(
     val path: String,
     val name: String,
     val branch: String,
+    val isDetachedHead: Boolean = false,
     val baseBranch: String?,
     val isMain: Boolean,
     val isLocked: Boolean,

@@ -18,3 +18,17 @@ internal fun resolveStatusBehindText(commits: String): String =
 
 internal fun resolveNewTaskInText(column: String): String =
     UiTextLocalizer.resolve(UiText(resource = Res.string.detail_new_task_in, args = listOf(column)))
+
+internal fun resolveCompleteWorktreeCleanupText(name: String): String =
+    UiTextLocalizer.resolve(UiText(resource = Res.string.worktree_complete_cleanup, args = listOf(name)))
+
+internal fun resolveCompleteWorktreeUnpushedCommitsText(commits: String): String =
+    UiTextLocalizer.resolve(UiText(resource = Res.string.worktree_complete_unpushed_commits, args = listOf(commits)))
+
+internal fun resolveCompleteWorktreeUpdateTargetFromRemoteFirstText(branch: String): String =
+    UiTextLocalizer.resolve(
+        UiText(
+            resource = Res.string.worktree_complete_update_target_from_remote_first,
+            args = listOf(branch),
+        ),
+    )

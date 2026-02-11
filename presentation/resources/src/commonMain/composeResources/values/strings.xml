@@ -124,6 +124,22 @@
     <string name="worktree_create_preparing">Preparing\u2026</string>
     <string name="worktree_create_submitting">Creating worktree\u2026</string>
     <string name="worktree_create_branch_picker">Branch</string>
+    <string name="worktree_complete_title">Complete Worktree</string>
+    <string name="worktree_complete_cleanup">Clean up \'%1$s\'</string>
+    <string name="worktree_complete_warning_uncommitted_changes">Uncommitted changes</string>
+    <string name="worktree_complete_unpushed_commits">Unpushed commits (%1$s)</string>
+    <string name="worktree_complete_warning_open_pr">PR is still open</string>
+    <string name="worktree_complete_question">What happened with this work?</string>
+    <string name="worktree_complete_cleanup_options">Cleanup options</string>
+    <string name="worktree_complete_delete_local_branch">Delete local branch</string>
+    <string name="worktree_complete_delete_remote_branch">Delete remote branch</string>
+    <string name="worktree_complete_update_target_from_remote_first">Update %1$s from remote first</string>
+    <string name="worktree_complete_force_delete">Force delete</string>
+    <string name="worktree_complete_cancel">Cancel</string>
+    <string name="worktree_complete_delete">Delete</string>
+    <string name="worktree_complete_complete">Complete</string>
+    <string name="worktree_complete_preparing">Preparing\u2026</string>
+    <string name="worktree_complete_submitting">Completing worktree\u2026</string>
 
     <string name="branch_conflict_title">Branch Already Exists</string>
     <string name="branch_conflict_message">Branch \'%1$s\' already exists.\nHow would you like to proceed?</string>

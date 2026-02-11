@@ -124,6 +124,22 @@
     <string name="worktree_create_preparing">Подготовка\u2026</string>
     <string name="worktree_create_submitting">Создание worktree\u2026</string>
     <string name="worktree_create_branch_picker">Ветка</string>
+    <string name="worktree_complete_title">Завершить Worktree</string>
+    <string name="worktree_complete_cleanup">Очистить \'%1$s\'</string>
+    <string name="worktree_complete_warning_uncommitted_changes">Незакоммиченные изменения</string>
+    <string name="worktree_complete_unpushed_commits">Неотправленные коммиты (%1$s)</string>
+    <string name="worktree_complete_warning_open_pr">PR все еще открыт</string>
+    <string name="worktree_complete_question">Что произошло с этой работой?</string>
+    <string name="worktree_complete_cleanup_options">Опции очистки</string>
+    <string name="worktree_complete_delete_local_branch">Удалить локальную ветку</string>
+    <string name="worktree_complete_delete_remote_branch">Удалить удаленную ветку</string>
+    <string name="worktree_complete_update_target_from_remote_first">Сначала обновить %1$s из remote</string>
+    <string name="worktree_complete_force_delete">Удалить принудительно</string>
+    <string name="worktree_complete_cancel">Отмена</string>
+    <string name="worktree_complete_delete">Удалить</string>
+    <string name="worktree_complete_complete">Завершить</string>
+    <string name="worktree_complete_preparing">Подготовка\u2026</string>
+    <string name="worktree_complete_submitting">Завершение worktree\u2026</string>
 
     <string name="branch_conflict_title">Ветка уже существует</string>
     <string name="branch_conflict_message">Ветка \'%1$s\' уже существует.\nКак продолжить?</string>

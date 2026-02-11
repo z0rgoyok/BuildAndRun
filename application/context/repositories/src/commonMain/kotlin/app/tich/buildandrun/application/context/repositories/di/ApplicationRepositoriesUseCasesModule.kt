@@ -20,6 +20,12 @@ fun applicationRepositoriesUseCasesModule(): Module =
         single { CreateRepositoryGroupUseCase(preferencesStore = get()) }
         single { RenameRepositoryGroupUseCase(preferencesStore = get()) }
         single { DeleteRepositoryGroupUseCase(preferencesStore = get()) }
+        single {
+            CreateGroupAndAssignRepositoryUseCase(
+                createRepositoryGroupUseCase = get(),
+                setRepositoryGroupUseCase = get(),
+            )
+        }
 
         single { SetWorktreeBasePathUseCase(preferencesStore = get()) }
         single { LoadPreferredBaseBranchUseCase(preferencesStore = get()) }

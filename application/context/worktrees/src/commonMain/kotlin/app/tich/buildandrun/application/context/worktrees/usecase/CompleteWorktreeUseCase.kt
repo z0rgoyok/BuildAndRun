@@ -22,13 +22,6 @@ class CompleteWorktreeUseCase(
             val worktreePath = normalizedInput.worktreePath
             runCatchingCancellable {
                 val options = input.options
-                if (options.mergeIntoTarget) {
-                    gitClient.mergeBranch(
-                        atRepoPath = repositoryPath,
-                        source = input.worktree.branch,
-                        intoTarget = options.targetBranch,
-                    )
-                }
                 if (options.pullTargetFirst) {
                     val targetWorktree =
                         gitClient
@@ -37,6 +30,13 @@ class CompleteWorktreeUseCase(
                     if (targetWorktree != null) {
                         gitClient.pull(atWorktreePath = targetWorktree.path)
                     }
+                }
+                if (options.mergeIntoTarget) {
+                    gitClient.mergeBranch(
+                        atRepoPath = repositoryPath,
+                        source = input.worktree.branch,
+                        intoTarget = options.targetBranch,
+                    )
                 }
                 val snapshot =
                     removeWorktreeAndLoadSnapshot(

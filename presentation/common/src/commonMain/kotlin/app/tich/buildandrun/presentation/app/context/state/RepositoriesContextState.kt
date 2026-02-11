@@ -65,6 +65,7 @@ class RepositoriesContextState {
                                 path = it.path,
                                 name = it.name,
                                 branch = it.branch,
+                                isDetachedHead = it.isDetachedHead,
                                 baseBranch = it.baseBranch,
                                 isMain = it.isMain,
                                 isLocked = it.isLocked,

@@ -12,6 +12,17 @@ class SetPreferredBaseBranchUseCase(
     private val preferencesStore: PreferencesStore,
 ) {
     fun execute(input: Input): UseCaseResult<Output> {
+        val repositoryId = input.repositoryId.trim()
+        if (repositoryId.isBlank()) {
+            return UseCaseResult.Failure(
+                value =
+                    DomainFailure.Validation(
+                        code = DomainFailureCode.APP_VALIDATION_REPOSITORY_ID_BLANK,
+                        args = emptyList(),
+                    ),
+            )
+        }
+
         val normalizedBranch = input.branch.trim()
         if (normalizedBranch.isBlank()) {
             return UseCaseResult.Failure(
@@ -26,7 +37,7 @@ class SetPreferredBaseBranchUseCase(
         return runCatchingCancellable {
             preferencesStore.setPreferredBaseBranch(
                 branch = normalizedBranch,
-                forRepositoryId = RepositoryId(input.repositoryId),
+                forRepositoryId = RepositoryId(repositoryId),
             )
             UseCaseResult.Success(value = Output(branch = normalizedBranch))
         }.fold(

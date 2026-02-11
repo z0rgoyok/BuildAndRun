@@ -124,6 +124,22 @@
     <string name="worktree_create_preparing">Підготовка\u2026</string>
     <string name="worktree_create_submitting">Створення worktree\u2026</string>
     <string name="worktree_create_branch_picker">Гілка</string>
+    <string name="worktree_complete_title">Завершити Worktree</string>
+    <string name="worktree_complete_cleanup">Очистити \'%1$s\'</string>
+    <string name="worktree_complete_warning_uncommitted_changes">Незакомічені зміни</string>
+    <string name="worktree_complete_unpushed_commits">Невідправлені коміти (%1$s)</string>
+    <string name="worktree_complete_warning_open_pr">PR досі відкритий</string>
+    <string name="worktree_complete_question">Що сталося з цією роботою?</string>
+    <string name="worktree_complete_cleanup_options">Опції очищення</string>
+    <string name="worktree_complete_delete_local_branch">Видалити локальну гілку</string>
+    <string name="worktree_complete_delete_remote_branch">Видалити віддалену гілку</string>
+    <string name="worktree_complete_update_target_from_remote_first">Спочатку оновити %1$s з remote</string>
+    <string name="worktree_complete_force_delete">Видалити примусово</string>
+    <string name="worktree_complete_cancel">Скасувати</string>
+    <string name="worktree_complete_delete">Видалити</string>
+    <string name="worktree_complete_complete">Завершити</string>
+    <string name="worktree_complete_preparing">Підготовка\u2026</string>
+    <string name="worktree_complete_submitting">Завершення worktree\u2026</string>
 
     <string name="branch_conflict_title">Гілка вже існує</string>
     <string name="branch_conflict_message">Гілка \'%1$s\' вже існує.\nЯк продовжити?</string>

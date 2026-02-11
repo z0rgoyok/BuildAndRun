@@ -10,4 +10,10 @@ interface AppTextsFeature {
     fun resolveStatusBehind(commits: String): String
 
     fun resolveNewTaskIn(column: String): String
+
+    fun resolveCompleteWorktreeCleanup(name: String): String
+
+    fun resolveCompleteWorktreeUnpushedCommits(commits: String): String
+
+    fun resolveCompleteWorktreeUpdateTargetFromRemoteFirst(branch: String): String
 }

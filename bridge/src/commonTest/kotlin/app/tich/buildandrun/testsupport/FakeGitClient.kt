@@ -13,6 +13,10 @@ class FakeGitClient : GitClient {
     private val branchesByRepository = mutableMapOf<String, MutableSet<String>>()
     private val remoteBranchesByRepository = mutableMapOf<String, MutableSet<String>>()
     private val worktreesByRepository = mutableMapOf<String, MutableList<Worktree>>()
+    private val operationLog = mutableListOf<String>()
+
+    val operations: List<String>
+        get() = operationLog.toList()
 
     fun registerRepository(
         path: String,
@@ -97,6 +101,7 @@ class FakeGitClient : GitClient {
         worktreePath: String,
         force: Boolean,
     ) {
+        operationLog += "removeWorktree:$worktreePath"
         val worktrees =
             worktreesByRepository[normalize(atRepoPath)]
                 ?: throw GitError.WorktreeNotFound(path = worktreePath)
@@ -156,7 +161,9 @@ class FakeGitClient : GitClient {
         setUpstream: Boolean,
     ) = Unit
 
-    override suspend fun pull(atWorktreePath: String) = Unit
+    override suspend fun pull(atWorktreePath: String) {
+        operationLog += "pull:$atWorktreePath"
+    }
 
     override suspend fun createPR(
         atWorktreePath: String,
@@ -170,6 +177,7 @@ class FakeGitClient : GitClient {
         source: String,
         intoTarget: String,
     ) {
+        operationLog += "mergeBranch:$source->$intoTarget"
         val branches = branchesByRepository[normalize(atRepoPath)] ?: throw GitError.NotARepository(path = atRepoPath)
         if (!branches.contains(source)) {
             throw GitError.BranchNotFound(name = source)

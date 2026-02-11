@@ -6,6 +6,8 @@ import app.tich.buildandrun.application.context.shared.usecase.runCatchingCancel
 import app.tich.buildandrun.application.context.shared.usecase.toUseCaseResult
 import app.tich.buildandrun.domain.context.repositories.model.RepositoryId
 import app.tich.buildandrun.domain.context.worktrees.model.Worktree
+import app.tich.buildandrun.domain.shared.failure.DomainFailure
+import app.tich.buildandrun.domain.shared.failure.DomainFailureCode
 
 class CreateWorktreeFlowUseCase(
     private val createWorktreeUseCase: CreateWorktreeUseCase,
@@ -15,6 +17,11 @@ class CreateWorktreeFlowUseCase(
     private val preferencesStore: PreferencesStore,
 ) {
     suspend fun execute(input: Input): UseCaseResult<Output> {
+        val repositoryId = input.repositoryId.trim()
+        if (repositoryId.isBlank()) {
+            return repositoryIdBlankFailure()
+        }
+
         val createResult =
             when (
                 val result =
@@ -36,7 +43,7 @@ class CreateWorktreeFlowUseCase(
         when (
             val result =
                 persistCreatedWorktreePreferences(
-                    repositoryId = input.repositoryId,
+                    repositoryId = repositoryId,
                     worktreePath = createResult.createdWorktree.path,
                     baseBranch = input.baseBranch,
                 )
@@ -47,14 +54,22 @@ class CreateWorktreeFlowUseCase(
             is UseCaseResult.Failure -> return result
         }
 
-        copyConfiguredFilesUseCase.execute(
-            input =
-                CopyConfiguredFilesUseCase.Input(
-                    repositoryPath = input.repositoryPath,
-                    createdWorktreePath = createResult.createdWorktree.path,
-                    repositoryId = input.repositoryId,
-                ),
-        )
+        when (
+            val result =
+                copyConfiguredFilesUseCase.execute(
+                    input =
+                        CopyConfiguredFilesUseCase.Input(
+                            repositoryPath = input.repositoryPath,
+                            createdWorktreePath = createResult.createdWorktree.path,
+                            repositoryId = repositoryId,
+                        ),
+                )
+        ) {
+            is UseCaseResult.Success -> {
+            }
+
+            is UseCaseResult.Failure -> return result
+        }
 
         val worktreesResult =
             when (
@@ -123,4 +138,13 @@ class CreateWorktreeFlowUseCase(
         val worktrees: List<Worktree>,
         val branches: List<String>,
     )
+
+    private fun repositoryIdBlankFailure(): UseCaseResult.Failure =
+        UseCaseResult.Failure(
+            value =
+                DomainFailure.Validation(
+                    code = DomainFailureCode.APP_VALIDATION_REPOSITORY_ID_BLANK,
+                    args = emptyList(),
+                ),
+        )
 }

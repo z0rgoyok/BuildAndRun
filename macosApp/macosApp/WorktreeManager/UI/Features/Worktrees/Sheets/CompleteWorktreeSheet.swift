@@ -16,6 +16,8 @@ struct CompleteWorktreeSheet: View {
     @State private var isPreparing = false
     @State private var isSubmitting = false
 
+    private var labels: KanbanLabels { root.store.kanbanLabels }
+
     private var worktree: WorktreeItem? {
         root.selectedRepository?.worktrees.first { $0.path == worktreePath }
     }
@@ -49,7 +51,7 @@ struct CompleteWorktreeSheet: View {
 
     private var canDeleteBranch: Bool {
         guard let worktree else { return false }
-        return !worktree.branch.isEmpty && worktree.branch != "detached HEAD"
+        return !worktree.branch.isEmpty && !worktree.isDetachedHead
     }
 
     var body: some View {
@@ -58,27 +60,30 @@ struct CompleteWorktreeSheet: View {
                 .font(.system(size: 48))
                 .foregroundStyle(selectedAction.color)
 
-            Text("Complete Worktree")
+            Text(labels.completeWorktreeTitle)
                 .font(.headline)
 
-            Text("Clean up '\(worktree?.name ?? "")'")
+            Text(root.store.texts.resolveCompleteWorktreeCleanup(name: worktree?.name ?? ""))
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
 
             if isDirty || hasUnpushed || hasOpenPR {
                 VStack(alignment: .leading, spacing: 6) {
                     if isDirty {
-                        Label("Uncommitted changes", systemImage: "exclamationmark.triangle.fill")
+                        Label(labels.completeWorktreeWarningUncommittedChanges, systemImage: "exclamationmark.triangle.fill")
                             .foregroundStyle(.orange)
                             .font(.caption)
                     }
                     if hasUnpushed {
-                        Label("Unpushed commits (\(status?.ahead ?? 0))", systemImage: "exclamationmark.triangle.fill")
+                        Label(
+                            root.store.texts.resolveCompleteWorktreeUnpushedCommits(commits: "\(status?.ahead ?? 0)"),
+                            systemImage: "exclamationmark.triangle.fill"
+                        )
                             .foregroundStyle(.orange)
                             .font(.caption)
                     }
                     if hasOpenPR {
-                        Label("PR is still open", systemImage: "exclamationmark.triangle.fill")
+                        Label(labels.completeWorktreeWarningOpenPr, systemImage: "exclamationmark.triangle.fill")
                             .foregroundStyle(.orange)
                             .font(.caption)
                     }
@@ -90,7 +95,7 @@ struct CompleteWorktreeSheet: View {
             }
 
             VStack(alignment: .leading, spacing: 8) {
-                Text("What happened with this work?")
+                Text(labels.completeWorktreeQuestion)
                     .font(.subheadline)
                     .fontWeight(.medium)
 
@@ -118,23 +123,23 @@ struct CompleteWorktreeSheet: View {
             .cornerRadius(8)
 
             VStack(alignment: .leading, spacing: 12) {
-                Text("Cleanup options")
+                Text(labels.completeWorktreeCleanupOptions)
                     .font(.subheadline)
                     .fontWeight(.medium)
 
                 if canDeleteBranch {
-                    Toggle("Delete local branch", isOn: $deleteLocalBranch)
+                    Toggle(labels.completeWorktreeDeleteLocalBranch, isOn: $deleteLocalBranch)
                     if hasRemoteBranch {
-                        Toggle("Delete remote branch", isOn: $deleteRemoteBranch)
+                        Toggle(labels.completeWorktreeDeleteRemoteBranch, isOn: $deleteRemoteBranch)
                     }
                 }
 
                 if selectedAction != .discard {
-                    Toggle("Update \(targetBranch) from remote first", isOn: $pullTargetFirst)
+                    Toggle(root.store.texts.resolveCompleteWorktreeUpdateTargetFromRemoteFirst(branch: targetBranch), isOn: $pullTargetFirst)
                 }
 
                 if isDirty {
-                    Toggle("Force delete", isOn: $forceDelete)
+                    Toggle(labels.completeWorktreeForceDelete, isOn: $forceDelete)
                         .foregroundStyle(.red)
                 }
             }
@@ -143,12 +148,12 @@ struct CompleteWorktreeSheet: View {
             .cornerRadius(8)
 
             HStack(spacing: 12) {
-                Button("Cancel") {
+                Button(labels.completeWorktreeCancel) {
                     dismiss()
                 }
                 .keyboardShortcut(.cancelAction)
 
-                Button(selectedAction == .discard ? "Delete" : "Complete") {
+                Button(selectedAction == .discard ? labels.completeWorktreeDelete : labels.completeWorktreeComplete) {
                     complete()
                 }
                 .keyboardShortcut(.defaultAction)
@@ -161,9 +166,9 @@ struct CompleteWorktreeSheet: View {
         .frame(width: 430)
         .overlay {
             if isPreparing {
-                BlockingProgressOverlay(title: "Preparing…")
+                BlockingProgressOverlay(title: labels.completeWorktreePreparing)
             } else if isSubmitting {
-                BlockingProgressOverlay(title: "Completing worktree…")
+                BlockingProgressOverlay(title: labels.completeWorktreeSubmitting)
             }
         }
         .task {

@@ -13,4 +13,12 @@ class AppTextsService : AppTextsFeature {
     override fun resolveStatusBehind(commits: String): String = resolveStatusBehindText(commits = commits)
 
     override fun resolveNewTaskIn(column: String): String = resolveNewTaskInText(column = column)
+
+    override fun resolveCompleteWorktreeCleanup(name: String): String = resolveCompleteWorktreeCleanupText(name = name)
+
+    override fun resolveCompleteWorktreeUnpushedCommits(commits: String): String =
+        resolveCompleteWorktreeUnpushedCommitsText(commits = commits)
+
+    override fun resolveCompleteWorktreeUpdateTargetFromRemoteFirst(branch: String): String =
+        resolveCompleteWorktreeUpdateTargetFromRemoteFirstText(branch = branch)
 }
