@@ -1,10 +1,12 @@
 package app.tich.buildandrun.presentation.app.context.worktrees.impl
 
 import app.tich.buildandrun.application.context.repositories.usecase.AppSessionPersistenceUseCase
-import app.tich.buildandrun.application.context.repositories.usecase.PersistCreatedWorktreePreferencesUseCase
-import app.tich.buildandrun.application.context.shared.port.EditorOpening
+import app.tich.buildandrun.application.context.shared.path.normalizePath
 import app.tich.buildandrun.application.context.shared.usecase.UseCaseResult
-import app.tich.buildandrun.application.context.worktrees.usecase.*
+import app.tich.buildandrun.application.context.worktrees.usecase.CreateWorktreeFlowUseCase
+import app.tich.buildandrun.application.context.worktrees.usecase.LoadBranchesUseCase
+import app.tich.buildandrun.application.context.worktrees.usecase.LoadRepositoryWorktreesUseCase
+import app.tich.buildandrun.application.context.worktrees.usecase.LoadWorktreeStatusUseCase
 import app.tich.buildandrun.presentation.app.AppWorktreesFeature
 import app.tich.buildandrun.presentation.app.SuccessState
 import app.tich.buildandrun.presentation.app.context.state.MessagesContextState
@@ -25,15 +27,12 @@ class AppWorktreesService(
     private val repositoriesState: RepositoriesContextState,
     private val worktreesState: WorktreesContextState,
     private val messagesState: MessagesContextState,
-    private val editorOpening: EditorOpening,
-    private val createWorktreeUseCase: CreateWorktreeUseCase,
+    private val createWorktreeFlowUseCase: CreateWorktreeFlowUseCase,
     private val loadBranchesUseCase: LoadBranchesUseCase,
-    private val copyConfiguredFilesUseCase: CopyConfiguredFilesUseCase,
     private val loadRepositoryWorktreesUseCase: LoadRepositoryWorktreesUseCase,
     private val loadWorktreeStatusUseCase: LoadWorktreeStatusUseCase,
     private val appSessionPersistenceUseCase: AppSessionPersistenceUseCase,
-    private val persistCreatedWorktreePreferencesUseCase: PersistCreatedWorktreePreferencesUseCase,
-) : AppWorktreesFeature, WorktreesOperations {
+) : AppWorktreesFeature {
     override fun onSelectWorktree(worktreePath: String?) {
         worktreesState.selectedWorktreePath = worktreePath
         persistSelection()
@@ -44,7 +43,7 @@ class AppWorktreesService(
     override fun onRefreshSelectedRepository() {
         val repositoryPath = repositoriesState.selectedRepository()?.path ?: return
         messagesState.clear()
-        executionScope.scope.launch { stateRefresher.refreshInstalledEditors(editorOpening = editorOpening) }
+        executionScope.scope.launch { stateRefresher.refreshInstalledEditors() }
         loadWorktreesForRepository(path = repositoryPath)
         loadSelectedRepositoryBranches()
     }
@@ -141,9 +140,10 @@ class AppWorktreesService(
             stateRefresher.publishAll()
             when (
                 val result =
-                    createWorktreeUseCase.execute(
+                    createWorktreeFlowUseCase.execute(
                         input =
-                            CreateWorktreeUseCase.Input(
+                            CreateWorktreeFlowUseCase.Input(
+                                repositoryId = repository.id.value,
                                 repositoryPath = repositoryPath,
                                 branch = worktreesState.createWorktreeState.branchInput,
                                 worktreePath = worktreesState.createWorktreeState.worktreePathInput,
@@ -153,46 +153,8 @@ class AppWorktreesService(
                     )
             ) {
                 is UseCaseResult.Success -> {
-                    when (
-                        val persistenceResult =
-                            persistCreatedWorktreePreferencesUseCase.execute(
-                                input =
-                                    PersistCreatedWorktreePreferencesUseCase.Input(
-                                        repositoryId = repository.id.value,
-                                        worktreePath = result.value.createdWorktree.path,
-                                        baseBranch = worktreesState.createWorktreeState.baseBranchInput,
-                                    ),
-                            )
-                    ) {
-                        is UseCaseResult.Success -> {
-                        }
-
-                        is UseCaseResult.Failure -> {
-                            messagesState.error = errorMapper.mapFailureToErrorState(persistenceResult.value)
-                        }
-                    }
-                    copyConfiguredFilesUseCase.execute(
-                        input =
-                            CopyConfiguredFilesUseCase.Input(
-                                repositoryPath = repository.path,
-                                createdWorktreePath = result.value.createdWorktree.path,
-                                repositoryId = repository.id.value,
-                            ),
-                    )
-                    when (
-                        val loadResult =
-                            loadRepositoryWorktreesUseCase.execute(
-                                input = LoadRepositoryWorktreesUseCase.Input(repositoryPath = repositoryPath),
-                            )
-                    ) {
-                        is UseCaseResult.Success -> {
-                            worktreesState.worktreesByRepositoryPath[repositoryPath] = loadResult.value.worktrees
-                        }
-
-                        is UseCaseResult.Failure -> {
-                            messagesState.error = errorMapper.mapFailureToErrorState(loadResult.value)
-                        }
-                    }
+                    worktreesState.worktreesByRepositoryPath[repositoryPath] = result.value.worktrees
+                    stateRefresher.settingsState.branches = result.value.branches
                     worktreesState.selectedWorktreePath = result.value.createdWorktree.path
                     persistSelection()
                     worktreesState.createWorktreeState =
@@ -200,7 +162,6 @@ class AppWorktreesService(
                             isSubmitting = false,
                             createdWorktreePath = result.value.createdWorktree.path,
                         )
-                    loadSelectedRepositoryBranches()
                     messagesState.success =
                         SuccessState(
                             message =
@@ -223,7 +184,7 @@ class AppWorktreesService(
         }
     }
 
-    override fun loadWorktreesForRepository(path: String) {
+    private fun loadWorktreesForRepository(path: String) {
         executionScope.scope.launch {
             loadingRunner.withGlobalLoading(Res.string.loading_refreshing) {
                 loadWorktreesForRepositoryInternal(path = path)
@@ -231,7 +192,7 @@ class AppWorktreesService(
         }
     }
 
-    override suspend fun loadWorktreesForRepositoryInternal(path: String) {
+    private suspend fun loadWorktreesForRepositoryInternal(path: String) {
         val normalizedPath = normalizePath(path)
         if (normalizedPath.isBlank()) {
             return

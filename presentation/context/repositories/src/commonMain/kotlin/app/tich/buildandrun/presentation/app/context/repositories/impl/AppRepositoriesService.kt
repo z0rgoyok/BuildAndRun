@@ -1,15 +1,12 @@
 package app.tich.buildandrun.presentation.app.context.repositories.impl
 
-import app.tich.buildandrun.application.context.repositories.usecase.AddRepositoryUseCase
-import app.tich.buildandrun.application.context.repositories.usecase.RemoveRepositoryUseCase
-import app.tich.buildandrun.application.context.repositories.usecase.SetRepositoryArchivedStateUseCase
+import app.tich.buildandrun.application.context.repositories.usecase.*
 import app.tich.buildandrun.application.context.shared.usecase.UseCaseResult
+import app.tich.buildandrun.application.context.worktrees.usecase.LoadRepositoryWorktreesUseCase
+import app.tich.buildandrun.domain.context.repositories.model.Repository
 import app.tich.buildandrun.presentation.app.AppRepositoriesFeature
 import app.tich.buildandrun.presentation.app.SuccessState
-import app.tich.buildandrun.presentation.app.context.state.MessagesContextState
-import app.tich.buildandrun.presentation.app.context.state.RepositoriesContextState
-import app.tich.buildandrun.presentation.app.context.state.WorktreesContextState
-import app.tich.buildandrun.presentation.app.context.worktrees.impl.WorktreesOperations
+import app.tich.buildandrun.presentation.app.context.state.*
 import app.tich.buildandrun.presentation.app.core.*
 import app.tich.buildandrun.presentation.i18n.UiText
 import app.tich.buildandrun.resources.*
@@ -22,11 +19,14 @@ class AppRepositoriesService(
     private val errorMapper: AppErrorStateMapper,
     private val repositoriesState: RepositoriesContextState,
     private val worktreesState: WorktreesContextState,
+    private val kanbanState: KanbanContextState,
     private val messagesState: MessagesContextState,
     private val addRepositoryUseCase: AddRepositoryUseCase,
     private val removeRepositoryUseCase: RemoveRepositoryUseCase,
     private val setRepositoryArchivedStateUseCase: SetRepositoryArchivedStateUseCase,
-    private val worktreesOperations: WorktreesOperations,
+    private val appSessionPersistenceUseCase: AppSessionPersistenceUseCase,
+    private val clearKanbanTasksUseCase: ClearKanbanTasksUseCase,
+    private val loadRepositoryWorktreesUseCase: LoadRepositoryWorktreesUseCase,
 ) : AppRepositoriesFeature {
     override fun onAddRepositoryPathChanged(value: String) {
         repositoriesState.addRepositoryPathInput = value
@@ -72,7 +72,7 @@ class AppRepositoriesService(
                                             ),
                                     ),
                             )
-                        stateRefresher.persistSelection()
+                        persistSelection()
                     }
 
                     is UseCaseResult.Failure -> {
@@ -90,12 +90,12 @@ class AppRepositoriesService(
         val repositoryChanged = repositoriesState.selectedRepositoryId != repositoryId
         repositoriesState.selectedRepositoryId = repositoryId
         worktreesState.selectedWorktreePath = null
-        stateRefresher.persistSelection()
+        persistSelection()
         messagesState.clear()
         stateRefresher.publishAll()
         if (repositoryChanged) {
             val selectedRepository = repositoriesState.repositories.firstOrNull { it.id.value == repositoryId } ?: return
-            worktreesOperations.loadWorktreesForRepository(path = selectedRepository.path)
+            loadWorktreesForRepository(path = selectedRepository.path)
         }
     }
 
@@ -127,12 +127,12 @@ class AppRepositoriesService(
                 ) {
                     is UseCaseResult.Success -> {
                         repositoriesState.repositories = result.value.repositories
-                        stateRefresher.cleanupRepositoryData(repository = result.value.removedRepository)
+                        cleanupRepositoryData(repository = result.value.removedRepository)
                         if (repositoriesState.selectedRepositoryId == result.value.removedRepository.id.value) {
                             repositoriesState.selectedRepositoryId = stateRefresher.preferredSelectedRepositoryId()
                             worktreesState.selectedWorktreePath = null
                         }
-                        stateRefresher.persistSelection()
+                        persistSelection()
                     }
 
                     is UseCaseResult.Failure -> {
@@ -175,7 +175,7 @@ class AppRepositoriesService(
                                 worktreesState.selectedWorktreePath = null
                             }
                         }
-                        stateRefresher.persistSelection()
+                        persistSelection()
                     }
 
                     is UseCaseResult.Failure -> {
@@ -183,6 +183,69 @@ class AppRepositoriesService(
                     }
                 }
             }
+        }
+    }
+
+    private fun persistSelection() {
+        when (
+            val result =
+                appSessionPersistenceUseCase.execute(
+                    input =
+                        AppSessionPersistenceUseCase.Input(
+                            repositoryId = repositoriesState.selectedRepositoryId,
+                            worktreePath = worktreesState.selectedWorktreePath,
+                        ),
+                )
+        ) {
+            is UseCaseResult.Success -> {
+            }
+
+            is UseCaseResult.Failure -> {
+                messagesState.error = errorMapper.mapFailureToErrorState(result.value)
+            }
+        }
+    }
+
+    private fun cleanupRepositoryData(repository: Repository) {
+        val removedWorktreePaths = worktreesState.worktreesByRepositoryPath.remove(repository.path).orEmpty().map { it.path }
+        kanbanState.tasksByScope.remove(repositoryScopeKey(repositoryId = repository.id.value))
+        when (
+            val result =
+                clearKanbanTasksUseCase.execute(
+                    input = ClearKanbanTasksUseCase.Input(repositoryId = repository.id.value),
+                )
+        ) {
+            is UseCaseResult.Success -> {
+            }
+
+            is UseCaseResult.Failure -> {
+                messagesState.error = errorMapper.mapFailureToErrorState(result.value)
+            }
+        }
+        removedWorktreePaths.forEach { worktreesState.worktreeStatusByPath.remove(it) }
+        removedWorktreePaths.forEach { worktreesState.hasRemoteBranchByWorktreePath.remove(it) }
+        worktreesState.worktreeStatusLoadingPaths.removeAll(removedWorktreePaths.toSet())
+    }
+
+    private fun loadWorktreesForRepository(path: String) {
+        executionScope.scope.launch {
+            loadingRunner.withGlobalLoading(Res.string.loading_refreshing) {
+                when (
+                    val result =
+                        loadRepositoryWorktreesUseCase.execute(
+                            input = LoadRepositoryWorktreesUseCase.Input(repositoryPath = path),
+                        )
+                ) {
+                    is UseCaseResult.Success -> {
+                        worktreesState.worktreesByRepositoryPath[path] = result.value.worktrees
+                    }
+
+                    is UseCaseResult.Failure -> {
+                        messagesState.error = errorMapper.mapFailureToErrorState(result.value)
+                    }
+                }
+            }
+            stateRefresher.publishAll()
         }
     }
 }

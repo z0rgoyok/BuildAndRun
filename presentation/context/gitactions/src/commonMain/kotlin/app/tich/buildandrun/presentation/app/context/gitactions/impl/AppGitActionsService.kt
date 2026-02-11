@@ -1,7 +1,7 @@
 package app.tich.buildandrun.presentation.app.context.gitactions.impl
 
 import app.tich.buildandrun.application.context.repositories.usecase.AppSessionPersistenceUseCase
-import app.tich.buildandrun.application.context.shared.port.SystemOpening
+import app.tich.buildandrun.application.context.shared.usecase.OpenUrlUseCase
 import app.tich.buildandrun.application.context.shared.usecase.UseCaseResult
 import app.tich.buildandrun.application.context.worktrees.usecase.*
 import app.tich.buildandrun.domain.context.worktrees.model.CompleteWorktreeOptions
@@ -25,7 +25,7 @@ class AppGitActionsService(
     private val worktreesState: WorktreesContextState,
     private val settingsState: SettingsContextState,
     private val messagesState: MessagesContextState,
-    private val systemOpening: SystemOpening,
+    private val openUrlUseCase: OpenUrlUseCase,
     private val appSessionPersistenceUseCase: AppSessionPersistenceUseCase,
     private val pushWorktreeUseCase: PushWorktreeUseCase,
     private val pullWorktreeUseCase: PullWorktreeUseCase,
@@ -52,7 +52,6 @@ class AppGitActionsService(
                         worktreesState.worktreeStatusByPath[pair.second.path] = result.value.status
                         messagesState.success = success(Res.string.screen_git_push_success)
                     }
-
                     is UseCaseResult.Failure -> {
                         messagesState.error = errorMapper.mapFailureToErrorState(result.value)
                     }
@@ -75,7 +74,6 @@ class AppGitActionsService(
                         worktreesState.worktreeStatusByPath[pair.second.path] = result.value.status
                         messagesState.success = success(Res.string.screen_git_pull_success)
                     }
-
                     is UseCaseResult.Failure -> {
                         messagesState.error = errorMapper.mapFailureToErrorState(result.value)
                     }
@@ -107,10 +105,15 @@ class AppGitActionsService(
                 ) {
                     is UseCaseResult.Success -> {
                         worktreesState.worktreeStatusByPath[pair.second.path] = result.value.status
-                        systemOpening.openURL(url = result.value.pullRequestUrl)
-                        messagesState.success = success(Res.string.screen_git_pr_created_success)
+                        if (openGitActionUrl(
+                                openUrlUseCase = openUrlUseCase,
+                                url = result.value.pullRequestUrl,
+                                onFailure = { failure -> messagesState.error = errorMapper.mapFailureToErrorState(failure) },
+                            )
+                        ) {
+                            messagesState.success = success(Res.string.screen_git_pr_created_success)
+                        }
                     }
-
                     is UseCaseResult.Failure -> {
                         messagesState.error = errorMapper.mapFailureToErrorState(result.value)
                     }
@@ -130,12 +133,17 @@ class AppGitActionsService(
             ) {
                 is UseCaseResult.Success -> {
                     worktreesState.worktreeStatusByPath[pair.second.path] = result.value.status
-                    val url = result.value.pullRequestUrl
-                    if (url != null) {
-                        systemOpening.openURL(url = url)
+                    result.value.pullRequestUrl?.let { url ->
+                        openGitActionUrl(
+                            openUrlUseCase = openUrlUseCase,
+                            url = url,
+                            onFailure = { failure ->
+                                messagesState.error = errorMapper.mapFailureToErrorState(failure)
+                                stateRefresher.publishAll()
+                            },
+                        )
                     }
                 }
-
                 is UseCaseResult.Failure -> {
                     messagesState.error = errorMapper.mapFailureToErrorState(result.value)
                     stateRefresher.publishAll()
@@ -162,7 +170,6 @@ class AppGitActionsService(
                         worktreesState.worktreesByRepositoryPath[pair.first.path] = result.value.worktrees
                         messagesState.success = success(Res.string.screen_git_worktree_locked_success)
                     }
-
                     is UseCaseResult.Failure -> {
                         messagesState.error = errorMapper.mapFailureToErrorState(result.value)
                     }
@@ -189,7 +196,6 @@ class AppGitActionsService(
                         worktreesState.worktreesByRepositoryPath[pair.first.path] = result.value.worktrees
                         messagesState.success = success(Res.string.screen_git_worktree_unlocked_success)
                     }
-
                     is UseCaseResult.Failure -> {
                         messagesState.error = errorMapper.mapFailureToErrorState(result.value)
                     }
@@ -227,7 +233,6 @@ class AppGitActionsService(
                         }
                         messagesState.success = success(Res.string.screen_git_worktree_removed_success)
                     }
-
                     is UseCaseResult.Failure -> {
                         messagesState.error = errorMapper.mapFailureToErrorState(result.value)
                     }
@@ -269,15 +274,14 @@ class AppGitActionsService(
                         )
                 ) {
                     is UseCaseResult.Success -> {
-                        worktreesState.worktreesByRepositoryPath[pair.first.path] = result.value.worktrees
                         settingsState.branches = result.value.branches
-                        if (worktreesState.selectedWorktreePath == pair.second.path) {
+                        worktreesState.worktreesByRepositoryPath[pair.first.path] = result.value.worktrees
+                        if (pair.second.path == worktreesState.selectedWorktreePath) {
                             worktreesState.selectedWorktreePath = null
                             persistSelection()
                         }
                         messagesState.success = success(Res.string.screen_git_worktree_completed_success)
                     }
-
                     is UseCaseResult.Failure -> {
                         messagesState.error = errorMapper.mapFailureToErrorState(result.value)
                     }
@@ -303,7 +307,6 @@ class AppGitActionsService(
                     worktreesState.hasRemoteBranchByWorktreePath[pair.second.path] = result.value.hasRemoteBranch
                     stateRefresher.publishAll()
                 }
-
                 is UseCaseResult.Failure -> {
                     messagesState.error = errorMapper.mapFailureToErrorState(result.value)
                     stateRefresher.publishAll()
@@ -326,7 +329,6 @@ class AppGitActionsService(
                         worktreesState.worktreesByRepositoryPath[repositoryPath] = result.value.worktrees
                         messagesState.success = success(Res.string.screen_git_worktrees_pruned_success)
                     }
-
                     is UseCaseResult.Failure -> {
                         messagesState.error = errorMapper.mapFailureToErrorState(result.value)
                     }
@@ -335,27 +337,14 @@ class AppGitActionsService(
         }
     }
 
-    private fun persistSelection() {
-        when (
-            val result =
-                appSessionPersistenceUseCase.execute(
-                    input =
-                        AppSessionPersistenceUseCase.Input(
-                            repositoryId = repositoriesState.selectedRepositoryId,
-                            worktreePath = worktreesState.selectedWorktreePath,
-                        ),
-                )
-        ) {
-            is UseCaseResult.Success -> {
-            }
+    private fun persistSelection() =
+        persistGitSelection(
+            appSessionPersistenceUseCase = appSessionPersistenceUseCase,
+            repositoryId = repositoriesState.selectedRepositoryId,
+            worktreePath = worktreesState.selectedWorktreePath,
+            onFailure = { failure -> messagesState.error = errorMapper.mapFailureToErrorState(failure) },
+        )
 
-            is UseCaseResult.Failure -> {
-                messagesState.error = errorMapper.mapFailureToErrorState(result.value)
-            }
-        }
-    }
-
-    private fun success(resource: org.jetbrains.compose.resources.StringResource): SuccessState {
-        return SuccessState(message = resolveText(text = UiText(resource = resource)))
-    }
+    private fun success(resource: org.jetbrains.compose.resources.StringResource): SuccessState =
+        SuccessState(message = resolveText(text = UiText(resource = resource)))
 }

@@ -10,11 +10,13 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
+            implementation(projects.application.shared)
+            implementation(projects.application.context.repositories)
+            implementation(projects.application.context.worktrees)
             implementation(projects.domain.shared)
             implementation(projects.domain.context.worktrees)
             implementation(projects.presentation.common)
             implementation(projects.presentation.resources)
-            implementation(projects.presentation.context.worktrees)
             implementation(libs.kotlinx.coroutines.core)
         }
         commonTest.dependencies {

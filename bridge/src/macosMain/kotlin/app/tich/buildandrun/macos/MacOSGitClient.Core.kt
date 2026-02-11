@@ -1,5 +1,6 @@
 package app.tich.buildandrun.macos
 
+import app.tich.buildandrun.application.context.shared.path.normalizePath
 import app.tich.buildandrun.domain.context.kanban.model.PRState
 import app.tich.buildandrun.domain.context.kanban.model.PRStatus
 import app.tich.buildandrun.domain.context.worktrees.model.Worktree
@@ -10,7 +11,7 @@ internal data class MacOSGitCommandResult(
     val output: String,
 )
 
-internal fun macOsGitNormalizePath(path: String): String = path.trim().trimEnd('/')
+internal fun macOsGitNormalizePath(path: String): String = normalizePath(path)
 
 internal fun macOsGitRunCommand(
     arguments: List<String>,

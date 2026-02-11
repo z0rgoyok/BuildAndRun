@@ -1,12 +1,12 @@
 package app.tich.buildandrun.presentation.app.context.state
 
+import app.tich.buildandrun.application.context.shared.path.normalizePath
 import app.tich.buildandrun.domain.context.repositories.model.Repository
 import app.tich.buildandrun.domain.context.worktrees.model.Worktree
 import app.tich.buildandrun.domain.context.worktrees.model.WorktreeStatus
 import app.tich.buildandrun.presentation.app.CreateWorktreeState
 import app.tich.buildandrun.presentation.app.RemoteBranchItem
 import app.tich.buildandrun.presentation.app.WorktreesState
-import app.tich.buildandrun.presentation.app.core.normalizePath
 import com.arkivanov.decompose.value.MutableValue
 import com.arkivanov.decompose.value.Value
 

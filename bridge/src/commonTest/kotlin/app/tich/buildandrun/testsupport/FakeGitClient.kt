@@ -1,5 +1,6 @@
 package app.tich.buildandrun.testsupport
 
+import app.tich.buildandrun.application.context.shared.path.normalizePath
 import app.tich.buildandrun.application.context.worktrees.port.GitClient
 import app.tich.buildandrun.domain.context.kanban.model.PRState
 import app.tich.buildandrun.domain.context.kanban.model.PRStatus
@@ -205,5 +206,5 @@ class FakeGitClient : GitClient {
         worktrees[index] = transform(worktrees[index])
     }
 
-    private fun normalize(path: String): String = path.trim().trimEnd('/')
+    private fun normalize(path: String): String = normalizePath(path)
 }

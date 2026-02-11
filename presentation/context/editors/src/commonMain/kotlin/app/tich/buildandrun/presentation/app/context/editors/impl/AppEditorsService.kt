@@ -4,7 +4,8 @@ import app.tich.buildandrun.application.context.repositories.usecase.OpenInEdito
 import app.tich.buildandrun.application.context.repositories.usecase.SetEditorEnabledUseCase
 import app.tich.buildandrun.application.context.repositories.usecase.SetPreferredEditorUseCase
 import app.tich.buildandrun.application.context.repositories.usecase.SetRememberEditorChoiceUseCase
-import app.tich.buildandrun.application.context.shared.port.SystemOpening
+import app.tich.buildandrun.application.context.shared.usecase.OpenPathInFinderUseCase
+import app.tich.buildandrun.application.context.shared.usecase.OpenPathInTerminalUseCase
 import app.tich.buildandrun.application.context.shared.usecase.UseCaseResult
 import app.tich.buildandrun.domain.context.editors.model.Editor
 import app.tich.buildandrun.presentation.app.AppEditorsFeature
@@ -14,7 +15,6 @@ import app.tich.buildandrun.presentation.app.context.state.RepositoriesContextSt
 import app.tich.buildandrun.presentation.app.core.AppErrorStateMapper
 import app.tich.buildandrun.presentation.app.core.AppExecutionScope
 import app.tich.buildandrun.presentation.app.core.AppStateRefresher
-import app.tich.buildandrun.presentation.app.core.normalizePath
 import kotlinx.coroutines.launch
 
 class AppEditorsService(
@@ -28,7 +28,8 @@ class AppEditorsService(
     private val setEditorEnabledUseCase: SetEditorEnabledUseCase,
     private val setPreferredEditorUseCase: SetPreferredEditorUseCase,
     private val openInEditorUseCase: OpenInEditorUseCase,
-    private val systemOpening: SystemOpening,
+    private val openPathInFinderUseCase: OpenPathInFinderUseCase,
+    private val openPathInTerminalUseCase: OpenPathInTerminalUseCase,
 ) : AppEditorsFeature {
     override fun onSetRememberEditorChoice(value: Boolean) {
         val repositoryId = repositoriesState.selectedRepository()?.id?.value
@@ -98,10 +99,6 @@ class AppEditorsService(
         worktreePath: String,
         editorId: String?,
     ) {
-        val normalizedWorktreePath = normalizePath(worktreePath)
-        if (normalizedWorktreePath.isBlank()) {
-            return
-        }
         val repositoryId = repositoriesState.selectedRepository()?.id?.value
         executionScope.scope.launch {
             when (
@@ -109,7 +106,7 @@ class AppEditorsService(
                     openInEditorUseCase.execute(
                         input =
                             OpenInEditorUseCase.Input(
-                                worktreePath = normalizedWorktreePath,
+                                worktreePath = worktreePath,
                                 editorId = editorId,
                                 repositoryId = repositoryId,
                                 rememberEditorChoice = editorsState.rememberEditorChoice,
@@ -136,18 +133,36 @@ class AppEditorsService(
     }
 
     override fun onOpenInFinder(worktreePath: String) {
-        val normalizedWorktreePath = normalizePath(worktreePath)
-        if (normalizedWorktreePath.isBlank()) {
-            return
+        when (
+            val result =
+                openPathInFinderUseCase.execute(
+                    input = OpenPathInFinderUseCase.Input(path = worktreePath),
+                )
+        ) {
+            is UseCaseResult.Success -> {
+            }
+
+            is UseCaseResult.Failure -> {
+                messagesState.error = errorMapper.mapFailureToErrorState(result.value)
+                stateRefresher.publishAll()
+            }
         }
-        systemOpening.revealInFinder(path = normalizedWorktreePath)
     }
 
     override fun onOpenInTerminal(worktreePath: String) {
-        val normalizedWorktreePath = normalizePath(worktreePath)
-        if (normalizedWorktreePath.isBlank()) {
-            return
+        when (
+            val result =
+                openPathInTerminalUseCase.execute(
+                    input = OpenPathInTerminalUseCase.Input(path = worktreePath),
+                )
+        ) {
+            is UseCaseResult.Success -> {
+            }
+
+            is UseCaseResult.Failure -> {
+                messagesState.error = errorMapper.mapFailureToErrorState(result.value)
+                stateRefresher.publishAll()
+            }
         }
-        systemOpening.openTerminal(atPath = normalizedWorktreePath)
     }
 }

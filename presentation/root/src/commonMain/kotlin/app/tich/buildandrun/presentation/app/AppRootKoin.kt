@@ -5,6 +5,10 @@ import app.tich.buildandrun.application.context.repositories.usecase.*
 import app.tich.buildandrun.application.context.shared.port.EditorOpening
 import app.tich.buildandrun.application.context.shared.port.FileSystemHandling
 import app.tich.buildandrun.application.context.shared.port.SystemOpening
+import app.tich.buildandrun.application.context.shared.usecase.LoadInstalledEditorsUseCase
+import app.tich.buildandrun.application.context.shared.usecase.OpenPathInFinderUseCase
+import app.tich.buildandrun.application.context.shared.usecase.OpenPathInTerminalUseCase
+import app.tich.buildandrun.application.context.shared.usecase.OpenUrlUseCase
 import app.tich.buildandrun.application.context.worktrees.port.GitClient
 import app.tich.buildandrun.application.context.worktrees.usecase.*
 import app.tich.buildandrun.domain.shared.failure.DomainFailureMapper
@@ -19,7 +23,6 @@ import app.tich.buildandrun.presentation.app.context.sidebar.impl.AppSidebarServ
 import app.tich.buildandrun.presentation.app.context.state.*
 import app.tich.buildandrun.presentation.app.context.texts.impl.AppTextsService
 import app.tich.buildandrun.presentation.app.context.worktrees.impl.AppWorktreesService
-import app.tich.buildandrun.presentation.app.context.worktrees.impl.WorktreesOperations
 import app.tich.buildandrun.presentation.app.core.*
 import com.arkivanov.decompose.ComponentContext
 import org.koin.core.module.Module
@@ -49,7 +52,6 @@ internal fun appRootModule(
         single { AppSessionPersistenceUseCase(preferencesStore = get()) }
         single { PersistKanbanTasksUseCase(preferencesStore = get()) }
         single { ClearKanbanTasksUseCase(preferencesStore = get()) }
-        single { PersistCreatedWorktreePreferencesUseCase(preferencesStore = get()) }
 
         single { ReorderRepositoryGroupsUseCase(preferencesStore = get()) }
         single { CreateRepositoryGroupUseCase(preferencesStore = get()) }
@@ -66,6 +68,7 @@ internal fun appRootModule(
         single { SetEditorEnabledUseCase(preferencesStore = get()) }
         single { SetPreferredEditorUseCase(preferencesStore = get()) }
         single { OpenInEditorUseCase(preferencesStore = get(), editorOpening = get()) }
+        single { LoadPresentationPreferencesUseCase(preferencesStore = get()) }
 
         single { SetSidebarMembershipStateUseCase(preferencesStore = get()) }
         single { ToggleSidebarRepositoriesExpansionUseCase(preferencesStore = get()) }
@@ -79,6 +82,15 @@ internal fun appRootModule(
         single { CopyConfiguredFilesUseCase(preferencesStore = get(), fileSystemHandling = get()) }
         single { LoadRepositoryWorktreesUseCase(gitClient = get(), preferencesStore = get()) }
         single { LoadWorktreeStatusUseCase(gitClient = get()) }
+        single {
+            CreateWorktreeFlowUseCase(
+                createWorktreeUseCase = get(),
+                copyConfiguredFilesUseCase = get(),
+                loadRepositoryWorktreesUseCase = get(),
+                loadBranchesUseCase = get(),
+                preferencesStore = get(),
+            )
+        }
         single { PushWorktreeUseCase(gitClient = get()) }
         single { PullWorktreeUseCase(gitClient = get()) }
         single { CreatePullRequestUseCase(gitClient = get()) }
@@ -89,6 +101,10 @@ internal fun appRootModule(
         single { CompleteWorktreeUseCase(gitClient = get(), preferencesStore = get()) }
         single { LoadHasRemoteBranchUseCase(gitClient = get()) }
         single { PruneWorktreesUseCase(gitClient = get(), preferencesStore = get()) }
+        single { LoadInstalledEditorsUseCase(editorOpening = get()) }
+        single { OpenUrlUseCase(systemOpening = get()) }
+        single { OpenPathInFinderUseCase(systemOpening = get()) }
+        single { OpenPathInTerminalUseCase(systemOpening = get()) }
 
         single<ComponentContext> { componentContext }
         single { AppErrorStateMapper() }
@@ -101,8 +117,10 @@ internal fun appRootModule(
         single { MessagesContextState() }
         single {
             AppStateRefresher(
-                preferencesStore = get(),
                 activityState = get(),
+                errorMapper = get(),
+                loadPresentationPreferencesUseCase = get(),
+                loadInstalledEditorsUseCase = get(),
                 repositoriesState = get(),
                 worktreesState = get(),
                 settingsState = get(),
@@ -134,18 +152,14 @@ internal fun appRootModule(
                 repositoriesState = get(),
                 worktreesState = get(),
                 messagesState = get(),
-                editorOpening = get(),
-                createWorktreeUseCase = get(),
+                createWorktreeFlowUseCase = get(),
                 loadBranchesUseCase = get(),
-                copyConfiguredFilesUseCase = get(),
                 loadRepositoryWorktreesUseCase = get(),
                 loadWorktreeStatusUseCase = get(),
                 appSessionPersistenceUseCase = get(),
-                persistCreatedWorktreePreferencesUseCase = get(),
             )
         }
         single<AppWorktreesFeature> { get<AppWorktreesService>() }
-        single<WorktreesOperations> { get<AppWorktreesService>() }
 
         single<AppRepositoriesFeature> {
             AppRepositoriesService(
@@ -155,11 +169,14 @@ internal fun appRootModule(
                 errorMapper = get(),
                 repositoriesState = get(),
                 worktreesState = get(),
+                kanbanState = get(),
                 messagesState = get(),
                 addRepositoryUseCase = get(),
                 removeRepositoryUseCase = get(),
                 setRepositoryArchivedStateUseCase = get(),
-                worktreesOperations = get(),
+                appSessionPersistenceUseCase = get(),
+                clearKanbanTasksUseCase = get(),
+                loadRepositoryWorktreesUseCase = get(),
             )
         }
         single<AppSettingsFeature> {
@@ -189,7 +206,7 @@ internal fun appRootModule(
                 worktreesState = get(),
                 settingsState = get(),
                 messagesState = get(),
-                systemOpening = get(),
+                openUrlUseCase = get(),
                 appSessionPersistenceUseCase = get(),
                 pushWorktreeUseCase = get(),
                 pullWorktreeUseCase = get(),
@@ -215,7 +232,8 @@ internal fun appRootModule(
                 setEditorEnabledUseCase = get(),
                 setPreferredEditorUseCase = get(),
                 openInEditorUseCase = get(),
-                systemOpening = get(),
+                openPathInFinderUseCase = get(),
+                openPathInTerminalUseCase = get(),
             )
         }
         single<AppKanbanFeature> {
@@ -269,10 +287,10 @@ internal fun appRootModule(
                 editorsState = get(),
                 kanbanState = get(),
                 messagesState = get(),
-                preferencesStore = get(),
-                loadRepositoriesUseCase = get(),
-                editorOpening = get(),
-                loadWorktreesForRepositoryInternal = { path -> get<WorktreesOperations>().loadWorktreesForRepositoryInternal(path) },
+                restoreAppSessionUseCase = get(),
+                appSessionPersistenceUseCase = get(),
+                loadRepositoryWorktreesUseCase = get(),
+                loadWorktreeStatusUseCase = get(),
             )
         }
         single {
