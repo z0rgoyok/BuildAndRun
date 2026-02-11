@@ -15,6 +15,7 @@ kotlin {
             implementation(projects.domain.context.editors)
             implementation(projects.domain.context.kanban)
             implementation(projects.domain.context.repositories)
+            implementation(libs.koin.core)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

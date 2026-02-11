@@ -11,8 +11,11 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             api(projects.domain.context.kanban)
+            implementation(projects.application.shared)
+            implementation(projects.application.context.repositories)
             implementation(projects.presentation.common)
             implementation(projects.presentation.resources)
+            implementation(libs.koin.core)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

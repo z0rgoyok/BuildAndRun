@@ -16,6 +16,7 @@ kotlin {
             implementation(projects.domain.context.editors)
             implementation(projects.presentation.common)
             implementation(projects.presentation.resources)
+            implementation(libs.koin.core)
             implementation(libs.kotlinx.coroutines.core)
         }
         commonTest.dependencies {

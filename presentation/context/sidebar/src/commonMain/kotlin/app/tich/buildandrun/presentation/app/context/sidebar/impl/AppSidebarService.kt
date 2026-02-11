@@ -5,12 +5,16 @@ import app.tich.buildandrun.application.context.repositories.usecase.SyncSidebar
 import app.tich.buildandrun.application.context.repositories.usecase.ToggleSidebarRepositoriesExpansionUseCase
 import app.tich.buildandrun.application.context.shared.usecase.UseCaseResult
 import app.tich.buildandrun.presentation.app.AppSidebarFeature
+import app.tich.buildandrun.presentation.app.context.state.MessagesContextState
 import app.tich.buildandrun.presentation.app.context.state.RepositoriesContextState
+import app.tich.buildandrun.presentation.app.core.AppErrorStateMapper
 import app.tich.buildandrun.presentation.app.core.AppStateRefresher
 
 class AppSidebarService(
     private val stateRefresher: AppStateRefresher,
+    private val errorMapper: AppErrorStateMapper,
     private val repositoriesState: RepositoriesContextState,
+    private val messagesState: MessagesContextState,
     private val setSidebarMembershipStateUseCase: SetSidebarMembershipStateUseCase,
     private val toggleSidebarRepositoriesExpansionUseCase: ToggleSidebarRepositoriesExpansionUseCase,
     private val syncSidebarSelectionExpansionUseCase: SyncSidebarSelectionExpansionUseCase,
@@ -39,6 +43,8 @@ class AppSidebarService(
             }
 
             is UseCaseResult.Failure -> {
+                messagesState.error = errorMapper.mapFailureToErrorState(result.value)
+                stateRefresher.publishAll()
             }
         }
     }
@@ -67,6 +73,8 @@ class AppSidebarService(
             }
 
             is UseCaseResult.Failure -> {
+                messagesState.error = errorMapper.mapFailureToErrorState(result.value)
+                stateRefresher.publishAll()
             }
         }
     }
@@ -100,6 +108,8 @@ class AppSidebarService(
             }
 
             is UseCaseResult.Failure -> {
+                messagesState.error = errorMapper.mapFailureToErrorState(result.value)
+                stateRefresher.publishAll()
             }
         }
     }
@@ -135,6 +145,8 @@ class AppSidebarService(
             }
 
             is UseCaseResult.Failure -> {
+                messagesState.error = errorMapper.mapFailureToErrorState(result.value)
+                stateRefresher.publishAll()
             }
         }
     }

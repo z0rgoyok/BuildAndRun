@@ -5,8 +5,8 @@ import app.tich.buildandrun.application.context.repositories.usecase.RestoreAppS
 import app.tich.buildandrun.application.context.shared.usecase.UseCaseResult
 import app.tich.buildandrun.application.context.shared.usecase.runCatchingCancellable
 import app.tich.buildandrun.application.context.shared.usecase.toUseCaseFailure
-import app.tich.buildandrun.application.context.worktrees.usecase.LoadRepositoryWorktreesUseCase
-import app.tich.buildandrun.application.context.worktrees.usecase.LoadWorktreeStatusUseCase
+import app.tich.buildandrun.application.context.worktrees.usecase.LoadRepositoryWorktreeSnapshotUseCase
+import app.tich.buildandrun.application.context.worktrees.usecase.ReconcileSelectedWorktreePathUseCase
 import app.tich.buildandrun.presentation.app.context.state.*
 import app.tich.buildandrun.resources.Res
 import app.tich.buildandrun.resources.loading_initial
@@ -25,8 +25,8 @@ class AppBootstrapper(
     private val messagesState: MessagesContextState,
     private val restoreAppSessionUseCase: RestoreAppSessionUseCase,
     private val appSessionPersistenceUseCase: AppSessionPersistenceUseCase,
-    private val loadRepositoryWorktreesUseCase: LoadRepositoryWorktreesUseCase,
-    private val loadWorktreeStatusUseCase: LoadWorktreeStatusUseCase,
+    private val loadRepositoryWorktreeSnapshotUseCase: LoadRepositoryWorktreeSnapshotUseCase,
+    private val reconcileSelectedWorktreePathUseCase: ReconcileSelectedWorktreePathUseCase,
 ) {
     fun start() {
         executionScope.scope.launch {
@@ -46,15 +46,23 @@ class AppBootstrapper(
                     repositoriesState.repositories.forEach { repository ->
                         loadWorktreesForRepository(path = repository.path)
                     }
-                    if (worktreesState.selectedWorktreePath != null) {
-                        val restoredPath = worktreesState.selectedWorktreePath
-                        val hasRestoredPath =
-                            repositoriesState.repositories.any { repository ->
-                                worktreesState.worktreesByRepositoryPath[repository.path].orEmpty().any { it.path == restoredPath }
-                            }
-                        if (!hasRestoredPath) {
-                            worktreesState.selectedWorktreePath = null
-                        }
+                    val availableWorktreePaths =
+                        worktreesState.worktreesByRepositoryPath
+                            .values
+                            .asSequence()
+                            .flatten()
+                            .map { worktree -> worktree.path }
+                            .toSet()
+                    val reconciliation =
+                        reconcileSelectedWorktreePathUseCase.execute(
+                            input =
+                                ReconcileSelectedWorktreePathUseCase.Input(
+                                    selectedWorktreePath = worktreesState.selectedWorktreePath,
+                                    availableWorktreePaths = availableWorktreePaths,
+                                ),
+                        )
+                    if (reconciliation.changed) {
+                        worktreesState.selectedWorktreePath = reconciliation.selectedWorktreePath
                     }
                     persistSelection()
                 }
@@ -108,28 +116,13 @@ class AppBootstrapper(
     private suspend fun loadWorktreesForRepository(path: String) {
         when (
             val result =
-                loadRepositoryWorktreesUseCase.execute(
-                    input = LoadRepositoryWorktreesUseCase.Input(repositoryPath = path),
+                loadRepositoryWorktreeSnapshotUseCase.execute(
+                    input = LoadRepositoryWorktreeSnapshotUseCase.Input(repositoryPath = path),
                 )
         ) {
             is UseCaseResult.Success -> {
                 worktreesState.worktreesByRepositoryPath[path] = result.value.worktrees
-                result.value.worktrees.forEach { worktree ->
-                    when (
-                        val statusResult =
-                            loadWorktreeStatusUseCase.execute(
-                                input = LoadWorktreeStatusUseCase.Input(worktreePath = worktree.path),
-                            )
-                    ) {
-                        is UseCaseResult.Success -> {
-                            worktreesState.worktreeStatusByPath[worktree.path] = statusResult.value.status
-                        }
-
-                        is UseCaseResult.Failure -> {
-                            messagesState.error = errorMapper.mapFailureToErrorState(statusResult.value)
-                        }
-                    }
-                }
+                worktreesState.worktreeStatusByPath.putAll(result.value.worktreeStatusesByPath)
             }
 
             is UseCaseResult.Failure -> {

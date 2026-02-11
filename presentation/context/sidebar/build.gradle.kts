@@ -13,6 +13,7 @@ kotlin {
             implementation(projects.application.shared)
             implementation(projects.application.context.repositories)
             implementation(projects.presentation.common)
+            implementation(libs.koin.core)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

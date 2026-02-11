@@ -1,11 +1,8 @@
 package app.tich.buildandrun.presentation.app
 
-import app.tich.buildandrun.application.context.repositories.usecase.*
 import app.tich.buildandrun.application.context.shared.port.EditorOpening
 import app.tich.buildandrun.application.context.shared.port.FileSystemHandling
 import app.tich.buildandrun.application.context.shared.port.SystemOpening
-import app.tich.buildandrun.application.context.worktrees.usecase.CreateWorktreeUseCase
-import app.tich.buildandrun.application.context.worktrees.usecase.LoadBranchesUseCase
 import app.tich.buildandrun.domain.context.editors.model.Editor
 import app.tich.buildandrun.domain.context.repositories.model.Repository
 import app.tich.buildandrun.domain.context.worktrees.model.Worktree
@@ -101,13 +98,6 @@ class AppRootBootstrapCleanupTest {
         override val fileSystem = NoOpFileSystemHandling
         override val editorOpening = NoOpEditorOpening
         override val systemOpening = NoOpSystemOpening
-        override val addRepositoryUseCase = AddRepositoryUseCase(gitClient = gitClient, preferencesStore = preferencesStore)
-        override val loadRepositoriesUseCase = LoadRepositoriesUseCase(preferencesStore = preferencesStore)
-        override val createWorktreeUseCase = CreateWorktreeUseCase(gitClient = gitClient)
-        override val removeRepositoryUseCase = RemoveRepositoryUseCase(preferencesStore = preferencesStore)
-        override val setRepositoryArchivedStateUseCase = SetRepositoryArchivedStateUseCase(preferencesStore = preferencesStore)
-        override val setRepositoryGroupUseCase = SetRepositoryGroupUseCase(preferencesStore = preferencesStore)
-        override val loadBranchesUseCase = LoadBranchesUseCase(gitClient = gitClient)
     }
 
     private object NoOpEditorOpening : EditorOpening {

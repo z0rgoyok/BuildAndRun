@@ -3,10 +3,7 @@ package app.tich.buildandrun.presentation.app.context.worktrees.impl
 import app.tich.buildandrun.application.context.repositories.usecase.AppSessionPersistenceUseCase
 import app.tich.buildandrun.application.context.shared.path.normalizePath
 import app.tich.buildandrun.application.context.shared.usecase.UseCaseResult
-import app.tich.buildandrun.application.context.worktrees.usecase.CreateWorktreeFlowUseCase
-import app.tich.buildandrun.application.context.worktrees.usecase.LoadBranchesUseCase
-import app.tich.buildandrun.application.context.worktrees.usecase.LoadRepositoryWorktreesUseCase
-import app.tich.buildandrun.application.context.worktrees.usecase.LoadWorktreeStatusUseCase
+import app.tich.buildandrun.application.context.worktrees.usecase.*
 import app.tich.buildandrun.presentation.app.AppWorktreesFeature
 import app.tich.buildandrun.presentation.app.SuccessState
 import app.tich.buildandrun.presentation.app.context.state.MessagesContextState
@@ -31,6 +28,7 @@ class AppWorktreesService(
     private val loadBranchesUseCase: LoadBranchesUseCase,
     private val loadRepositoryWorktreesUseCase: LoadRepositoryWorktreesUseCase,
     private val loadWorktreeStatusUseCase: LoadWorktreeStatusUseCase,
+    private val reconcileSelectedWorktreePathUseCase: ReconcileSelectedWorktreePathUseCase,
     private val appSessionPersistenceUseCase: AppSessionPersistenceUseCase,
 ) : AppWorktreesFeature {
     override fun onSelectWorktree(worktreePath: String?) {
@@ -205,13 +203,22 @@ class AppWorktreesService(
         ) {
             is UseCaseResult.Success -> {
                 worktreesState.worktreesByRepositoryPath[normalizedPath] = result.value.worktrees
-                if (repositoriesState.selectedRepository()?.path == normalizedPath && worktreesState.selectedWorktreePath != null) {
-                    val stillExists =
+                if (repositoriesState.selectedRepository()?.path == normalizedPath) {
+                    val availableWorktreePaths =
                         worktreesState.worktreesByRepositoryPath[normalizedPath]
                             .orEmpty()
-                            .any { it.path == worktreesState.selectedWorktreePath }
-                    if (!stillExists) {
-                        worktreesState.selectedWorktreePath = null
+                            .map { worktree -> worktree.path }
+                            .toSet()
+                    val reconciliation =
+                        reconcileSelectedWorktreePathUseCase.execute(
+                            input =
+                                ReconcileSelectedWorktreePathUseCase.Input(
+                                    selectedWorktreePath = worktreesState.selectedWorktreePath,
+                                    availableWorktreePaths = availableWorktreePaths,
+                                ),
+                        )
+                    if (reconciliation.changed) {
+                        worktreesState.selectedWorktreePath = reconciliation.selectedWorktreePath
                         persistSelection()
                     }
                 }

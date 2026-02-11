@@ -15,6 +15,7 @@ kotlin {
             implementation(projects.domain.context.copy)
             implementation(projects.domain.context.repositories)
             implementation(projects.domain.context.worktrees)
+            implementation(libs.koin.core)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
