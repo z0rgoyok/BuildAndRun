@@ -16,6 +16,44 @@ struct WorktreeTreeRow: View {
         return false
     }
 
+    private var titleColor: Color {
+        if isSelected {
+            return DS.Colors.sidebarSelectedTextPrimary
+        }
+        return DS.Colors.textPrimary
+    }
+
+    private var subtitleColor: Color {
+        if isSelected {
+            return DS.Colors.sidebarSelectedTextSecondary
+        }
+        return DS.Colors.textTertiary
+    }
+
+    private var branchBadgeColor: Color {
+        if isSelected {
+            return DS.Colors.sidebarSelectedTextPrimary
+        }
+        return .blue
+    }
+
+    private var lockColor: Color {
+        if isSelected {
+            return DS.Colors.sidebarSelectedTextSecondary
+        }
+        return .orange
+    }
+
+    private var indicatorSymbolColor: Color {
+        if isSelected {
+            return DS.Colors.sidebarSelectedTextSecondary
+        }
+        if worktree.isMain {
+            return .orange
+        }
+        return DS.Colors.textSecondary
+    }
+
     var body: some View {
         HStack(spacing: DS.Spacing.xs) {
             Color.clear
@@ -23,39 +61,40 @@ struct WorktreeTreeRow: View {
 
             Image(systemName: worktree.isMain ? "house.fill" : "arrow.triangle.branch")
                 .font(.system(size: 12))
-                .foregroundStyle(worktree.isMain ? .orange : DS.Colors.textSecondary)
+                .foregroundStyle(indicatorSymbolColor)
                 .frame(width: DS.Sizes.treeIconSize)
 
             VStack(alignment: .leading, spacing: 1) {
                 HStack(spacing: DS.Spacing.xs) {
                     Text(worktree.name)
                         .font(DS.Typography.treeItem)
-                        .foregroundStyle(DS.Colors.textPrimary)
+                        .foregroundStyle(titleColor)
                         .lineLimit(1)
 
                     if worktree.isMain {
-                        StatusBadge(text: worktree.branch, color: .blue)
+                        StatusBadge(text: worktree.branch, color: branchBadgeColor)
                     }
 
                     if worktree.isLocked {
                         Image(systemName: "lock.fill")
                             .font(.system(size: 9))
-                            .foregroundStyle(.orange)
+                            .foregroundStyle(lockColor)
                     }
                 }
 
                 HStack(spacing: DS.Spacing.xs) {
                     Text(worktree.branch)
                         .font(DS.Typography.treeItemSecondary)
-                        .foregroundStyle(DS.Colors.textTertiary)
+                        .foregroundStyle(subtitleColor)
                         .lineLimit(1)
 
                     if worktree.isStatusLoading {
                         ProgressView()
                             .controlSize(.mini)
+                            .tint(DS.Colors.sidebarSelectedTextPrimary)
                             .transition(.opacity)
                     } else if let status = worktree.status {
-                        WorktreeStatusIndicators(status: status)
+                        WorktreeStatusIndicators(status: status, isSelected: isSelected)
                     }
                 }
             }
@@ -86,6 +125,7 @@ struct WorktreeTreeRow: View {
             .allowsHitTesting(true)
             .accessibilityHidden(true)
         }
+        .animation(DS.Animation.quick, value: isSelected)
         .animation(DS.Animation.quick, value: worktree.isStatusLoading)
         .contextMenu {
             WorktreeMenuItems(root: root, worktreePath: worktree.path, includeNewWorktree: false)

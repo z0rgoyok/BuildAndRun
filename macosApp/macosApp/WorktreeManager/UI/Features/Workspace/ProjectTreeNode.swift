@@ -19,14 +19,73 @@ struct ProjectTreeNode: View {
         return false
     }
 
+    private var chevronColor: Color {
+        if isRepoSelected {
+            return DS.Colors.sidebarSelectedTextSecondary
+        }
+        if repository.isArchived {
+            return DS.Colors.textQuaternary
+        }
+        return DS.Colors.textTertiary
+    }
+
+    private var iconColor: Color {
+        if isRepoSelected {
+            return DS.Colors.sidebarSelectedTextPrimary
+        }
+        if repository.isArchived {
+            return DS.Colors.textTertiary
+        }
+        return .blue
+    }
+
+    private var titleColor: Color {
+        if isRepoSelected {
+            return DS.Colors.sidebarSelectedTextPrimary
+        }
+        if repository.isArchived {
+            return DS.Colors.textSecondary
+        }
+        return DS.Colors.textPrimary
+    }
+
+    private var subtitleColor: Color {
+        if isRepoSelected {
+            return DS.Colors.sidebarSelectedTextSecondary
+        }
+        if repository.isArchived {
+            return DS.Colors.textQuaternary
+        }
+        return DS.Colors.textTertiary
+    }
+
+    private var countTextColor: Color {
+        if isRepoSelected {
+            return DS.Colors.sidebarSelectedBadgeText
+        }
+        return DS.Colors.textSecondary
+    }
+
+    private var countBackgroundColor: Color {
+        if isRepoSelected {
+            return DS.Colors.sidebarSelectedBadgeBackground
+        }
+        return DS.Colors.surfaceSecondary
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             repoHeader
 
             if !repository.isArchived, isExpanded {
                 worktreeList
+                    .transition(.asymmetric(
+                        insertion: .move(edge: .top).combined(with: .opacity),
+                        removal: .opacity
+                    ))
             }
         }
+        .animation(DS.Animation.quick, value: isExpanded)
     }
 
     private var repoHeader: some View {
@@ -39,31 +98,31 @@ struct ProjectTreeNode: View {
                 } label: {
                     Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
                         .font(.system(size: 10, weight: .semibold))
-                        .foregroundStyle(DS.Colors.textTertiary)
+                        .foregroundStyle(chevronColor)
                         .frame(width: DS.Sizes.treeIconSize, height: DS.Sizes.treeIconSize)
                 }
                 .buttonStyle(.plain)
             } else {
                 Image(systemName: "chevron.right")
                     .font(.system(size: 10, weight: .semibold))
-                    .foregroundStyle(DS.Colors.textQuaternary)
+                    .foregroundStyle(chevronColor)
                     .frame(width: DS.Sizes.treeIconSize, height: DS.Sizes.treeIconSize)
             }
 
             Image(systemName: "folder.fill")
                 .font(.system(size: 14))
-                .foregroundStyle(repository.isArchived ? DS.Colors.textTertiary : .blue)
+                .foregroundStyle(iconColor)
                 .frame(width: DS.Sizes.treeIconSize)
 
             VStack(alignment: .leading, spacing: 1) {
                 Text(repository.name)
                     .font(DS.Typography.treeItem)
-                    .foregroundStyle(repository.isArchived ? DS.Colors.textSecondary : DS.Colors.textPrimary)
+                    .foregroundStyle(titleColor)
                     .lineLimit(1)
 
                 Text(repository.path)
                     .font(DS.Typography.treeItemSecondary)
-                    .foregroundStyle(repository.isArchived ? DS.Colors.textQuaternary : DS.Colors.textTertiary)
+                    .foregroundStyle(subtitleColor)
                     .lineLimit(1)
                     .truncationMode(.middle)
             }
@@ -74,10 +133,10 @@ struct ProjectTreeNode: View {
             if !repository.isArchived, !repository.worktrees.isEmpty {
                 Text("\(repository.worktrees.count)")
                     .font(DS.Typography.badge)
-                    .foregroundStyle(DS.Colors.textSecondary)
+                    .foregroundStyle(countTextColor)
                     .padding(.horizontal, DS.Spacing.xs)
                     .padding(.vertical, DS.Spacing.xxxs)
-                    .background(DS.Colors.surfaceSecondary)
+                    .background(countBackgroundColor)
                     .cornerRadius(DS.Radius.xs)
             }
         }
@@ -108,6 +167,7 @@ struct ProjectTreeNode: View {
                 }
             }
         }
+        .animation(DS.Animation.quick, value: isRepoSelected)
         .contextMenu {
             Button(root.store.sidebarLabels.showInFinder) {
                 NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: repository.path)

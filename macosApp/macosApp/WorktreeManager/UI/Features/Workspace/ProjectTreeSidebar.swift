@@ -41,6 +41,9 @@ struct ProjectTreeSidebar: View {
                 }
             }
             .padding(.vertical, DS.Spacing.xs)
+            .animation(DS.Animation.quick, value: root.repositoriesState.expandedRepositoryIds)
+            .animation(DS.Animation.quick, value: root.repositoriesState.collapsedGroupIds)
+            .animation(DS.Animation.quick, value: root.isSidebarArchivedSectionExpanded)
         }
         .background(DS.Colors.surfacePrimary)
         .toolbar {
