@@ -13,6 +13,8 @@ struct ProjectTreeSidebar: View {
     @State private var renameGroupId: String?
     @State private var renameGroupName = ""
 
+    @State private var animationsEnabled = false
+
     @State private var draggedGroupId: String?
     @State private var activeDropTargetGroupId: String?
     @State private var activeDropPlacement: GroupSectionDropDelegate.DropPlacement = .before
@@ -43,9 +45,16 @@ struct ProjectTreeSidebar: View {
                 }
             }
             .padding(.vertical, DS.Spacing.xs)
-            .animation(DS.Animation.quick, value: root.repositoriesState.expandedRepositoryIds)
-            .animation(DS.Animation.quick, value: root.repositoriesState.collapsedGroupIds)
-            .animation(DS.Animation.quick, value: root.isSidebarArchivedSectionExpanded)
+            .animation(animationsEnabled ? DS.Animation.quick : nil, value: root.repositoriesState.expandedRepositoryIds)
+            .animation(animationsEnabled ? DS.Animation.quick : nil, value: root.repositoriesState.collapsedGroupIds)
+            .animation(animationsEnabled ? DS.Animation.quick : nil, value: root.isSidebarArchivedSectionExpanded)
+            .onChange(of: root.repositoriesState.sidebarSections) { _, newSections in
+                if !animationsEnabled && !newSections.isEmpty {
+                    Task { @MainActor in
+                        animationsEnabled = true
+                    }
+                }
+            }
         }
         .background(DS.Colors.surfacePrimary)
         .toolbar {

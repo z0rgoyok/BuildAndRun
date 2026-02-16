@@ -42,9 +42,11 @@ class AppBootstrapper(
                             return@withGlobalLoading
                         }
                     }
+                    stateRefresher.publishAll()
                     stateRefresher.refreshInstalledEditors()
                     repositoriesState.repositories.forEach { repository ->
                         loadWorktreesForRepository(path = repository.path)
+                        stateRefresher.publishAll()
                     }
                     val availableWorktreePaths =
                         worktreesState.worktreesByRepositoryPath

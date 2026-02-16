@@ -53,8 +53,8 @@ class WorktreesContextState {
 
     fun syncSelectionWithAvailableWorktrees(selectedRepository: Repository?) {
         val selectedRepositoryPath = selectedRepository?.path.orEmpty()
-        val availableWorktrees = worktreesByRepositoryPath[selectedRepositoryPath].orEmpty()
-        if (selectedWorktreePath != null && availableWorktrees.none { it.path == selectedWorktreePath }) {
+        val availableWorktrees = worktreesByRepositoryPath[selectedRepositoryPath]
+        if (availableWorktrees != null && selectedWorktreePath != null && availableWorktrees.none { it.path == selectedWorktreePath }) {
             selectedWorktreePath = null
         }
         createWorktreeState =
