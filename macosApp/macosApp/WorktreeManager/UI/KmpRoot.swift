@@ -243,12 +243,16 @@ final class KmpRoot: ObservableObject {
     }
 
     private func updateRepositoriesState(_ nextState: RepositoriesState) {
-        if repositoriesState.sidebarSections.isEmpty {
-            repositoriesState = nextState
-        } else {
+        let shouldAnimate =
+            !repositoriesState.sidebarSections.isEmpty &&
+            (repositoriesState.expandedRepositoryIds != nextState.expandedRepositoryIds ||
+            repositoriesState.collapsedGroupIds != nextState.collapsedGroupIds)
+        if shouldAnimate {
             withAnimation(DS.Animation.quick) {
                 repositoriesState = nextState
             }
+        } else {
+            repositoriesState = nextState
         }
     }
 }

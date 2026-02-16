@@ -6,33 +6,45 @@ if [ "${OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED:-}" = "YES" ]; then
   exit 0
 fi
 
-if ! command -v java >/dev/null 2>&1; then
-  if [ -n "${JAVA_HOME:-}" ] && [ -x "${JAVA_HOME}/bin/java" ]; then
+has_working_java() {
+  if ! command -v java >/dev/null 2>&1; then
+    return 1
+  fi
+  java -version >/dev/null 2>&1
+}
+
+activate_java_home() {
+  CANDIDATE_HOME="$1"
+  if [ -n "$CANDIDATE_HOME" ] && [ -x "$CANDIDATE_HOME/bin/java" ]; then
+    export JAVA_HOME="$CANDIDATE_HOME"
     export PATH="${JAVA_HOME}/bin:${PATH}"
-  else
+    if has_working_java; then
+      return 0
+    fi
+  fi
+  return 1
+}
+
+if ! has_working_java; then
+  if ! activate_java_home "${JAVA_HOME:-}"; then
     for CANDIDATE in \
       /opt/homebrew/opt/openjdk@21 \
       /opt/homebrew/opt/openjdk \
       /usr/local/opt/openjdk@21 \
       /usr/local/opt/openjdk
     do
-      if [ -x "${CANDIDATE}/bin/java" ]; then
-        export JAVA_HOME="${CANDIDATE}"
-        export PATH="${JAVA_HOME}/bin:${PATH}"
+      if activate_java_home "$CANDIDATE"; then
         break
       fi
     done
-    if ! command -v java >/dev/null 2>&1 && [ -x "/usr/libexec/java_home" ]; then
+    if ! has_working_java && [ -x "/usr/libexec/java_home" ]; then
       JAVA_HOME_CANDIDATE="$("/usr/libexec/java_home" 2>/dev/null || true)"
-      if [ -n "${JAVA_HOME_CANDIDATE}" ] && [ -x "${JAVA_HOME_CANDIDATE}/bin/java" ]; then
-        export JAVA_HOME="${JAVA_HOME_CANDIDATE}"
-        export PATH="${JAVA_HOME}/bin:${PATH}"
-      fi
+      activate_java_home "${JAVA_HOME_CANDIDATE}" || true
     fi
   fi
 fi
 
-if ! command -v java >/dev/null 2>&1; then
+if ! has_working_java; then
   echo "Java runtime is required for Gradle Kotlin framework build phase."
   exit 1
 fi
