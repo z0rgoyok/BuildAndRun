@@ -79,10 +79,6 @@ struct ProjectTreeNode: View {
 
             if !repository.isArchived, isExpanded {
                 worktreeList
-                    .transition(.asymmetric(
-                        insertion: .move(edge: .top).combined(with: .opacity),
-                        removal: .opacity
-                    ))
             }
         }
         .animation(DS.Animation.quick, value: isExpanded)
@@ -167,7 +163,6 @@ struct ProjectTreeNode: View {
                 }
             }
         }
-        .animation(DS.Animation.quick, value: isRepoSelected)
         .contextMenu {
             Button(root.store.sidebarLabels.showInFinder) {
                 NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: repository.path)

@@ -6,6 +6,37 @@ if [ "${OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED:-}" = "YES" ]; then
   exit 0
 fi
 
+if ! command -v java >/dev/null 2>&1; then
+  if [ -n "${JAVA_HOME:-}" ] && [ -x "${JAVA_HOME}/bin/java" ]; then
+    export PATH="${JAVA_HOME}/bin:${PATH}"
+  else
+    for CANDIDATE in \
+      /opt/homebrew/opt/openjdk@21 \
+      /opt/homebrew/opt/openjdk \
+      /usr/local/opt/openjdk@21 \
+      /usr/local/opt/openjdk
+    do
+      if [ -x "${CANDIDATE}/bin/java" ]; then
+        export JAVA_HOME="${CANDIDATE}"
+        export PATH="${JAVA_HOME}/bin:${PATH}"
+        break
+      fi
+    done
+    if ! command -v java >/dev/null 2>&1 && [ -x "/usr/libexec/java_home" ]; then
+      JAVA_HOME_CANDIDATE="$("/usr/libexec/java_home" 2>/dev/null || true)"
+      if [ -n "${JAVA_HOME_CANDIDATE}" ] && [ -x "${JAVA_HOME_CANDIDATE}/bin/java" ]; then
+        export JAVA_HOME="${JAVA_HOME_CANDIDATE}"
+        export PATH="${JAVA_HOME}/bin:${PATH}"
+      fi
+    fi
+  fi
+fi
+
+if ! command -v java >/dev/null 2>&1; then
+  echo "Java runtime is required for Gradle Kotlin framework build phase."
+  exit 1
+fi
+
 cd "$SRCROOT/.."
 
 ARCH="${NATIVE_ARCH_64_BIT:-${CURRENT_ARCH:-}}"

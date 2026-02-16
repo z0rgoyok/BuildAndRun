@@ -40,65 +40,49 @@ class CreateWorktreeFlowUseCase(
                 is UseCaseResult.Failure -> return result
             }
 
-        when (
-            val result =
-                persistCreatedWorktreePreferences(
+        persistCreatedWorktreePreferences(
+            repositoryId = repositoryId,
+            worktreePath = createResult.createdWorktree.path,
+            baseBranch = input.baseBranch,
+        )
+
+        copyConfiguredFilesUseCase.execute(
+            input =
+                CopyConfiguredFilesUseCase.Input(
+                    repositoryPath = input.repositoryPath,
+                    createdWorktreePath = createResult.createdWorktree.path,
                     repositoryId = repositoryId,
-                    worktreePath = createResult.createdWorktree.path,
-                    baseBranch = input.baseBranch,
-                )
-        ) {
-            is UseCaseResult.Success -> {
-            }
+                ),
+        )
 
-            is UseCaseResult.Failure -> return result
-        }
-
-        when (
-            val result =
-                copyConfiguredFilesUseCase.execute(
-                    input =
-                        CopyConfiguredFilesUseCase.Input(
-                            repositoryPath = input.repositoryPath,
-                            createdWorktreePath = createResult.createdWorktree.path,
-                            repositoryId = repositoryId,
-                        ),
-                )
-        ) {
-            is UseCaseResult.Success -> {
-            }
-
-            is UseCaseResult.Failure -> return result
-        }
-
-        val worktreesResult =
+        val worktrees =
             when (
                 val result =
                     loadRepositoryWorktreesUseCase.execute(
                         input = LoadRepositoryWorktreesUseCase.Input(repositoryPath = input.repositoryPath),
                     )
             ) {
-                is UseCaseResult.Success -> result.value
-                is UseCaseResult.Failure -> return result
+                is UseCaseResult.Success -> result.value.worktrees
+                is UseCaseResult.Failure -> createResult.allWorktrees
             }
 
-        val branchesResult =
+        val branches =
             when (
                 val result =
                     loadBranchesUseCase.execute(
                         input = LoadBranchesUseCase.Input(repositoryPath = input.repositoryPath),
                     )
             ) {
-                is UseCaseResult.Success -> result.value
-                is UseCaseResult.Failure -> return result
+                is UseCaseResult.Success -> result.value.branches
+                is UseCaseResult.Failure -> emptyList()
             }
 
         return UseCaseResult.Success(
             value =
                 Output(
                     createdWorktree = createResult.createdWorktree,
-                    worktrees = worktreesResult.worktrees,
-                    branches = branchesResult.branches,
+                    worktrees = worktrees,
+                    branches = branches,
                 ),
         )
     }

@@ -69,7 +69,7 @@ final class KmpRoot: ObservableObject {
             },
             store.repositoriesState.subscribe { [weak self] nextState in
                 Task { @MainActor [weak self] in
-                    self?.repositoriesState = nextState
+                    self?.updateRepositoriesState(nextState)
                 }
             },
             store.worktreesState.subscribe { [weak self] nextState in
@@ -240,5 +240,18 @@ final class KmpRoot: ObservableObject {
                 id: repository.id,
                 name: repository.name
             )
+    }
+
+    private func updateRepositoriesState(_ nextState: RepositoriesState) {
+        let shouldAnimateExpansion =
+            repositoriesState.expandedRepositoryIds != nextState.expandedRepositoryIds ||
+            repositoriesState.collapsedGroupIds != nextState.collapsedGroupIds
+        if shouldAnimateExpansion {
+            withAnimation(DS.Animation.quick) {
+                repositoriesState = nextState
+            }
+        } else {
+            repositoriesState = nextState
+        }
     }
 }

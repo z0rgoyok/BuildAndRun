@@ -15,6 +15,7 @@ struct CompleteWorktreeSheet: View {
     @State private var hasRemoteBranch = false
     @State private var isPreparing = false
     @State private var isSubmitting = false
+    @State private var isSubmissionRequested = false
 
     private var labels: KanbanLabels { root.store.kanbanLabels }
 
@@ -174,11 +175,24 @@ struct CompleteWorktreeSheet: View {
         .task {
             await prepare()
         }
+        .onChange(of: root.messagesState.success?.message) { _, next in
+            guard isSubmissionRequested, next != nil else { return }
+            isSubmitting = false
+            isSubmissionRequested = false
+            dismiss()
+        }
+        .onChange(of: root.messagesState.error?.message) { _, next in
+            guard isSubmissionRequested, next != nil else { return }
+            isSubmitting = false
+            isSubmissionRequested = false
+        }
     }
 
     private func complete() {
         guard let worktree else { return }
+        guard !isSubmitting else { return }
         isSubmitting = true
+        isSubmissionRequested = true
         root.store.gitActions.onCompleteWorktree(
             worktreePath: worktree.path,
             targetBranch: targetBranch,
@@ -188,25 +202,32 @@ struct CompleteWorktreeSheet: View {
             deleteRemoteBranch: deleteRemoteBranch && hasRemoteBranch,
             force: forceDelete,
         )
-        isSubmitting = false
-        dismiss()
     }
 
     private func prepare() async {
         guard !isPreparing else { return }
         isPreparing = true
-        defer { isPreparing = false }
 
         if hasMergedPR || hasOpenPR {
             selectedAction = .prMerged
         }
 
         root.store.gitActions.onLoadHasRemoteBranch(worktreePath: worktreePath)
-        hasRemoteBranch =
-            root.worktreesState.remoteBranches
-                .first(where: { $0.worktreePath == worktreePath })?
-                .hasRemote
-                ?? false
+        for _ in 0 ..< 100 {
+            if let hasRemote =
+                root.worktreesState.remoteBranches
+                    .first(where: { $0.worktreePath == worktreePath })?
+                    .hasRemote
+            {
+                hasRemoteBranch = hasRemote
+                break
+            }
+            if root.messagesState.error != nil {
+                break
+            }
+            try? await Task.sleep(for: .milliseconds(50))
+        }
+        isPreparing = false
     }
 }
 

@@ -152,7 +152,9 @@ class AppWorktreesService(
             ) {
                 is UseCaseResult.Success -> {
                     worktreesState.worktreesByRepositoryPath[repositoryPath] = result.value.worktrees
-                    stateRefresher.settingsState.branches = result.value.branches
+                    if (result.value.branches.isNotEmpty()) {
+                        stateRefresher.settingsState.branches = result.value.branches
+                    }
                     worktreesState.selectedWorktreePath = result.value.createdWorktree.path
                     persistSelection()
                     worktreesState.createWorktreeState =

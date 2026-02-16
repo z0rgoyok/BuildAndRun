@@ -4,7 +4,7 @@ import app.tich.buildandrun.domain.context.worktrees.model.Worktree
 import app.tich.buildandrun.domain.context.worktrees.model.WorktreeStatus
 import app.tich.buildandrun.domain.shared.error.GitError
 
-internal suspend fun macOsGitListWorktrees(atRepoPath: String): List<Worktree> {
+internal fun macOsGitListWorktrees(atRepoPath: String): List<Worktree> {
     val repoPath = macOsGitNormalizePath(atRepoPath)
     val result = macOsGitRunCommand(listOf("git", "-C", repoPath, "worktree", "list", "--porcelain"))
     if (result.exitCode != 0) {
@@ -21,7 +21,7 @@ internal suspend fun macOsGitListWorktrees(atRepoPath: String): List<Worktree> {
     )
 }
 
-internal suspend fun macOsGitCreateWorktree(
+internal fun macOsGitCreateWorktree(
     atRepoPath: String,
     worktreePath: String,
     branch: String,
@@ -64,7 +64,7 @@ internal suspend fun macOsGitCreateWorktree(
     }
 }
 
-internal suspend fun macOsGitRemoveWorktree(
+internal fun macOsGitRemoveWorktree(
     atRepoPath: String,
     worktreePath: String,
     force: Boolean,
@@ -96,7 +96,7 @@ internal suspend fun macOsGitRemoveWorktree(
     }
 }
 
-internal suspend fun macOsGitLockWorktree(
+internal fun macOsGitLockWorktree(
     atRepoPath: String,
     worktreePath: String,
     reason: String?,
@@ -123,7 +123,7 @@ internal suspend fun macOsGitLockWorktree(
     }
 }
 
-internal suspend fun macOsGitUnlockWorktree(
+internal fun macOsGitUnlockWorktree(
     atRepoPath: String,
     worktreePath: String,
 ) {
@@ -150,7 +150,7 @@ internal suspend fun macOsGitUnlockWorktree(
     }
 }
 
-internal suspend fun macOsGitPruneWorktrees(atRepoPath: String) {
+internal fun macOsGitPruneWorktrees(atRepoPath: String) {
     val repoPath = macOsGitNormalizePath(atRepoPath)
     val result = macOsGitRunCommand(listOf("git", "-C", repoPath, "worktree", "prune"))
     if (result.exitCode != 0) {
@@ -163,7 +163,7 @@ internal suspend fun macOsGitPruneWorktrees(atRepoPath: String) {
     }
 }
 
-internal suspend fun macOsGitGetWorktreeStatus(atWorktreePath: String): WorktreeStatus {
+internal fun macOsGitGetWorktreeStatus(atWorktreePath: String): WorktreeStatus {
     val worktreePath = macOsGitNormalizePath(atWorktreePath)
     if (worktreePath.isBlank()) {
         throw GitError.InvalidPath(path = atWorktreePath)

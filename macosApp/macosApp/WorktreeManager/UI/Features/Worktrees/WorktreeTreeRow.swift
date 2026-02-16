@@ -125,7 +125,6 @@ struct WorktreeTreeRow: View {
             .allowsHitTesting(true)
             .accessibilityHidden(true)
         }
-        .animation(DS.Animation.quick, value: isSelected)
         .animation(DS.Animation.quick, value: worktree.isStatusLoading)
         .contextMenu {
             WorktreeMenuItems(root: root, worktreePath: worktree.path, includeNewWorktree: false)

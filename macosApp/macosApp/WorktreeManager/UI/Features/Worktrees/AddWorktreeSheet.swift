@@ -205,8 +205,11 @@ private extension AddWorktreeSheet {
         root.store.settings.onLoadBranches()
 
         Task {
-            while root.settingsState.branches.isEmpty {
-                try? await Task.sleep(for: .milliseconds(100))
+            for _ in 0 ..< 100 {
+                if !root.settingsState.branches.isEmpty || root.messagesState.error != nil {
+                    break
+                }
+                try? await Task.sleep(for: .milliseconds(50))
             }
             await MainActor.run {
                 if selectedExistingBranch.isEmpty, let first = allBranches.first {

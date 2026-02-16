@@ -42,12 +42,7 @@ class AppGitActionsService(
         val pair = worktreesState.findWorktreeByPath(path = worktreePath, repositoriesState = repositoriesState) ?: return
         executionScope.scope.launch {
             loadingRunner.withWorktreeLoading(pair.second.path, Res.string.loading_pushing) {
-                when (
-                    val result =
-                        pushWorktreeUseCase.execute(
-                            input = PushWorktreeUseCase.Input(worktreePath = pair.second.path),
-                        )
-                ) {
+                when (val result = pushWorktreeUseCase.execute(input = PushWorktreeUseCase.Input(worktreePath = pair.second.path))) {
                     is UseCaseResult.Success -> {
                         worktreesState.worktreeStatusByPath[pair.second.path] = result.value.status
                         messagesState.success = success(Res.string.screen_git_push_success)
@@ -64,12 +59,7 @@ class AppGitActionsService(
         val pair = worktreesState.findWorktreeByPath(path = worktreePath, repositoriesState = repositoriesState) ?: return
         executionScope.scope.launch {
             loadingRunner.withWorktreeLoading(pair.second.path, Res.string.loading_pulling) {
-                when (
-                    val result =
-                        pullWorktreeUseCase.execute(
-                            input = PullWorktreeUseCase.Input(worktreePath = pair.second.path),
-                        )
-                ) {
+                when (val result = pullWorktreeUseCase.execute(input = PullWorktreeUseCase.Input(worktreePath = pair.second.path))) {
                     is UseCaseResult.Success -> {
                         worktreesState.worktreeStatusByPath[pair.second.path] = result.value.status
                         messagesState.success = success(Res.string.screen_git_pull_success)
@@ -327,6 +317,14 @@ class AppGitActionsService(
                 ) {
                     is UseCaseResult.Success -> {
                         worktreesState.worktreesByRepositoryPath[repositoryPath] = result.value.worktrees
+                        val selectedWorktreePath = worktreesState.selectedWorktreePath
+                        if (
+                            selectedWorktreePath != null &&
+                            result.value.worktrees.none { worktree -> worktree.path == selectedWorktreePath }
+                        ) {
+                            worktreesState.selectedWorktreePath = null
+                            persistSelection()
+                        }
                         messagesState.success = success(Res.string.screen_git_worktrees_pruned_success)
                     }
                     is UseCaseResult.Failure -> {

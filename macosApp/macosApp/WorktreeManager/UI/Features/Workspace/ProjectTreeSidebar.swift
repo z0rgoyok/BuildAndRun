@@ -28,14 +28,16 @@ struct ProjectTreeSidebar: View {
                     archivedSectionHeader
 
                     if root.isSidebarArchivedSectionExpanded {
-                        ForEach(archivedRepositories, id: \.id) { repo in
-                            ProjectTreeNode(
-                                repository: repo,
-                                selection: $selection,
-                                isExpanded: expansionBinding(for: repo),
-                                onCopySettings: { root.presentSidebarCopySettings(for: repo) },
-                                onNewGroupForRepository: { presentNewGroupAlert(forRepositoryId: $0) }
-                            )
+                        VStack(spacing: 0) {
+                            ForEach(archivedRepositories, id: \.id) { repo in
+                                ProjectTreeNode(
+                                    repository: repo,
+                                    selection: $selection,
+                                    isExpanded: expansionBinding(for: repo),
+                                    onCopySettings: { root.presentSidebarCopySettings(for: repo) },
+                                    onNewGroupForRepository: { presentNewGroupAlert(forRepositoryId: $0) }
+                                )
+                            }
                         }
                     }
                 }
@@ -128,14 +130,16 @@ struct ProjectTreeSidebar: View {
             )
 
             if !root.isSidebarGroupCollapsed(groupId: groupId) {
-                ForEach(section.repositories, id: \.id) { repo in
-                    ProjectTreeNode(
-                        repository: repo,
-                        selection: $selection,
-                        isExpanded: expansionBinding(for: repo),
-                        onCopySettings: { root.presentSidebarCopySettings(for: repo) },
-                        onNewGroupForRepository: { presentNewGroupAlert(forRepositoryId: $0) }
-                    )
+                VStack(spacing: 0) {
+                    ForEach(section.repositories, id: \.id) { repo in
+                        ProjectTreeNode(
+                            repository: repo,
+                            selection: $selection,
+                            isExpanded: expansionBinding(for: repo),
+                            onCopySettings: { root.presentSidebarCopySettings(for: repo) },
+                            onNewGroupForRepository: { presentNewGroupAlert(forRepositoryId: $0) }
+                        )
+                    }
                 }
             }
         } else {

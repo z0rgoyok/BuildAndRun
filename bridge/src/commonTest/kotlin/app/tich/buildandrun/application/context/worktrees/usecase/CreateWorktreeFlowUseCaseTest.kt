@@ -51,7 +51,7 @@ class CreateWorktreeFlowUseCaseTest {
         }
 
     @Test
-    fun failsFlowWhenCopyConfiguredFilesFails() =
+    fun keepsSuccessWhenCopyConfiguredFilesFails() =
         runBlocking {
             val repositoryId = "repo-1"
             val gitClient = FakeGitClient().apply { registerRepository(path = "/tmp/repo") }
@@ -94,8 +94,103 @@ class CreateWorktreeFlowUseCaseTest {
                         ),
                 )
 
-            assertTrue(result is UseCaseResult.Failure)
-            assertEquals(DomainFailureCode.APP_UNKNOWN, result.value.code)
+            assertTrue(result is UseCaseResult.Success<*>)
+            val success = result as UseCaseResult.Success<CreateWorktreeFlowUseCase.Output>
+            assertEquals("/tmp/repo-feature", success.value.createdWorktree.path)
+            assertTrue(success.value.worktrees.any { it.path == "/tmp/repo-feature" })
+        }
+
+    @Test
+    fun keepsSuccessWhenLoadingWorktreesFailsAfterCreate() =
+        runBlocking {
+            val repositoryId = "repo-1"
+            val createGitClient = FakeGitClient().apply { registerRepository(path = "/tmp/repo") }
+            val failingSnapshotGitClient =
+                FakeGitClient().apply {
+                    registerRepository(path = "/tmp/repo")
+                    failListWorktreesFor(repositoryPath = "/tmp/repo")
+                }
+            val preferencesStore = FakePreferencesStore()
+            val useCase =
+                CreateWorktreeFlowUseCase(
+                    createWorktreeUseCase = CreateWorktreeUseCase(gitClient = createGitClient),
+                    copyConfiguredFilesUseCase =
+                        CopyConfiguredFilesUseCase(
+                            preferencesStore = preferencesStore,
+                            fileSystemHandling = FakeFileSystemHandling(),
+                        ),
+                    loadRepositoryWorktreesUseCase =
+                        LoadRepositoryWorktreesUseCase(
+                            gitClient = failingSnapshotGitClient,
+                            preferencesStore = preferencesStore,
+                        ),
+                    loadBranchesUseCase = LoadBranchesUseCase(gitClient = createGitClient),
+                    preferencesStore = preferencesStore,
+                )
+
+            val result =
+                useCase.execute(
+                    input =
+                        CreateWorktreeFlowUseCase.Input(
+                            repositoryId = repositoryId,
+                            repositoryPath = "/tmp/repo",
+                            branch = "feature/cleanup",
+                            worktreePath = "/tmp/repo-feature",
+                            createBranch = true,
+                            baseBranch = "main",
+                        ),
+                )
+
+            assertTrue(result is UseCaseResult.Success<*>)
+            val success = result as UseCaseResult.Success<CreateWorktreeFlowUseCase.Output>
+            assertTrue(success.value.worktrees.any { it.path == "/tmp/repo-feature" })
+        }
+
+    @Test
+    fun keepsSuccessWhenLoadingBranchesFailsAfterCreate() =
+        runBlocking {
+            val repositoryId = "repo-1"
+            val createGitClient = FakeGitClient().apply { registerRepository(path = "/tmp/repo") }
+            val failingBranchesGitClient =
+                FakeGitClient().apply {
+                    registerRepository(path = "/tmp/repo")
+                    failListBranchesFor(repositoryPath = "/tmp/repo")
+                }
+            val preferencesStore = FakePreferencesStore()
+            val useCase =
+                CreateWorktreeFlowUseCase(
+                    createWorktreeUseCase = CreateWorktreeUseCase(gitClient = createGitClient),
+                    copyConfiguredFilesUseCase =
+                        CopyConfiguredFilesUseCase(
+                            preferencesStore = preferencesStore,
+                            fileSystemHandling = FakeFileSystemHandling(),
+                        ),
+                    loadRepositoryWorktreesUseCase =
+                        LoadRepositoryWorktreesUseCase(
+                            gitClient = createGitClient,
+                            preferencesStore = preferencesStore,
+                        ),
+                    loadBranchesUseCase = LoadBranchesUseCase(gitClient = failingBranchesGitClient),
+                    preferencesStore = preferencesStore,
+                )
+
+            val result =
+                useCase.execute(
+                    input =
+                        CreateWorktreeFlowUseCase.Input(
+                            repositoryId = repositoryId,
+                            repositoryPath = "/tmp/repo",
+                            branch = "feature/cleanup",
+                            worktreePath = "/tmp/repo-feature",
+                            createBranch = true,
+                            baseBranch = "main",
+                        ),
+                )
+
+            assertTrue(result is UseCaseResult.Success<*>)
+            val success = result as UseCaseResult.Success<CreateWorktreeFlowUseCase.Output>
+            assertTrue(success.value.branches.isEmpty())
+            assertTrue(success.value.worktrees.any { it.path == "/tmp/repo-feature" })
         }
 
     private class FakeFileSystemHandling(

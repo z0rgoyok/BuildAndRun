@@ -14,6 +14,8 @@ class FakeGitClient : GitClient {
     private val remoteBranchesByRepository = mutableMapOf<String, MutableSet<String>>()
     private val worktreesByRepository = mutableMapOf<String, MutableList<Worktree>>()
     private val operationLog = mutableListOf<String>()
+    private val failingBranchListRepositories = mutableSetOf<String>()
+    private val failingWorktreeListRepositories = mutableSetOf<String>()
 
     val operations: List<String>
         get() = operationLog.toList()
@@ -36,11 +38,23 @@ class FakeGitClient : GitClient {
         worktreesByRepository[normalize(repositoryPath)] = worktrees.toMutableList()
     }
 
+    fun failListBranchesFor(repositoryPath: String) {
+        failingBranchListRepositories += normalize(repositoryPath)
+    }
+
+    fun failListWorktreesFor(repositoryPath: String) {
+        failingWorktreeListRepositories += normalize(repositoryPath)
+    }
+
     override suspend fun getRepositoryRoot(atPath: String): String =
         repositoryRootsByPath[normalize(atPath)] ?: throw GitError.NotARepository(path = atPath)
 
     override suspend fun listBranches(atRepoPath: String): List<String> =
-        branchesByRepository[normalize(atRepoPath)]?.toList() ?: emptyList()
+        if (failingBranchListRepositories.contains(normalize(atRepoPath))) {
+            throw GitError.NotARepository(path = atRepoPath)
+        } else {
+            branchesByRepository[normalize(atRepoPath)]?.toList() ?: emptyList()
+        }
 
     override suspend fun branchExists(
         atRepoPath: String,
@@ -59,7 +73,11 @@ class FakeGitClient : GitClient {
     }
 
     override suspend fun listWorktrees(atRepoPath: String): List<Worktree> =
-        worktreesByRepository[normalize(atRepoPath)]?.toList() ?: emptyList()
+        if (failingWorktreeListRepositories.contains(normalize(atRepoPath))) {
+            throw GitError.NotARepository(path = atRepoPath)
+        } else {
+            worktreesByRepository[normalize(atRepoPath)]?.toList() ?: emptyList()
+        }
 
     override suspend fun createWorktree(
         atRepoPath: String,
