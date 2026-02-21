@@ -81,24 +81,24 @@ struct WorktreeMenuItems: View {
 
     private struct WorktreeBoundMenuItems: View {
         @ObservedObject var root: KmpRoot
-        let worktree: AppStore.WorktreeItem
+        let worktree: WorktreeItem
 
         private var labels: KanbanLabels { root.store.kanbanLabels }
 
-        private var configuredEditors: [AppStore.EditorItem] {
-            root.state.editors.filter { $0.isEnabled && $0.isInstalled }
+        private var configuredEditors: [EditorItem] {
+            root.editorsState.editors.filter { $0.isEnabled && $0.isInstalled }
         }
 
         private var selectedEditorId: String {
-            root.state.preferredEditorId ?? ""
+            root.editorsState.preferredEditorId ?? ""
         }
 
         var body: some View {
             Section {
                 Button(labels.openInEditor) {
-                    root.store.onOpenInEditor(
+                    root.store.editors.onOpenInEditor(
                         worktreePath: worktree.path,
-                        editorId: root.state.preferredEditorId,
+                        editorId: root.editorsState.preferredEditorId,
                     )
                 }
                 .keyboardShortcut("o", modifiers: .command)
@@ -114,8 +114,8 @@ struct WorktreeMenuItems: View {
                             selection: Binding(
                                 get: { selectedEditorId },
                                 set: { newId in
-                                    root.store.onSetPreferredEditor(editorId: newId)
-                                    root.store.onOpenInEditor(
+                                    root.store.editors.onSetPreferredEditor(editorId: newId)
+                                    root.store.editors.onOpenInEditor(
                                         worktreePath: worktree.path,
                                         editorId: newId,
                                     )
@@ -132,10 +132,10 @@ struct WorktreeMenuItems: View {
 
                     Divider()
 
-                    Button(root.state.rememberEditorChoice ? labels.forgetEditorChoice : labels.rememberEditorChoice) {
-                        root.store.onSetRememberEditorChoice(value: !root.state.rememberEditorChoice)
-                        if root.state.rememberEditorChoice {
-                            root.store.onSetPreferredEditor(editorId: nil)
+                    Button(root.editorsState.rememberEditorChoice ? labels.forgetEditorChoice : labels.rememberEditorChoice) {
+                        root.store.editors.onSetRememberEditorChoice(value: !root.editorsState.rememberEditorChoice)
+                        if root.editorsState.rememberEditorChoice {
+                            root.store.editors.onSetPreferredEditor(editorId: nil)
                         }
                     }
 
@@ -148,12 +148,12 @@ struct WorktreeMenuItems: View {
 
             Section {
                 Button(labels.showInFinder) {
-                    root.store.onOpenInFinder(worktreePath: worktree.path)
+                    root.store.editors.onOpenInFinder(worktreePath: worktree.path)
                 }
                 .keyboardShortcut("f", modifiers: [.command, .shift])
 
                 Button(labels.openInTerminal) {
-                    root.store.onOpenInTerminal(worktreePath: worktree.path)
+                    root.store.editors.onOpenInTerminal(worktreePath: worktree.path)
                 }
                 .keyboardShortcut("t", modifiers: [.command, .shift])
 
@@ -167,12 +167,12 @@ struct WorktreeMenuItems: View {
             if !worktree.isMain {
                 Section {
                     Button(labels.push) {
-                        root.store.onPush(worktreePath: worktree.path)
+                        root.store.gitActions.onPush(worktreePath: worktree.path)
                     }
                     .keyboardShortcut("p", modifiers: [.command, .shift])
 
                     Button(labels.pull) {
-                        root.store.onPull(worktreePath: worktree.path)
+                        root.store.gitActions.onPull(worktreePath: worktree.path)
                     }
                     .keyboardShortcut("p", modifiers: [.command, .option])
                 }
@@ -180,7 +180,7 @@ struct WorktreeMenuItems: View {
                 Section {
                     if worktree.status?.prStatus != nil {
                         Button(labels.viewPullRequest) {
-                            root.store.onOpenPullRequest(worktreePath: worktree.path)
+                            root.store.gitActions.onOpenPullRequest(worktreePath: worktree.path)
                         }
                     } else {
                         Button(labels.createPullRequest) {
@@ -192,11 +192,11 @@ struct WorktreeMenuItems: View {
                 Section {
                     if worktree.isLocked {
                         Button(labels.unlock) {
-                            root.store.onUnlockWorktree(worktreePath: worktree.path)
+                            root.store.gitActions.onUnlockWorktree(worktreePath: worktree.path)
                         }
                     } else {
                         Button(labels.lock) {
-                            root.store.onLockWorktree(worktreePath: worktree.path)
+                            root.store.gitActions.onLockWorktree(worktreePath: worktree.path)
                         }
                     }
                 }
@@ -207,7 +207,7 @@ struct WorktreeMenuItems: View {
                     }
 
                     Button(labels.removeWorktree, role: .destructive) {
-                        root.store.onRemoveWorktree(
+                        root.store.gitActions.onRemoveWorktree(
                             worktreePath: worktree.path,
                             force: true,
                             deleteBranch: true,
@@ -218,7 +218,7 @@ struct WorktreeMenuItems: View {
 
             Section {
                 Button(labels.refreshStatus) {
-                    root.store.onRefreshWorktreeStatus(worktreePath: worktree.path)
+                    root.store.worktrees.onRefreshWorktreeStatus(worktreePath: worktree.path)
                 }
                 .keyboardShortcut("r", modifiers: .command)
             }

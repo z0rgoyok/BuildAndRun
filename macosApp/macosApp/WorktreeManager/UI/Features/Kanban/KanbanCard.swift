@@ -3,7 +3,7 @@ import SwiftUI
 
 struct KanbanCard: View {
     @EnvironmentObject var root: KmpRoot
-    let task: AppStore.KanbanTaskItem
+    let task: KanbanTaskItem
     let isDragging: Bool
     let onMoveTask: (String, KanbanColumnType) -> Void
     let onEdit: () -> Void

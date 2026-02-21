@@ -1,5 +1,0 @@
-goal: keep Swift only for UI layer
-scope: full parity repo/worktree/status/PR/settings/editors/help
-i18n: en,ru,uk required for migrated keys
-compat-storage: not required
-coordination: write progress to .coord/port-sync/results/*.md

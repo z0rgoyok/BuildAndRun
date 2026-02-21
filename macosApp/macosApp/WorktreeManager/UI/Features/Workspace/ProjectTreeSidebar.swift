@@ -13,6 +13,8 @@ struct ProjectTreeSidebar: View {
     @State private var renameGroupId: String?
     @State private var renameGroupName = ""
 
+    @State private var animationsEnabled = false
+
     @State private var draggedGroupId: String?
     @State private var activeDropTargetGroupId: String?
     @State private var activeDropPlacement: GroupSectionDropDelegate.DropPlacement = .before
@@ -28,19 +30,31 @@ struct ProjectTreeSidebar: View {
                     archivedSectionHeader
 
                     if root.isSidebarArchivedSectionExpanded {
-                        ForEach(archivedRepositories, id: \.id) { repo in
-                            ProjectTreeNode(
-                                repository: repo,
-                                selection: $selection,
-                                isExpanded: expansionBinding(for: repo),
-                                onCopySettings: { root.presentSidebarCopySettings(for: repo) },
-                                onNewGroupForRepository: { presentNewGroupAlert(forRepositoryId: $0) }
-                            )
+                        VStack(spacing: 0) {
+                            ForEach(archivedRepositories, id: \.id) { repo in
+                                ProjectTreeNode(
+                                    repository: repo,
+                                    selection: $selection,
+                                    isExpanded: expansionBinding(for: repo),
+                                    onCopySettings: { root.presentSidebarCopySettings(for: repo) },
+                                    onNewGroupForRepository: { presentNewGroupAlert(forRepositoryId: $0) }
+                                )
+                            }
                         }
                     }
                 }
             }
             .padding(.vertical, DS.Spacing.xs)
+            .animation(animationsEnabled ? DS.Animation.quick : nil, value: root.repositoriesState.expandedRepositoryIds)
+            .animation(animationsEnabled ? DS.Animation.quick : nil, value: root.repositoriesState.collapsedGroupIds)
+            .animation(animationsEnabled ? DS.Animation.quick : nil, value: root.isSidebarArchivedSectionExpanded)
+            .onChange(of: root.repositoriesState.sidebarSections) { _, newSections in
+                if !animationsEnabled && !newSections.isEmpty {
+                    Task { @MainActor in
+                        animationsEnabled = true
+                    }
+                }
+            }
         }
         .background(DS.Colors.surfacePrimary)
         .toolbar {
@@ -75,7 +89,7 @@ struct ProjectTreeSidebar: View {
         }
         .onAppear { root.syncSidebarSelectionExpansion(selection: selection) }
         .onChange(of: selection) { _, _ in root.syncSidebarSelectionExpansion(selection: selection) }
-        .onChange(of: root.state.selectedRepositoryId) { _, _ in root.syncSidebarSelectionExpansion(selection: selection) }
+        .onChange(of: root.repositoriesState.selectedRepositoryId) { _, _ in root.syncSidebarSelectionExpansion(selection: selection) }
         .sheet(item: sidebarCopySettingsTargetBinding) { target in
             RepositoryCopyPatternsSheet(
                 repositoryId: target.id,
@@ -96,7 +110,7 @@ struct ProjectTreeSidebar: View {
     }
 
     @ViewBuilder
-    private func sidebarSection(_ section: AppStore.SidebarSection) -> some View {
+    private func sidebarSection(_ section: SidebarSection) -> some View {
         if let groupName = section.groupName, let groupId = section.groupId {
             SidebarSectionHeader(
                 groupId: groupId,
@@ -109,7 +123,7 @@ struct ProjectTreeSidebar: View {
                     activeDropTargetGroupId = nil
                 },
                 onRename: { id in presentRenameGroupAlert(groupId: id, currentName: groupName) },
-                onDelete: { root.store.onDeleteRepositoryGroup(groupId: groupId) }
+                onDelete: { root.store.groups.onDeleteRepositoryGroup(groupId: groupId) }
             )
             .onDrop(
                 of: [.text],
@@ -125,14 +139,16 @@ struct ProjectTreeSidebar: View {
             )
 
             if !root.isSidebarGroupCollapsed(groupId: groupId) {
-                ForEach(section.repositories, id: \.id) { repo in
-                    ProjectTreeNode(
-                        repository: repo,
-                        selection: $selection,
-                        isExpanded: expansionBinding(for: repo),
-                        onCopySettings: { root.presentSidebarCopySettings(for: repo) },
-                        onNewGroupForRepository: { presentNewGroupAlert(forRepositoryId: $0) }
-                    )
+                VStack(spacing: 0) {
+                    ForEach(section.repositories, id: \.id) { repo in
+                        ProjectTreeNode(
+                            repository: repo,
+                            selection: $selection,
+                            isExpanded: expansionBinding(for: repo),
+                            onCopySettings: { root.presentSidebarCopySettings(for: repo) },
+                            onNewGroupForRepository: { presentNewGroupAlert(forRepositoryId: $0) }
+                        )
+                    }
                 }
             }
         } else {
@@ -148,12 +164,12 @@ struct ProjectTreeSidebar: View {
         }
     }
 
-    private var archivedRepositories: [AppStore.RepositoryItem] {
-        root.state.repositories.filter { $0.isArchived }
+    private var archivedRepositories: [RepositoryItem] {
+        root.repositoriesState.repositories.filter { $0.isArchived }
     }
 
-    private var sidebarSectionsWithStableIds: [(id: String, section: AppStore.SidebarSection)] {
-        root.state.sidebarSections.map { section in
+    private var sidebarSectionsWithStableIds: [(id: String, section: SidebarSection)] {
+        root.repositoriesState.sidebarSections.map { section in
             let id = section.groupId.map { "group:\($0)" } ?? "ungrouped"
             return (id: id, section: section)
         }
@@ -228,7 +244,7 @@ struct ProjectTreeSidebar: View {
         targetId: String,
         placement: GroupSectionDropDelegate.DropPlacement,
     ) {
-        var orderedGroupIds = root.state.sidebarSections.compactMap(\.groupId)
+        var orderedGroupIds = root.repositoriesState.sidebarSections.compactMap(\.groupId)
         guard let fromIndex = orderedGroupIds.firstIndex(of: draggedId),
               let targetIndex = orderedGroupIds.firstIndex(of: targetId) else { return }
 
@@ -244,10 +260,10 @@ struct ProjectTreeSidebar: View {
 
         insertionIndex = min(max(insertionIndex, 0), orderedGroupIds.count)
         orderedGroupIds.insert(draggedId, at: insertionIndex)
-        root.store.onReorderRepositoryGroups(orderedGroupIds: orderedGroupIds)
+        root.store.groups.onReorderRepositoryGroups(orderedGroupIds: orderedGroupIds)
     }
 
-    private func expansionBinding(for repo: AppStore.RepositoryItem) -> Binding<Bool> {
+    private func expansionBinding(for repo: RepositoryItem) -> Binding<Bool> {
         Binding(
             get: { root.isSidebarRepositoryExpanded(repositoryId: repo.id) },
             set: { expanded in
@@ -271,9 +287,9 @@ struct ProjectTreeSidebar: View {
         let name = newGroupName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !name.isEmpty else { return }
         if let repositoryId = newGroupRepositoryId {
-            root.store.onCreateGroupAndAssignRepository(name: name, repositoryId: repositoryId)
+            root.store.groups.onCreateGroupAndAssignRepository(name: name, repositoryId: repositoryId)
         } else {
-            root.store.onCreateRepositoryGroup(name: name)
+            root.store.groups.onCreateRepositoryGroup(name: name)
         }
         resetNewGroupState()
     }
@@ -292,7 +308,7 @@ struct ProjectTreeSidebar: View {
     private func submitRenameGroup() {
         let name = renameGroupName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !name.isEmpty, let groupId = renameGroupId else { return }
-        root.store.onRenameRepositoryGroup(groupId: groupId, newName: name)
+        root.store.groups.onRenameRepositoryGroup(groupId: groupId, newName: name)
         resetRenameGroupState()
     }
 }

@@ -24,7 +24,7 @@ struct RepositoryCopyPatternsSheet: View {
             Toggle("Use custom patterns for this repository", isOn: $useCustomPatterns)
                 .onChange(of: useCustomPatterns) { _, newValue in
                     if !newValue {
-                        patterns = root.state.defaultCopyPatterns
+                        patterns = root.settingsState.defaultCopyPatterns
                     }
                 }
 
@@ -36,12 +36,12 @@ struct RepositoryCopyPatternsSheet: View {
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
 
-                    if root.state.defaultCopyPatterns.isEmpty {
+                    if root.settingsState.defaultCopyPatterns.isEmpty {
                         Text("No default patterns configured")
                             .foregroundStyle(.tertiary)
                             .font(.subheadline)
                     } else {
-                        ForEach(root.state.defaultCopyPatterns, id: \.self) { pattern in
+                        ForEach(root.settingsState.defaultCopyPatterns, id: \.self) { pattern in
                             HStack {
                                 Image(systemName: pattern.hasSuffix("/") ? "folder" : "doc")
                                     .foregroundStyle(.secondary)
@@ -80,29 +80,29 @@ struct RepositoryCopyPatternsSheet: View {
         .onAppear {
             load()
         }
-        .onChange(of: root.state.selectedRepositoryId) { _, _ in
+        .onChange(of: root.repositoriesState.selectedRepositoryId) { _, _ in
             load()
         }
     }
 
     private func load() {
-        if root.state.selectedRepositoryId != repositoryId {
-            root.store.onSelectRepository(repositoryId: repositoryId)
+        if root.repositoriesState.selectedRepositoryId != repositoryId {
+            root.store.repositories.onSelectRepository(repositoryId: repositoryId)
             return
         }
-        patterns = root.state.selectedRepositoryEffectiveCopyPatterns
-        useCustomPatterns = root.state.selectedRepositoryCustomCopyPatterns != nil
+        patterns = root.settingsState.selectedRepositoryEffectiveCopyPatterns
+        useCustomPatterns = root.settingsState.selectedRepositoryCustomCopyPatterns != nil
     }
 
     private func save() -> Bool {
-        guard root.state.selectedRepositoryId == repositoryId else {
-            root.store.onSelectRepository(repositoryId: repositoryId)
+        guard root.repositoriesState.selectedRepositoryId == repositoryId else {
+            root.store.repositories.onSelectRepository(repositoryId: repositoryId)
             return false
         }
         if useCustomPatterns {
-            root.store.onSetRepositoryCopyPatterns(patterns: patterns)
+            root.store.settings.onSetRepositoryCopyPatterns(patterns: patterns)
         } else {
-            root.store.onSetRepositoryCopyPatterns(patterns: nil)
+            root.store.settings.onSetRepositoryCopyPatterns(patterns: nil)
         }
         return true
     }

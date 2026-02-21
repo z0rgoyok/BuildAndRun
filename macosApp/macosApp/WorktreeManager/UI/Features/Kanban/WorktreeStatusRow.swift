@@ -23,12 +23,12 @@ struct WorktreeStatusRow: View {
                 }
 
                 if status.ahead > 0 {
-                    Label(root.store.resolveStatusToPush(commits: "\(status.ahead)"), systemImage: "arrow.up.circle.fill")
+                    Label(root.store.texts.resolveStatusToPush(commits: "\(status.ahead)"), systemImage: "arrow.up.circle.fill")
                         .foregroundStyle(.blue)
                 }
 
                 if status.behind > 0 {
-                    Label(root.store.resolveStatusBehind(commits: "\(status.behind)"), systemImage: "arrow.down.circle.fill")
+                    Label(root.store.texts.resolveStatusBehind(commits: "\(status.behind)"), systemImage: "arrow.down.circle.fill")
                         .foregroundStyle(.purple)
                 }
 

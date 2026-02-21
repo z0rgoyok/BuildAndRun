@@ -4,7 +4,7 @@ import SwiftUI
 
 struct ProjectTreeNode: View {
     @EnvironmentObject var root: KmpRoot
-    let repository: AppStore.RepositoryItem
+    let repository: RepositoryItem
     @Binding var selection: SidebarSelection?
     @Binding var isExpanded: Bool
     let onCopySettings: () -> Void
@@ -19,6 +19,60 @@ struct ProjectTreeNode: View {
         return false
     }
 
+    private var chevronColor: Color {
+        if isRepoSelected {
+            return DS.Colors.sidebarSelectedTextSecondary
+        }
+        if repository.isArchived {
+            return DS.Colors.textQuaternary
+        }
+        return DS.Colors.textTertiary
+    }
+
+    private var iconColor: Color {
+        if isRepoSelected {
+            return DS.Colors.sidebarSelectedTextPrimary
+        }
+        if repository.isArchived {
+            return DS.Colors.textTertiary
+        }
+        return .blue
+    }
+
+    private var titleColor: Color {
+        if isRepoSelected {
+            return DS.Colors.sidebarSelectedTextPrimary
+        }
+        if repository.isArchived {
+            return DS.Colors.textSecondary
+        }
+        return DS.Colors.textPrimary
+    }
+
+    private var subtitleColor: Color {
+        if isRepoSelected {
+            return DS.Colors.sidebarSelectedTextSecondary
+        }
+        if repository.isArchived {
+            return DS.Colors.textQuaternary
+        }
+        return DS.Colors.textTertiary
+    }
+
+    private var countTextColor: Color {
+        if isRepoSelected {
+            return DS.Colors.sidebarSelectedBadgeText
+        }
+        return DS.Colors.textSecondary
+    }
+
+    private var countBackgroundColor: Color {
+        if isRepoSelected {
+            return DS.Colors.sidebarSelectedBadgeBackground
+        }
+        return DS.Colors.surfaceSecondary
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             repoHeader
@@ -27,6 +81,7 @@ struct ProjectTreeNode: View {
                 worktreeList
             }
         }
+        .animation(DS.Animation.quick, value: isExpanded)
     }
 
     private var repoHeader: some View {
@@ -39,31 +94,31 @@ struct ProjectTreeNode: View {
                 } label: {
                     Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
                         .font(.system(size: 10, weight: .semibold))
-                        .foregroundStyle(DS.Colors.textTertiary)
+                        .foregroundStyle(chevronColor)
                         .frame(width: DS.Sizes.treeIconSize, height: DS.Sizes.treeIconSize)
                 }
                 .buttonStyle(.plain)
             } else {
                 Image(systemName: "chevron.right")
                     .font(.system(size: 10, weight: .semibold))
-                    .foregroundStyle(DS.Colors.textQuaternary)
+                    .foregroundStyle(chevronColor)
                     .frame(width: DS.Sizes.treeIconSize, height: DS.Sizes.treeIconSize)
             }
 
             Image(systemName: "folder.fill")
                 .font(.system(size: 14))
-                .foregroundStyle(repository.isArchived ? DS.Colors.textTertiary : .blue)
+                .foregroundStyle(iconColor)
                 .frame(width: DS.Sizes.treeIconSize)
 
             VStack(alignment: .leading, spacing: 1) {
                 Text(repository.name)
                     .font(DS.Typography.treeItem)
-                    .foregroundStyle(repository.isArchived ? DS.Colors.textSecondary : DS.Colors.textPrimary)
+                    .foregroundStyle(titleColor)
                     .lineLimit(1)
 
                 Text(repository.path)
                     .font(DS.Typography.treeItemSecondary)
-                    .foregroundStyle(repository.isArchived ? DS.Colors.textQuaternary : DS.Colors.textTertiary)
+                    .foregroundStyle(subtitleColor)
                     .lineLimit(1)
                     .truncationMode(.middle)
             }
@@ -74,10 +129,10 @@ struct ProjectTreeNode: View {
             if !repository.isArchived, !repository.worktrees.isEmpty {
                 Text("\(repository.worktrees.count)")
                     .font(DS.Typography.badge)
-                    .foregroundStyle(DS.Colors.textSecondary)
+                    .foregroundStyle(countTextColor)
                     .padding(.horizontal, DS.Spacing.xs)
                     .padding(.vertical, DS.Spacing.xxxs)
-                    .background(DS.Colors.surfaceSecondary)
+                    .background(countBackgroundColor)
                     .cornerRadius(DS.Radius.xs)
             }
         }
@@ -135,13 +190,13 @@ struct ProjectTreeNode: View {
 
             if repository.isArchived {
                 Button {
-                    root.store.onRestoreRepository(repositoryId: repository.id)
+                    root.store.repositories.onRestoreRepository(repositoryId: repository.id)
                 } label: {
                     Label(root.store.sidebarLabels.restoreProject, systemImage: "arrow.uturn.left")
                 }
             } else {
                 Button {
-                    root.store.onArchiveRepository(repositoryId: repository.id)
+                    root.store.repositories.onArchiveRepository(repositoryId: repository.id)
                 } label: {
                     Label(root.store.sidebarLabels.archiveProject, systemImage: "archivebox")
                 }
@@ -150,7 +205,7 @@ struct ProjectTreeNode: View {
             Divider()
 
             Button(root.store.sidebarLabels.removeFromList, role: .destructive) {
-                root.store.onRemoveRepository(repositoryId: repository.id)
+                root.store.repositories.onRemoveRepository(repositoryId: repository.id)
             }
         }
     }
@@ -158,14 +213,14 @@ struct ProjectTreeNode: View {
     @ViewBuilder
     private var groupMenu: some View {
         Menu(root.store.sidebarLabels.moveToGroup) {
-            ForEach(root.state.repositoryGroups, id: \.id) { group in
+            ForEach(root.repositoriesState.repositoryGroups, id: \.id) { group in
                 Button(group.name) {
-                    root.store.onSetRepositoryGroup(repositoryId: repository.id, groupId: group.id)
+                    root.store.groups.onSetRepositoryGroup(repositoryId: repository.id, groupId: group.id)
                 }
                 .disabled(repository.groupId == group.id)
             }
 
-            if !root.state.repositoryGroups.isEmpty {
+            if !root.repositoriesState.repositoryGroups.isEmpty {
                 Divider()
             }
 
@@ -177,7 +232,7 @@ struct ProjectTreeNode: View {
                 Divider()
 
                 Button(root.store.sidebarLabels.removeFromGroup) {
-                    root.store.onSetRepositoryGroup(repositoryId: repository.id, groupId: nil)
+                    root.store.groups.onSetRepositoryGroup(repositoryId: repository.id, groupId: nil)
                 }
             }
         }
@@ -195,7 +250,7 @@ struct ProjectTreeNode: View {
         }
     }
 
-    private var sortedWorktrees: [AppStore.WorktreeItem] {
+    private var sortedWorktrees: [WorktreeItem] {
         repository.worktrees.sorted { lhs, rhs in
             if lhs.isMain && !rhs.isMain { return true }
             if !lhs.isMain && rhs.isMain { return false }

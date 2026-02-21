@@ -46,7 +46,7 @@ flowchart LR
 
 ### 1) Shared contracts и error/i18n контракты
 
-- В `shared/commonMain` фиксируем единые контракты ошибок:
+- В `bridge/commonMain` фиксируем единые контракты ошибок:
   - `DomainFailure` на границе domain/use-cases,
   - `UiError` + `UiText(key,args)` на границе presentation → UI.
 - Полный набор i18n-ключей для первого полного релиза (`en/ru/uk`), без fallback на missing keys.
@@ -56,7 +56,7 @@ flowchart LR
 
 ### 2) Полный перенос application/data/infrastructure в shared
 
-- `shared/macosMain` реализует реальные адаптеры:
+- `bridge/macosMain` реализует реальные адаптеры:
   - `Git` (worktrees, branches, status, push/pull, merge, PR, lock/unlock/prune),
   - `Preferences` (base path, expanded repos, selected repo/worktree, editor prefs, copy patterns),
   - `Editor/System` opening,
@@ -67,7 +67,7 @@ flowchart LR
 
 ### 3) Полный перенос presentation в shared (Decompose)
 
-- В `shared/commonMain` собираем `Root/Workspace/Settings/...` компоненты.
+- В `bridge/commonMain` собираем `Root/Workspace/Settings/...` компоненты.
 - Для всех сценариев заводим `State + Intent + Effect`:
   - sidebar selection / repository-worktree lifecycle,
   - команды меню и тулбара,
@@ -117,8 +117,8 @@ flowchart LR
 
 ## Контроль качества и gate
 
-- `./gradlew :shared:test`
-- `./gradlew :shared:check`
+- `./gradlew :bridge:test`
+- `./gradlew :bridge:check`
 - `xcodebuild -project macosApp/macosApp.xcodeproj -scheme macosApp -configuration Debug -sdk macosx CODE_SIGNING_ALLOWED=NO PORT_SYNC_NON_UI_SWIFT_PRUNE=YES build`
 - IDEA inspections по затронутым файлам/модулям без ошибок и предупреждений.
 

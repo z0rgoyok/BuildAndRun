@@ -32,48 +32,44 @@ enum DS {
     // MARK: - Semantic Colors
 
     enum Colors {
-        // Backgrounds
         static let surfacePrimary = Color(nsColor: .windowBackgroundColor)
         static let surfaceSecondary = Color(nsColor: .controlBackgroundColor)
-        static let surfaceTertiary = Color(nsColor: .underPageBackgroundColor)
+        static let surfaceTertiary = Color(nsColor: .windowBackgroundColor)
         static let surfaceElevated = Color(nsColor: .windowBackgroundColor)
 
-        // Kanban column backgrounds
-        static let columnBackground = Color(nsColor: .controlBackgroundColor).opacity(0.5)
-        static let columnBackgroundHover = Color(nsColor: .controlBackgroundColor).opacity(0.7)
+        static let columnBackground = Color(nsColor: .controlBackgroundColor)
+        static let columnBackgroundHover = Color(nsColor: .controlBackgroundColor)
 
-        // Card backgrounds
-        static let cardBackground = Color(nsColor: .controlBackgroundColor)
-        static let cardBackgroundHover = Color(nsColor: .selectedContentBackgroundColor).opacity(0.1)
-        static let cardBackgroundDragging = Color(nsColor: .selectedContentBackgroundColor).opacity(0.15)
+        static let cardBackground = Color(nsColor: .textBackgroundColor)
+        static let cardBackgroundHover = Color(nsColor: .selectedContentBackgroundColor).opacity(0.08)
+        static let cardBackgroundDragging = Color(nsColor: .selectedContentBackgroundColor).opacity(0.14)
 
-        // Text
         static let textPrimary = Color(nsColor: .labelColor)
         static let textSecondary = Color(nsColor: .secondaryLabelColor)
         static let textTertiary = Color(nsColor: .tertiaryLabelColor)
         static let textQuaternary = Color(nsColor: .quaternaryLabelColor)
 
-        // Borders
         static let border = Color(nsColor: .separatorColor)
         static let borderSubtle = Color(nsColor: .separatorColor).opacity(0.5)
 
-        // Status colors
         static let statusTodo = Color.gray
         static let statusInProgress = Color.blue
         static let statusReview = Color.orange
         static let statusDone = Color.green
 
-        // Accent colors
         static let accent = Color.accentColor
         static let accentSubtle = Color.accentColor.opacity(0.15)
 
-        // Interactive states
         static let dropTargetActive = Color.accentColor.opacity(0.2)
         static let dropTargetBorder = Color.accentColor
 
-        // Tree sidebar
         static let sidebarSelected = Color(nsColor: .selectedContentBackgroundColor)
         static let sidebarHover = Color(nsColor: .selectedContentBackgroundColor).opacity(0.5)
+        static let sidebarSelectedTextPrimary = Color(nsColor: .alternateSelectedControlTextColor)
+        static let sidebarSelectedTextSecondary = Color(nsColor: .alternateSelectedControlTextColor).opacity(0.84)
+        static let sidebarSelectedTextTertiary = Color(nsColor: .alternateSelectedControlTextColor).opacity(0.7)
+        static let sidebarSelectedBadgeBackground = Color.white.opacity(0.95)
+        static let sidebarSelectedBadgeText = Color(nsColor: .selectedContentBackgroundColor)
     }
 
     // MARK: - Typography
@@ -160,6 +156,10 @@ extension View {
         self
             .background(DS.Colors.columnBackground)
             .cornerRadius(DS.Radius.lg)
+            .overlay(
+                RoundedRectangle(cornerRadius: DS.Radius.lg)
+                    .stroke(DS.Colors.borderSubtle, lineWidth: 1)
+            )
     }
 
     func dropTargetStyle(isTargeted: Bool) -> some View {

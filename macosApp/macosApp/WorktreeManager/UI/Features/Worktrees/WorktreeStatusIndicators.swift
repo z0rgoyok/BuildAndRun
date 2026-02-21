@@ -4,8 +4,13 @@ import SwiftUI
 struct WorktreeStatusIndicators: View {
     @EnvironmentObject var root: KmpRoot
     let status: WorktreeStatus
+    let isSelected: Bool
 
     private var labels: KanbanLabels { root.store.kanbanLabels }
+
+    private var selectedColor: Color {
+        DS.Colors.sidebarSelectedTextSecondary
+    }
 
     var body: some View {
         HStack(spacing: DS.Spacing.xxs) {
@@ -23,8 +28,8 @@ struct WorktreeStatusIndicators: View {
                     Text("\(status.ahead)")
                         .font(.system(size: 9))
                 }
-                .foregroundStyle(.blue)
-                .help(root.store.resolveStatusToPush(commits: "\(status.ahead)"))
+                .foregroundStyle(isSelected ? selectedColor : .blue)
+                .help(root.store.texts.resolveStatusToPush(commits: "\(status.ahead)"))
             }
 
             if status.behind > 0 {
@@ -34,14 +39,17 @@ struct WorktreeStatusIndicators: View {
                     Text("\(status.behind)")
                         .font(.system(size: 9))
                 }
-                .foregroundStyle(.purple)
-                .help(root.store.resolveStatusBehind(commits: "\(status.behind)"))
+                .foregroundStyle(isSelected ? selectedColor : .purple)
+                .help(root.store.texts.resolveStatusBehind(commits: "\(status.behind)"))
             }
 
             if let pr = status.prStatus {
                 Image(systemName: pr.state === PRState.merged ? "checkmark.circle.fill" : "arrow.triangle.pull")
                     .font(.system(size: 9))
-                    .foregroundStyle(pr.state === PRState.merged ? .purple : .green)
+                    .foregroundStyle(
+                        isSelected ? selectedColor :
+                        pr.state === PRState.merged ? .purple : .green
+                    )
                     .help(pr.state === PRState.merged ? labels.prMerged : "\(labels.prShort) #\(pr.number)")
             }
         }

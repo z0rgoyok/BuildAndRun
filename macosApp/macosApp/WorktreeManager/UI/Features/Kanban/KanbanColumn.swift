@@ -5,11 +5,11 @@ struct KanbanColumn: View {
     @EnvironmentObject var root: KmpRoot
     let title: String
     let columnId: KanbanColumnType
-    let tasks: [AppStore.KanbanTaskItem]
+    let tasks: [KanbanTaskItem]
     @Binding var draggedTaskId: String?
     let onAddTask: () -> Void
     let onMoveTask: (String, KanbanColumnType) -> Void
-    let onEditTask: (AppStore.KanbanTaskItem) -> Void
+    let onEditTask: (KanbanTaskItem) -> Void
     let onDeleteTask: (String) -> Void
 
     @State private var isTargeted = false

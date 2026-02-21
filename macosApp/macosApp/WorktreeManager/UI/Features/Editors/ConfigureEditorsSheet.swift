@@ -30,11 +30,11 @@ struct ConfigureEditorsSheet: View {
     private var content: some View {
         List {
             Section {
-                ForEach(root.state.editors, id: \.id) { editor in
+                ForEach(root.editorsState.editors, id: \.id) { editor in
                     EditorRow(
                         editor: editor,
                         onToggle: { enabled in
-                            root.store.onSetEditorEnabled(
+                            root.store.editors.onSetEditorEnabled(
                                 editorId: editor.id,
                                 enabled: enabled,
                             )
@@ -52,7 +52,7 @@ struct ConfigureEditorsSheet: View {
 }
 
 private struct EditorRow: View {
-    let editor: AppStore.EditorItem
+    let editor: EditorItem
     let onToggle: (Bool) -> Void
 
     var body: some View {

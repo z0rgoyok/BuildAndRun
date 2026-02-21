@@ -28,8 +28,8 @@ struct AddRepositorySheet: View {
                 Spacer()
 
                 Button("Add") {
-                    root.store.onAddRepositoryPathChanged(value: path)
-                    root.store.onAddRepository()
+                    root.store.repositories.onAddRepositoryPathChanged(value: path)
+                    root.store.repositories.onAddRepository()
                     dismiss()
                 }
                 .keyboardShortcut(.defaultAction)

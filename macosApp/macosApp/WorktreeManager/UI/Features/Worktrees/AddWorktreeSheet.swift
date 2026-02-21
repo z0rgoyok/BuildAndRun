@@ -46,7 +46,7 @@ struct AddWorktreeSheet: View {
                 worktreeName = newValue
             }
         }
-        .onChange(of: root.state.createWorktree.createdWorktreePath) { _, next in
+        .onChange(of: root.worktreesState.createWorktree.createdWorktreePath) { _, next in
             if next != nil { dismiss() }
         }
         .sheet(isPresented: $showBranchConflict) {
@@ -71,7 +71,7 @@ private extension AddWorktreeSheet {
 
     @ViewBuilder
     var baseBranchPicker: some View {
-        if root.state.branches.isEmpty {
+        if root.settingsState.branches.isEmpty {
             branchLoadingRow
         } else {
             Picker(labels.createBaseBranch, selection: $baseBranch) {
@@ -84,7 +84,7 @@ private extension AddWorktreeSheet {
 
     @ViewBuilder
     var existingBranchPicker: some View {
-        if root.state.branches.isEmpty {
+        if root.settingsState.branches.isEmpty {
             branchLoadingRow
         } else {
             Picker(labels.createBranchPicker, selection: $selectedExistingBranch) {
@@ -122,7 +122,7 @@ private extension AddWorktreeSheet {
             Spacer()
             Button(labels.createButton) { attemptCreate() }
                 .keyboardShortcut(.defaultAction)
-                .disabled(!isValid || root.state.branches.isEmpty || isPreparing || createState.isSubmitting)
+                .disabled(!isValid || root.settingsState.branches.isEmpty || isPreparing || createState.isSubmitting)
         }
     }
 
@@ -141,11 +141,11 @@ private extension AddWorktreeSheet {
             worktreeName: worktreeName,
             onUseExisting: {
                 syncToKmpState(createBranch: false)
-                root.store.onCreateWorktree()
+                root.store.worktrees.onCreateWorktree()
             },
             onRecreate: {
                 syncToKmpState(createBranch: true)
-                root.store.onCreateWorktree()
+                root.store.worktrees.onCreateWorktree()
             }
         )
     }
@@ -154,9 +154,9 @@ private extension AddWorktreeSheet {
 // MARK: - Logic
 
 private extension AddWorktreeSheet {
-    var createState: AppStore.CreateWorktreeState { root.state.createWorktree }
+    var createState: CreateWorktreeState { root.worktreesState.createWorktree }
 
-    var allBranches: [String] { root.state.branches as [String] }
+    var allBranches: [String] { root.settingsState.branches as [String] }
 
     var sortedBranches: [String] {
         let priorityNames = ["main", "master", "develop", "development"]
@@ -176,43 +176,46 @@ private extension AddWorktreeSheet {
     func buildWorktreePath() -> String {
         guard let repo = root.selectedRepository else { return "" }
         let name = worktreeName.trimmingCharacters(in: .whitespacesAndNewlines)
-        return "\(root.state.worktreeBasePath)/\(repo.name)/\(name)"
+        return "\(root.settingsState.worktreeBasePath)/\(repo.name)/\(name)"
     }
 
     func syncToKmpState(createBranch: Bool) {
         let branch = createBranch ? branchName : selectedExistingBranch
-        root.store.onCreateWorktreeBranchChanged(value: branch)
-        root.store.onCreateWorktreePathChanged(value: buildWorktreePath())
-        root.store.onCreateWorktreeBaseBranchChanged(value: createBranch ? baseBranch : "main")
-        root.store.onCreateWorktreeCreateBranchChanged(value: createBranch)
+        root.store.worktrees.onCreateWorktreeBranchChanged(value: branch)
+        root.store.worktrees.onCreateWorktreePathChanged(value: buildWorktreePath())
+        root.store.worktrees.onCreateWorktreeBaseBranchChanged(value: createBranch ? baseBranch : "main")
+        root.store.worktrees.onCreateWorktreeCreateBranchChanged(value: createBranch)
     }
 
     func attemptCreate() {
-        if createNewBranch && root.store.branchExists(branch: branchName) {
+        if createNewBranch && root.store.settings.branchExists(branch: branchName) {
             showBranchConflict = true
             return
         }
         syncToKmpState(createBranch: createNewBranch)
         if createNewBranch {
-            root.store.onSetPreferredBaseBranch(branch: baseBranch)
+            root.store.settings.onSetPreferredBaseBranch(branch: baseBranch)
         }
-        root.store.onCreateWorktree()
+        root.store.worktrees.onCreateWorktree()
     }
 
     func loadBranches() {
         guard !isPreparing else { return }
         isPreparing = true
-        root.store.onLoadBranches()
+        root.store.settings.onLoadBranches()
 
         Task {
-            while root.state.branches.isEmpty {
-                try? await Task.sleep(for: .milliseconds(100))
+            for _ in 0 ..< 100 {
+                if !root.settingsState.branches.isEmpty || root.messagesState.error != nil {
+                    break
+                }
+                try? await Task.sleep(for: .milliseconds(50))
             }
             await MainActor.run {
                 if selectedExistingBranch.isEmpty, let first = allBranches.first {
                     selectedExistingBranch = first
                 }
-                if let preferred = root.store.preferredBaseBranch(),
+                if let preferred = root.store.settings.preferredBaseBranch(),
                    allBranches.contains(preferred) {
                     baseBranch = preferred
                 } else if let main = allBranches.first(where: { $0 == "main" || $0 == "master" }) {

@@ -13,7 +13,7 @@ struct ContentView: View {
             .frame(minWidth: 900, minHeight: 550)
             .navigationTitle(navigationTitle)
             .toolbar { toolbarContent }
-            .animation(DS.Animation.quick, value: root.state.loadingMessage)
+            .animation(DS.Animation.quick, value: root.activityState.loadingMessage)
             .sheet(item: sheetBinding) { sheet in
                 SheetContent(sheet: sheet)
                     .environmentObject(root)
@@ -24,14 +24,14 @@ struct ContentView: View {
                     message: Text(alert.message),
                     dismissButton: .default(Text(labels.ok)) {
                         if alert.isError {
-                            root.store.onDismissError()
+                            root.store.messages.onDismissError()
                         } else {
-                            root.store.onDismissSuccess()
+                            root.store.messages.onDismissSuccess()
                         }
                     }
                 )
             }
-            .onChange(of: root.state.error) { _, next in
+            .onChange(of: root.messagesState.error) { _, next in
                 guard let next else { return }
                 presentedAlert =
                     PresentedAlert(
@@ -40,7 +40,7 @@ struct ContentView: View {
                         message: next.details ?? ""
                     )
             }
-            .onChange(of: root.state.success) { _, next in
+            .onChange(of: root.messagesState.success) { _, next in
                 guard let next else { return }
                 presentedAlert =
                     PresentedAlert(
@@ -78,18 +78,18 @@ struct ContentView: View {
                 }
                 .help(root.store.kanbanLabels.toolbarNewWorktree)
 
-                if let selectedWorktreePath = root.state.selectedWorktreePath {
+                if let selectedWorktreePath = root.worktreesState.selectedWorktreePath {
                     OpenEditorMenu(root: root, worktreePath: selectedWorktreePath)
 
                     Button {
-                        root.store.onOpenInFinder(worktreePath: selectedWorktreePath)
+                        root.store.editors.onOpenInFinder(worktreePath: selectedWorktreePath)
                     } label: {
                         Label(labels.finder, systemImage: "folder")
                     }
                     .help(root.store.kanbanLabels.toolbarFinder)
 
                     Button {
-                        root.store.onOpenInTerminal(worktreePath: selectedWorktreePath)
+                        root.store.editors.onOpenInTerminal(worktreePath: selectedWorktreePath)
                     } label: {
                         Label(labels.terminal, systemImage: "terminal")
                     }
@@ -97,7 +97,7 @@ struct ContentView: View {
                 }
 
                 Button {
-                    root.store.onRefreshSelectedRepository()
+                    root.store.worktrees.onRefreshSelectedRepository()
                 } label: {
                     Label(labels.refresh, systemImage: "arrow.clockwise")
                 }
@@ -106,7 +106,7 @@ struct ContentView: View {
         }
 
         ToolbarItem(placement: .status) {
-            if let message = root.state.loadingMessage {
+            if let message = root.activityState.loadingMessage {
                 HStack(spacing: 6) {
                     ProgressView()
                         .controlSize(.small)
@@ -131,8 +131,8 @@ struct ContentView: View {
     }
 
     private var currentSelection: SidebarSelection? {
-        guard let repoId = root.state.selectedRepositoryId else { return nil }
-        if let worktreePath = root.state.selectedWorktreePath {
+        guard let repoId = root.repositoriesState.selectedRepositoryId else { return nil }
+        if let worktreePath = root.worktreesState.selectedWorktreePath {
             return .worktree(worktreePath: worktreePath, repositoryId: repoId)
         }
         return .repository(repositoryId: repoId)
@@ -162,16 +162,16 @@ struct ContentView: View {
 
     private func applySelection(_ selection: SidebarSelection?) {
         guard let selection else {
-            root.store.onSelectWorktree(worktreePath: nil)
+            root.store.worktrees.onSelectWorktree(worktreePath: nil)
             return
         }
 
         switch selection {
         case .repository(let repositoryId):
-            root.store.onSelectRepository(repositoryId: repositoryId)
+            root.store.repositories.onSelectRepository(repositoryId: repositoryId)
         case .worktree(let worktreePath, let repositoryId):
-            root.store.onSelectRepository(repositoryId: repositoryId)
-            root.store.onSelectWorktree(worktreePath: worktreePath)
+            root.store.repositories.onSelectRepository(repositoryId: repositoryId)
+            root.store.worktrees.onSelectWorktree(worktreePath: worktreePath)
         }
     }
 

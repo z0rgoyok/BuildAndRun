@@ -12,10 +12,11 @@ struct CreatePRSheet: View {
     @State private var baseBranch: String = "main"
     @State private var isPreparing = false
     @State private var isSubmitting = false
+    @State private var isSubmissionRequested = false
 
     private var baseBranches: [String] {
         let common = ["main", "master", "develop"]
-        let available = root.state.branches.filter { common.contains($0) }
+        let available = root.settingsState.branches.filter { common.contains($0) }
         return available.isEmpty ? common : available
     }
 
@@ -60,17 +61,11 @@ struct CreatePRSheet: View {
                 .keyboardShortcut(.cancelAction)
 
                 Button("Create PR") {
-                    root.store.onCreatePullRequest(
-                        worktreePath: worktreePath,
-                        title: title,
-                        body: prDescription,
-                        baseBranch: baseBranch,
-                    )
-                    dismiss()
+                    submit()
                 }
                 .keyboardShortcut(.defaultAction)
                 .buttonStyle(.borderedProminent)
-                .disabled(root.state.branches.isEmpty || isPreparing || isSubmitting)
+                .disabled(root.settingsState.branches.isEmpty || isPreparing || isSubmitting)
             }
         }
         .padding(24)
@@ -85,15 +80,43 @@ struct CreatePRSheet: View {
         .task {
             await prepare()
         }
+        .onChange(of: root.messagesState.success?.message) { _, next in
+            guard isSubmissionRequested, next != nil else { return }
+            isSubmitting = false
+            isSubmissionRequested = false
+            dismiss()
+        }
+        .onChange(of: root.messagesState.error?.message) { _, next in
+            guard isSubmissionRequested, next != nil else { return }
+            isSubmitting = false
+            isSubmissionRequested = false
+        }
+    }
+
+    private func submit() {
+        guard !isPreparing, !isSubmitting else { return }
+        isSubmitting = true
+        isSubmissionRequested = true
+        root.store.gitActions.onCreatePullRequest(
+            worktreePath: worktreePath,
+            title: title,
+            body: prDescription,
+            baseBranch: baseBranch,
+        )
     }
 
     private func prepare() async {
         guard !isPreparing else { return }
         isPreparing = true
-        defer { isPreparing = false }
 
-        if root.state.branches.isEmpty {
-            root.store.onLoadBranches()
+        if root.settingsState.branches.isEmpty {
+            root.store.settings.onLoadBranches()
+            for _ in 0 ..< 100 {
+                if !root.settingsState.branches.isEmpty || root.messagesState.error != nil {
+                    break
+                }
+                try? await Task.sleep(for: .milliseconds(50))
+            }
         }
 
         let branchName =
@@ -105,5 +128,6 @@ struct CreatePRSheet: View {
         if let main = baseBranches.first {
             baseBranch = main
         }
+        isPreparing = false
     }
 }

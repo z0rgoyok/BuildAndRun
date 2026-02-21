@@ -21,7 +21,7 @@ struct BranchConflictSheet: View {
             Text(labels.branchConflictTitle)
                 .font(.headline)
 
-            Text(root.store.resolveBranchConflictMessage(branch: branchName))
+            Text(root.store.texts.resolveBranchConflictMessage(branch: branchName))
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -35,7 +35,7 @@ struct BranchConflictSheet: View {
                         VStack(alignment: .leading) {
                             Text(labels.branchConflictUseExisting)
                                 .fontWeight(.medium)
-                            Text(root.store.resolveBranchConflictUseExistingDetail(branch: branchName))
+                            Text(root.store.texts.resolveBranchConflictUseExistingDetail(branch: branchName))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }

@@ -44,7 +44,7 @@ flowchart LR
 
 ## Repository layout
 
-- `shared/` - core app logic (domain, use cases, presentation state, ports)
+- `bridge/` - core app logic (domain, use cases, presentation state, ports)
 - `macosApp/` - primary macOS app host and SwiftUI screens
 - `composeApp/` - Compose Multiplatform app module (Android target)
 - `iosApp/` - iOS host app scaffold
@@ -69,8 +69,8 @@ xcodebuild -project macosApp/macosApp.xcodeproj \
 ### Shared checks
 
 ```bash
-./gradlew :shared:allTests
-./gradlew :shared:check
+./gradlew :bridge:allTests
+./gradlew :bridge:check
 ./gradlew ktlintCheck
 ```
 

@@ -22,3 +22,6 @@ Follow the fail-fast principle.
 
 Each task must conclude with running tests and IDE inspections across the full affected scope. 
 All issues and warnings must be fixed, not suppressed.
+
+# MCP
+MCP — you must use it only for inspections, retrieving information about symbols, and renaming them.

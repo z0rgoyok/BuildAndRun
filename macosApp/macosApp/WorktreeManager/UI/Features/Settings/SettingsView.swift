@@ -8,8 +8,8 @@ struct SettingsView: View {
             GeneralSettingsView(
                 worktreeBasePath:
                     Binding(
-                        get: { root.state.worktreeBasePath },
-                        set: { root.store.onSetWorktreeBasePath(path: $0) }
+                        get: { root.settingsState.worktreeBasePath },
+                        set: { root.store.settings.onSetWorktreeBasePath(path: $0) }
                     )
             )
             .tabItem {
@@ -19,8 +19,8 @@ struct SettingsView: View {
             CopyPatternsSettingsView(
                 patterns:
                     Binding(
-                        get: { root.state.defaultCopyPatterns },
-                        set: { root.store.onSetDefaultCopyPatterns(patterns: $0) }
+                        get: { root.settingsState.defaultCopyPatterns },
+                        set: { root.store.settings.onSetDefaultCopyPatterns(patterns: $0) }
                     )
             )
             .tabItem {

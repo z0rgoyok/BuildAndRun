@@ -15,8 +15,11 @@ struct CompleteWorktreeSheet: View {
     @State private var hasRemoteBranch = false
     @State private var isPreparing = false
     @State private var isSubmitting = false
+    @State private var isSubmissionRequested = false
 
-    private var worktree: AppStore.WorktreeItem? {
+    private var labels: KanbanLabels { root.store.kanbanLabels }
+
+    private var worktree: WorktreeItem? {
         root.selectedRepository?.worktrees.first { $0.path == worktreePath }
     }
 
@@ -43,13 +46,13 @@ struct CompleteWorktreeSheet: View {
 
     private var targetBranch: String {
         worktree?.baseBranch?.takeIfNotBlank
-            ?? root.store.preferredBaseBranch()?.takeIfNotBlank
+            ?? root.store.settings.preferredBaseBranch()?.takeIfNotBlank
             ?? "main"
     }
 
     private var canDeleteBranch: Bool {
         guard let worktree else { return false }
-        return !worktree.branch.isEmpty && worktree.branch != "detached HEAD"
+        return !worktree.branch.isEmpty && !worktree.isDetachedHead
     }
 
     var body: some View {
@@ -58,27 +61,30 @@ struct CompleteWorktreeSheet: View {
                 .font(.system(size: 48))
                 .foregroundStyle(selectedAction.color)
 
-            Text("Complete Worktree")
+            Text(labels.completeWorktreeTitle)
                 .font(.headline)
 
-            Text("Clean up '\(worktree?.name ?? "")'")
+            Text(root.store.texts.resolveCompleteWorktreeCleanup(name: worktree?.name ?? ""))
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
 
             if isDirty || hasUnpushed || hasOpenPR {
                 VStack(alignment: .leading, spacing: 6) {
                     if isDirty {
-                        Label("Uncommitted changes", systemImage: "exclamationmark.triangle.fill")
+                        Label(labels.completeWorktreeWarningUncommittedChanges, systemImage: "exclamationmark.triangle.fill")
                             .foregroundStyle(.orange)
                             .font(.caption)
                     }
                     if hasUnpushed {
-                        Label("Unpushed commits (\(status?.ahead ?? 0))", systemImage: "exclamationmark.triangle.fill")
+                        Label(
+                            root.store.texts.resolveCompleteWorktreeUnpushedCommits(commits: "\(status?.ahead ?? 0)"),
+                            systemImage: "exclamationmark.triangle.fill"
+                        )
                             .foregroundStyle(.orange)
                             .font(.caption)
                     }
                     if hasOpenPR {
-                        Label("PR is still open", systemImage: "exclamationmark.triangle.fill")
+                        Label(labels.completeWorktreeWarningOpenPr, systemImage: "exclamationmark.triangle.fill")
                             .foregroundStyle(.orange)
                             .font(.caption)
                     }
@@ -90,7 +96,7 @@ struct CompleteWorktreeSheet: View {
             }
 
             VStack(alignment: .leading, spacing: 8) {
-                Text("What happened with this work?")
+                Text(labels.completeWorktreeQuestion)
                     .font(.subheadline)
                     .fontWeight(.medium)
 
@@ -118,23 +124,23 @@ struct CompleteWorktreeSheet: View {
             .cornerRadius(8)
 
             VStack(alignment: .leading, spacing: 12) {
-                Text("Cleanup options")
+                Text(labels.completeWorktreeCleanupOptions)
                     .font(.subheadline)
                     .fontWeight(.medium)
 
                 if canDeleteBranch {
-                    Toggle("Delete local branch", isOn: $deleteLocalBranch)
+                    Toggle(labels.completeWorktreeDeleteLocalBranch, isOn: $deleteLocalBranch)
                     if hasRemoteBranch {
-                        Toggle("Delete remote branch", isOn: $deleteRemoteBranch)
+                        Toggle(labels.completeWorktreeDeleteRemoteBranch, isOn: $deleteRemoteBranch)
                     }
                 }
 
                 if selectedAction != .discard {
-                    Toggle("Update \(targetBranch) from remote first", isOn: $pullTargetFirst)
+                    Toggle(root.store.texts.resolveCompleteWorktreeUpdateTargetFromRemoteFirst(branch: targetBranch), isOn: $pullTargetFirst)
                 }
 
                 if isDirty {
-                    Toggle("Force delete", isOn: $forceDelete)
+                    Toggle(labels.completeWorktreeForceDelete, isOn: $forceDelete)
                         .foregroundStyle(.red)
                 }
             }
@@ -143,12 +149,12 @@ struct CompleteWorktreeSheet: View {
             .cornerRadius(8)
 
             HStack(spacing: 12) {
-                Button("Cancel") {
+                Button(labels.completeWorktreeCancel) {
                     dismiss()
                 }
                 .keyboardShortcut(.cancelAction)
 
-                Button(selectedAction == .discard ? "Delete" : "Complete") {
+                Button(selectedAction == .discard ? labels.completeWorktreeDelete : labels.completeWorktreeComplete) {
                     complete()
                 }
                 .keyboardShortcut(.defaultAction)
@@ -161,20 +167,33 @@ struct CompleteWorktreeSheet: View {
         .frame(width: 430)
         .overlay {
             if isPreparing {
-                BlockingProgressOverlay(title: "Preparing…")
+                BlockingProgressOverlay(title: labels.completeWorktreePreparing)
             } else if isSubmitting {
-                BlockingProgressOverlay(title: "Completing worktree…")
+                BlockingProgressOverlay(title: labels.completeWorktreeSubmitting)
             }
         }
         .task {
             await prepare()
         }
+        .onChange(of: root.messagesState.success?.message) { _, next in
+            guard isSubmissionRequested, next != nil else { return }
+            isSubmitting = false
+            isSubmissionRequested = false
+            dismiss()
+        }
+        .onChange(of: root.messagesState.error?.message) { _, next in
+            guard isSubmissionRequested, next != nil else { return }
+            isSubmitting = false
+            isSubmissionRequested = false
+        }
     }
 
     private func complete() {
         guard let worktree else { return }
+        guard !isSubmitting else { return }
         isSubmitting = true
-        root.store.onCompleteWorktree(
+        isSubmissionRequested = true
+        root.store.gitActions.onCompleteWorktree(
             worktreePath: worktree.path,
             targetBranch: targetBranch,
             mergeIntoTarget: selectedAction == .mergeLocally,
@@ -183,25 +202,32 @@ struct CompleteWorktreeSheet: View {
             deleteRemoteBranch: deleteRemoteBranch && hasRemoteBranch,
             force: forceDelete,
         )
-        isSubmitting = false
-        dismiss()
     }
 
     private func prepare() async {
         guard !isPreparing else { return }
         isPreparing = true
-        defer { isPreparing = false }
 
         if hasMergedPR || hasOpenPR {
             selectedAction = .prMerged
         }
 
-        root.store.onLoadHasRemoteBranch(worktreePath: worktreePath)
-        hasRemoteBranch =
-            root.state.remoteBranches
-                .first(where: { $0.worktreePath == worktreePath })?
-                .hasRemote
-                ?? false
+        root.store.gitActions.onLoadHasRemoteBranch(worktreePath: worktreePath)
+        for _ in 0 ..< 100 {
+            if let hasRemote =
+                root.worktreesState.remoteBranches
+                    .first(where: { $0.worktreePath == worktreePath })?
+                    .hasRemote
+            {
+                hasRemoteBranch = hasRemote
+                break
+            }
+            if root.messagesState.error != nil {
+                break
+            }
+            try? await Task.sleep(for: .milliseconds(50))
+        }
+        isPreparing = false
     }
 }
 
